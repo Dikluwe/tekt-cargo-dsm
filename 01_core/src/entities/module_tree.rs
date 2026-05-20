@@ -33,6 +33,14 @@ pub struct ModuleNode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId(pub(crate) usize);
 
+impl NodeId {
+    /// Construtor para testes internos à crate. Não faz parte da API pública.
+    #[cfg(test)]
+    pub(crate) fn test_new(index: usize) -> Self {
+        NodeId(index)
+    }
+}
+
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum TreeError {
     #[error("NodeId inválido para esta árvore: {0:?}")]
