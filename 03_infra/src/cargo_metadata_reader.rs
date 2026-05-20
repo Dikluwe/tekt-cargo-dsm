@@ -63,7 +63,15 @@ pub fn read_workspace(workspace_path: &Path) -> Result<Workspace, CargoMetadataE
     for package_id in &metadata.workspace_members {
         let package = &metadata[package_id];
 
-        let (entry_kind, entry_point) = classify_targets(package)?;
+        let (entry_kind, entry_point) = match classify_targets(package) {
+            Ok(res) => res,
+            Err(CargoMetadataError::NoEntryPoint { .. }) => {
+                // Silenciosamente ignora pacotes que não têm lib nem binário
+                // (como crates exclusivas de testes, benchmarks ou documentação)
+                continue;
+            }
+            Err(e) => return Err(e),
+        };
 
         let manifest_dir =
             package
