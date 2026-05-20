@@ -6,4 +6,5 @@
  */
 
 pub mod cargo_metadata_reader;
+pub mod import_extractor;
 pub mod module_traverser;
