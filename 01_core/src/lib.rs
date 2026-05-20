@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+/*
+ * Crystalline Lineage
+ * @prompt 00_nucleo/prompts/workspace_resolver.md
+ * @layer L1
+ * @updated 2026-05-20
+ */
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod entities;

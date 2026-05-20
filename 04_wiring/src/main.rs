@@ -1,4 +1,4 @@
-/**
+/*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/cli.md
  * @layer L4
@@ -37,10 +37,8 @@ fn main() {
     let output_path = Path::new(&cli.output);
     
     // Cria as pastas pai caso não existam
-    if let Some(parent) = output_path.parent() {
-        if !parent.as_os_str().is_empty() && !parent.exists() {
-            fs::create_dir_all(parent).expect("Falha ao criar diretórios de saída");
-        }
+    if let Some(parent) = output_path.parent().filter(|p| !p.as_os_str().is_empty() && !p.exists()) {
+        fs::create_dir_all(parent).expect("Falha ao criar diretórios de saída");
     }
 
     // Escreve um arquivo de conteúdo mockado (JSON ou HTML dependendo do formato)

@@ -1,4 +1,4 @@
-/**
+/*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/cli.md
  * @layer L2
