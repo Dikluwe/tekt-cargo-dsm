@@ -1,0 +1,9 @@
+[package]
+name = "crystalline-dsm-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crystalline-dsm-core = { path = "../01_core" }
+crystalline-dsm-shell = { path = "../02_shell" }
+crystalline-dsm-infra = { path = "../03_infra" }
