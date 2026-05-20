@@ -7,3 +7,4 @@ edition = "2024"
 crystalline-dsm-core = { path = "../01_core" }
 crystalline-dsm-shell = { path = "../02_shell" }
 crystalline-dsm-infra = { path = "../03_infra" }
+clap = { version = "4.4", features = ["derive"] }
