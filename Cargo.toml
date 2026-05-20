@@ -6,3 +6,7 @@ members = [
     "03_infra",
     "04_wiring",
 ]
+exclude = [
+    "tests/fixtures",
+]
+

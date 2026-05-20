@@ -109,11 +109,7 @@ fn resolve_relative_path(
 ) -> (Vec<String>, String, ImportKind) {
     if segments.is_empty() {
         // Item simples sem path: ex `use Foo;`
-        return (
-            vec![],
-            item.to_string(),
-            ImportKind::External,
-        );
+        return (vec![], item.to_string(), ImportKind::External);
     }
 
     let first = &segments[0];
@@ -128,7 +124,10 @@ fn resolve_relative_path(
 
     if first == "self" {
         // self::a::b -> from_canonical_path::a::b
-        let mut resolved: Vec<String> = from_canonical_path.split("::").map(|s| s.to_string()).collect();
+        let mut resolved: Vec<String> = from_canonical_path
+            .split("::")
+            .map(|s| s.to_string())
+            .collect();
         resolved.extend(segments[1..].iter().cloned());
         let kind = ImportKind::CurrentCrate;
         return (resolved, item.to_string(), kind);
@@ -216,9 +215,7 @@ fn extract_from_items(
                     );
 
                     // Se não resolvemos por relative path, classificar pelo primeiro segmento
-                    if kind != ImportKind::CurrentCrate
-                        && kind != ImportKind::Unresolved
-                    {
+                    if kind != ImportKind::CurrentCrate && kind != ImportKind::Unresolved {
                         if let Some(first) = resolved_segments.first() {
                             kind = classify_import_kind(first, from_crate, workspace_crate_names);
                         }

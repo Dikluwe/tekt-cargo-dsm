@@ -44,10 +44,11 @@ fn get_path_attribute(attrs: &[syn::Attribute]) -> Option<String> {
     for attr in attrs {
         if attr.path().is_ident("path") {
             if let syn::Meta::NameValue(syn::MetaNameValue {
-                value: syn::Expr::Lit(syn::ExprLit {
-                    lit: syn::Lit::Str(lit_str),
-                    ..
-                }),
+                value:
+                    syn::Expr::Lit(syn::ExprLit {
+                        lit: syn::Lit::Str(lit_str),
+                        ..
+                    }),
                 ..
             }) = &attr.meta
             {

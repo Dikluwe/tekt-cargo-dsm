@@ -9,6 +9,8 @@ use clap::Parser;
 use std::fs;
 use std::path::Path;
 
+pub mod graph_builder;
+
 #[derive(Parser, Debug)]
 #[command(name = "crystalline-dsm")]
 #[command(version = "0.1.0")]
@@ -35,9 +37,12 @@ fn main() {
 
     // Mock do Passo 0.3: cria um arquivo de saída simulado no caminho especificado
     let output_path = Path::new(&cli.output);
-    
+
     // Cria as pastas pai caso não existam
-    if let Some(parent) = output_path.parent().filter(|p| !p.as_os_str().is_empty() && !p.exists()) {
+    if let Some(parent) = output_path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty() && !p.exists())
+    {
         fs::create_dir_all(parent).expect("Falha ao criar diretórios de saída");
     }
 

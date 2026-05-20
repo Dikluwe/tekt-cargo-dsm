@@ -35,7 +35,7 @@ fn test_cli_empty_workspace_default_html() {
         .expect("Falha ao rodar o comando da CLI");
 
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Iniciando análise do workspace em"));
     assert!(stdout.contains("Análise concluída com sucesso!"));

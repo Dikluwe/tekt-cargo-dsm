@@ -65,11 +65,13 @@ pub fn read_workspace(workspace_path: &Path) -> Result<Workspace, CargoMetadataE
 
         let (entry_kind, entry_point) = classify_targets(package)?;
 
-        let manifest_dir = package.manifest_path.parent().ok_or_else(|| {
-            CargoMetadataError::NoEntryPoint {
-                name: package.name.clone(),
-            }
-        })?;
+        let manifest_dir =
+            package
+                .manifest_path
+                .parent()
+                .ok_or_else(|| CargoMetadataError::NoEntryPoint {
+                    name: package.name.clone(),
+                })?;
 
         members.push(WorkspaceMember {
             name: package.name.clone(),
