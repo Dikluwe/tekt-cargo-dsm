@@ -1,5 +1,5 @@
 use crystalline_dsm_core::entities::workspace::{EntryKind, WorkspaceMember};
-use crystalline_dsm_infra::module_traverser::{traverse_crate, TraverseError};
+use crystalline_dsm_infra::module_traverser::{TraverseError, traverse_crate};
 use std::path::PathBuf;
 
 /// Resolve o caminho absoluto de uma fixture a partir de sua pasta.
@@ -168,7 +168,10 @@ fn test_traverse_module_tree_syntax_error() {
     let result = traverse_crate(&member);
 
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), TraverseError::ParseFailed { .. }));
+    assert!(matches!(
+        result.unwrap_err(),
+        TraverseError::ParseFailed { .. }
+    ));
 }
 
 #[test]

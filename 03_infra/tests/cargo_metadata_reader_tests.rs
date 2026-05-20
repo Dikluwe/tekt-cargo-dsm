@@ -1,5 +1,5 @@
 use crystalline_dsm_core::entities::workspace::EntryKind;
-use crystalline_dsm_infra::cargo_metadata_reader::{read_workspace, CargoMetadataError};
+use crystalline_dsm_infra::cargo_metadata_reader::{CargoMetadataError, read_workspace};
 use std::path::PathBuf;
 
 /// Resolve o caminho absoluto de uma fixture a partir de sua pasta.

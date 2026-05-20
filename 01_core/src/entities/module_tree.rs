@@ -245,10 +245,22 @@ mod tests {
         let root = tree.root();
 
         let a = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
         let b = tree
-            .add_child(a, "b".to_string(), PathBuf::from("src/a/b.rs"), false, false)
+            .add_child(
+                a,
+                "b".to_string(),
+                PathBuf::from("src/a/b.rs"),
+                false,
+                false,
+            )
             .unwrap();
         let c = tree
             .add_child(
@@ -270,7 +282,13 @@ mod tests {
         let root = tree.root();
 
         let a = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
 
         assert_eq!(tree.children(root), &[a]);
@@ -283,13 +301,30 @@ mod tests {
         let mut tree = ModuleTree::new("my_crate".to_string(), PathBuf::from("src/lib.rs"));
         let root = tree.root();
 
-        tree.add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
-            .unwrap();
+        tree.add_child(
+            root,
+            "a".to_string(),
+            PathBuf::from("src/a.rs"),
+            false,
+            false,
+        )
+        .unwrap();
         let err = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/b.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/b.rs"),
+                false,
+                false,
+            )
             .unwrap_err();
 
-        assert_eq!(err, TreeError::DuplicateChild { name: "a".to_string() });
+        assert_eq!(
+            err,
+            TreeError::DuplicateChild {
+                name: "a".to_string()
+            }
+        );
     }
 
     #[test]
@@ -322,13 +357,31 @@ mod tests {
         let root = tree.root();
 
         let a = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
         let b = tree
-            .add_child(root, "b".to_string(), PathBuf::from("src/b.rs"), false, false)
+            .add_child(
+                root,
+                "b".to_string(),
+                PathBuf::from("src/b.rs"),
+                false,
+                false,
+            )
             .unwrap();
         let c = tree
-            .add_child(a, "c".to_string(), PathBuf::from("src/a/c.rs"), false, false)
+            .add_child(
+                a,
+                "c".to_string(),
+                PathBuf::from("src/a/c.rs"),
+                false,
+                false,
+            )
             .unwrap();
 
         // Pre-order: root, a, c, b
@@ -346,7 +399,13 @@ mod tests {
         let root = tree.root();
 
         let a = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
 
         assert_eq!(tree.find_by_canonical_path("my_crate"), Some(root));
@@ -365,16 +424,34 @@ mod tests {
         let root2 = tree2.root();
 
         tree1
-            .add_child(root1, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root1,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
         tree2
-            .add_child(root2, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root2,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
 
         assert_eq!(tree1, tree2);
 
         tree2
-            .add_child(root2, "b".to_string(), PathBuf::from("src/b.rs"), false, false)
+            .add_child(
+                root2,
+                "b".to_string(),
+                PathBuf::from("src/b.rs"),
+                false,
+                false,
+            )
             .unwrap();
         assert_ne!(tree1, tree2);
     }
@@ -385,7 +462,13 @@ mod tests {
         let root = tree.root();
 
         let a = tree
-            .add_child(root, "a".to_string(), PathBuf::from("src/lib.rs"), true, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/lib.rs"),
+                true,
+                false,
+            )
             .unwrap();
 
         let node_a = tree.node(a);

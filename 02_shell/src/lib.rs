@@ -12,5 +12,8 @@ pub fn format_start_analysis(workspace_path: &str) -> String {
 
 /// Formata a mensagem de sucesso na geração do relatório.
 pub fn format_success(output_path: &str) -> String {
-    format!("Análise concluída com sucesso! Relatório gerado em: {}", output_path)
+    format!(
+        "Análise concluída com sucesso! Relatório gerado em: {}",
+        output_path
+    )
 }
