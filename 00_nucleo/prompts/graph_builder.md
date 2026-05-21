@@ -3,7 +3,8 @@
 **Camada**: L₄ (Fiação)
 **Ficheiro alvo**: `04_wiring/src/graph_builder.rs`
 **Passo do roadmap**: 1.4 — Construção do grafo
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `dependency_graph-revisao.md` (ADR-0010 — passa a chamar `add_internal_node_with_tree`).
 
 
 ---

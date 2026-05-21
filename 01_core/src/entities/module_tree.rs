@@ -1,6 +1,7 @@
 /*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/module_tree.md
+ * @prompt 00_nucleo/prompts/dependency_graph-revisao.md
  * @layer L1
  * @updated 2026-05-20
  */
