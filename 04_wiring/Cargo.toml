@@ -8,3 +8,8 @@ crystalline-dsm-core = { path = "../01_core" }
 crystalline-dsm-shell = { path = "../02_shell" }
 crystalline-dsm-infra = { path = "../03_infra" }
 clap = { version = "4.4", features = ["derive"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+thiserror = "1.0"
+
+[dev-dependencies]
+serde_json = "1"
