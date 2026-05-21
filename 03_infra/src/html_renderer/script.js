@@ -72,18 +72,31 @@
   }
 
   // --- Cache de cores ---
+  // getComputedStyle().getPropertyValue() em custom properties retorna a
+  // STRING LITERAL declarada (ex.: "light-dark(#fff, #1e293b)"), não o
+  // valor resolvido. Para que o Canvas 2D receba uma cor utilizável
+  // (rgb/hex), usamos um elemento sonda invisível com `color: var(--x)`
+  // — aí o browser resolve light-dark() de acordo com o tema actual.
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;";
+  root.appendChild(probe);
+
+  function resolveVar(name) {
+    probe.style.color = "var(" + name + ")";
+    return getComputedStyle(probe).color;
+  }
+
   let COLORS = {};
   function refreshColors() {
-    const s = getComputedStyle(root);
     COLORS = {
-      bgMatrix: s.getPropertyValue("--bg-matrix").trim(),
-      bgExtern: s.getPropertyValue("--bg-extern").trim(),
-      cellEdge1: s.getPropertyValue("--cell-edge-1").trim(),
-      cellEdge2: s.getPropertyValue("--cell-edge-2").trim(),
-      cellEdge4: s.getPropertyValue("--cell-edge-4").trim(),
-      diagonal: s.getPropertyValue("--diagonal").trim(),
-      borderScc: s.getPropertyValue("--border-scc").trim(),
-      divider: s.getPropertyValue("--divider").trim(),
+      bgMatrix: resolveVar("--bg-matrix"),
+      bgExtern: resolveVar("--bg-extern"),
+      cellEdge1: resolveVar("--cell-edge-1"),
+      cellEdge2: resolveVar("--cell-edge-2"),
+      cellEdge4: resolveVar("--cell-edge-4"),
+      diagonal: resolveVar("--diagonal"),
+      borderScc: resolveVar("--border-scc"),
+      divider: resolveVar("--divider"),
     };
   }
   refreshColors();
