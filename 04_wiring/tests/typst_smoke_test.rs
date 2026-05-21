@@ -2,11 +2,13 @@
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/typst-smoke-test.md
  * @prompt 00_nucleo/prompts/smoke-test-diagnostico.md
+ * @prompt 00_nucleo/prompts/dsm_partitioner.md
  * @layer L4
  * @updated 2026-05-20
  */
 
 use crystalline_dsm_core::rules::cycle_detector::detect_cycles;
+use crystalline_dsm_core::rules::dsm_partitioner::partition_for_dsm;
 use crystalline_dsm_infra::cargo_metadata_reader::read_workspace;
 use crystalline_dsm_infra::import_extractor::{ExtractError, extract_imports};
 use crystalline_dsm_infra::module_traverser::{TraverseError, traverse_crate};
@@ -249,14 +251,37 @@ fn typst_smoke_test() {
         }
     }
 
+    // Fase 6: particionamento DSM.
+    let t_partition_start = Instant::now();
+    let partition = partition_for_dsm(&graph);
+    let t_partition = t_partition_start.elapsed();
+
+    println!("\n--- Fase 6: Particionamento DSM ---");
+    println!("order.len(): {}", partition.order.len());
+    println!("internal_boundary: {}", partition.internal_boundary);
+    println!("Total SCCs: {}", partition.sccs.len());
+    println!("  Cíclicos: {}", partition.cyclic_scc_count());
+    println!("  Triviais: {}", partition.trivial_scc_count());
+    println!("Tempo: {:?}", t_partition);
+
+    assert_eq!(partition.order.len(), graph.node_count());
+    assert_eq!(partition.internal_boundary, internal_count);
+    // O número de SCCs cíclicos deve bater com o número de ciclos
+    // detectados pelo cycle_detector (mesma definição matemática).
+    assert_eq!(
+        partition.cyclic_scc_count(),
+        report.cycle_count(),
+        "cyclic_scc_count e cycle_count devem coincidir",
+    );
+
     // Resumo total.
-    let t_total = t_workspace + t_traverse + t_imports + t_graph + t_cycles;
+    let t_total = t_workspace + t_traverse + t_imports + t_graph + t_cycles + t_partition;
     println!("\n=== RESUMO ===");
     println!("Tempo total do pipeline: {:?}", t_total);
     println!(
         "Distribuição: workspace={:?}, traverse={:?}, \
-         imports={:?}, graph={:?}, cycles={:?}",
-        t_workspace, t_traverse, t_imports, t_graph, t_cycles,
+         imports={:?}, graph={:?}, cycles={:?}, partition={:?}",
+        t_workspace, t_traverse, t_imports, t_graph, t_cycles, t_partition,
     );
 
     // Sanidade: deve terminar em tempo razoável.
