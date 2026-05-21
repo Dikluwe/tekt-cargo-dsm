@@ -169,15 +169,18 @@
     opacity: 0.15;
   }
 
-  /* Filtro de externos */
-  body.hide-externals .row-labels span[data-kind^="external"],
-  body.hide-externals .column-labels span[data-kind^="external"] {
+  /* Filtro de externos — `:scope` refere o elemento que abriu o
+     @scope (o `.dsm-root`). Usar `body.hide-externals` directamente
+     não casa porque dentro de @scope os seletores são interpretados
+     contra descendentes do scope, e o `body` é o próprio scope. */
+  :scope.hide-externals .row-labels span[data-kind^="external"],
+  :scope.hide-externals .column-labels span[data-kind^="external"] {
     display: none;
   }
 
-  /* Filtro de SCCs triviais */
-  body.only-cyclic .row-labels span[data-cyclic="false"],
-  body.only-cyclic .column-labels span[data-cyclic="false"] {
+  /* Filtro de SCCs triviais (mesma razão para usar :scope) */
+  :scope.only-cyclic .row-labels span[data-cyclic="false"],
+  :scope.only-cyclic .column-labels span[data-cyclic="false"] {
     display: none;
   }
 
