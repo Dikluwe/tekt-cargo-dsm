@@ -430,7 +430,7 @@ Após implementação:
      fora de L₃).
    - Leitura da versão da tool (de `env!("CARGO_PKG_VERSION")`).
 
-2. Documentar o schema em `docs/json-schema-v1.md`.
+2. Documentar o schema em `docs/graph-schema-v1.md`. [CUMPRIDO]
 
 3. Adicionar exemplo de JSON gerado contra Typst no README ou
    numa pasta `examples/`.

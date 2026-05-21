@@ -333,7 +333,7 @@ Após implementação:
    de gravar `graph.json`, gravar também `trees.json` no mesmo
    diretório.
 
-2. Documentar o schema em `docs/trees-schema-v1.md`.
+2. Documentar o schema em `docs/trees-schema-v1.md`. [CUMPRIDO]
 
 3. Atualizar README com exemplo de uso.
 

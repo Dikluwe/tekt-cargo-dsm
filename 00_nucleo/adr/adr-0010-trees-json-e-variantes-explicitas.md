@@ -297,8 +297,8 @@ Rejeitada em favor de dois ficheiros físicos (Forma 4.1).
    - `json_serializer.md` → `IMPLEMENTADO (revisado)`.
 
 9. Documentar schemas:
-   - `docs/json-schema-v1.md` (graph.json).
-   - `docs/trees-schema-v1.md` (trees.json).
+   - `docs/graph-schema-v1.md` (graph.json). [CUMPRIDO]
+   - `docs/trees-schema-v1.md` (trees.json). [CUMPRIDO]
 
 ---
 
