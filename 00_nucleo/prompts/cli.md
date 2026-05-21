@@ -2,6 +2,8 @@
 
 **Camada**: L₄ (Fiação) e L₂ (Casca)  
 **Criado em**: 2026-05-20  
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `cli_output_flags.md` (pipeline real substituiu o mock; flags `--output` default `./graph.json` e `--emit-trees`; flag `--format` removida; `shell::format_summary` + `format_error` adicionados em L₂).
 **Arquivos gerados**:
 *   `04_wiring/src/main.rs` (Fiação - CLI Clap e Orquestração mockada)
 *   `02_shell/src/lib.rs` (Casca - Formatador de mensagens e interface de saída)
