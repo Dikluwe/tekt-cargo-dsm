@@ -3,6 +3,7 @@
  * @prompt 00_nucleo/prompts/typst-smoke-test.md
  * @prompt 00_nucleo/prompts/smoke-test-diagnostico.md
  * @prompt 00_nucleo/prompts/dsm_partitioner.md
+ * @prompt 00_nucleo/prompts/html_renderer.md
  * @layer L4
  * @updated 2026-05-20
  */
@@ -10,6 +11,7 @@
 use crystalline_dsm_core::rules::cycle_detector::detect_cycles;
 use crystalline_dsm_core::rules::dsm_partitioner::partition_for_dsm;
 use crystalline_dsm_infra::cargo_metadata_reader::read_workspace;
+use crystalline_dsm_infra::html_renderer::render_dsm_html;
 use crystalline_dsm_infra::import_extractor::{ExtractError, extract_imports};
 use crystalline_dsm_infra::module_traverser::{TraverseError, traverse_crate};
 
@@ -274,14 +276,55 @@ fn typst_smoke_test() {
         "cyclic_scc_count e cycle_count devem coincidir",
     );
 
+    // Fase 7: renderização HTML.
+    let t_html_start = Instant::now();
+    let html = render_dsm_html(
+        &graph,
+        &partition,
+        &report,
+        &workspace,
+        env!("CARGO_PKG_VERSION"),
+        "2026-05-20T22:30:00Z",
+    )
+    .expect("render_dsm_html falhou contra Typst real");
+    let t_html = t_html_start.elapsed();
+
+    println!("\n--- Fase 7: Renderização HTML ---");
+    println!("Tamanho do HTML: {} bytes ({:.1} KB)", html.len(), html.len() as f64 / 1024.0);
+    println!("Tempo: {:?}", t_html);
+
+    // Grava o HTML num tmp para inspecção visual manual.
+    let demo_path = std::env::temp_dir().join("typst-dsm.html");
+    if let Err(e) = std::fs::write(&demo_path, &html) {
+        eprintln!("Aviso: nao consegui gravar {} ({})", demo_path.display(), e);
+    } else {
+        println!("HTML gravado em: {}", demo_path.display());
+    }
+
+    // Sanidade do HTML produzido
+    assert!(html.contains("<canvas"), "HTML não tem canvas");
+    assert!(html.contains("popover=\"manual\""), "HTML não usa Popover API");
+    assert!(
+        html.len() > 100_000 && html.len() < 5_000_000,
+        "HTML do Typst fora do range esperado (100KB-5MB): {} bytes",
+        html.len(),
+    );
+    // Critério do prompt: < 5s
+    assert!(
+        t_html < std::time::Duration::from_secs(5),
+        "Render HTML demorou mais que 5s: {:?}",
+        t_html,
+    );
+
     // Resumo total.
-    let t_total = t_workspace + t_traverse + t_imports + t_graph + t_cycles + t_partition;
+    let t_total =
+        t_workspace + t_traverse + t_imports + t_graph + t_cycles + t_partition + t_html;
     println!("\n=== RESUMO ===");
     println!("Tempo total do pipeline: {:?}", t_total);
     println!(
         "Distribuição: workspace={:?}, traverse={:?}, \
-         imports={:?}, graph={:?}, cycles={:?}, partition={:?}",
-        t_workspace, t_traverse, t_imports, t_graph, t_cycles, t_partition,
+         imports={:?}, graph={:?}, cycles={:?}, partition={:?}, html={:?}",
+        t_workspace, t_traverse, t_imports, t_graph, t_cycles, t_partition, t_html,
     );
 
     // Sanidade: deve terminar em tempo razoável.

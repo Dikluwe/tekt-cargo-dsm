@@ -6,6 +6,7 @@
  */
 
 pub mod cargo_metadata_reader;
+pub mod html_renderer;
 pub mod import_extractor;
 pub mod json_serializer;
 pub mod module_traverser;

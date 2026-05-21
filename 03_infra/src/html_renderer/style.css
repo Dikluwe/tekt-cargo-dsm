@@ -1,0 +1,211 @@
+/* Crystalline DSM — estilos embutidos. */
+
+@scope (.dsm-root) {
+
+  /* Variáveis viven no container `.dsm-root` (que é o <body>),
+     NÃO em :root — ver html_renderer.md (a interpolação de :root
+     dentro de @scope não escopa nada). */
+  :scope {
+    color-scheme: light dark;
+    --font-base: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --cell-size: 6px;
+
+    /* Surfaces */
+    --bg-page: light-dark(#fafafa, #121212);
+    --bg-matrix: light-dark(#ffffff, #1e293b);
+    --bg-extern: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+
+    /* Células de aresta — escala discreta por intensidade */
+    --cell-edge-1: light-dark(#bfdbfe, #1e3a8a);
+    --cell-edge-2: light-dark(#60a5fa, #1d4ed8);
+    --cell-edge-4: light-dark(#2563eb, #3b82f6);
+
+    /* Estrutura */
+    --diagonal: light-dark(#9ca3af, #4b5563);
+    --border-scc: light-dark(#ef4444, #f87171);
+    --divider: light-dark(#374151, #9ca3af);
+
+    /* Texto */
+    --text-primary: light-dark(#111827, #e0e0e0);
+    --text-secondary: light-dark(#6b7280, #9ca3af);
+    --label-highlight: light-dark(#dbeafe, #1e40af);
+
+    font-family: var(--font-base);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+  }
+
+  .metadata,
+  .stats {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .controls {
+    margin: 12px 0;
+  }
+
+  .controls fieldset {
+    border: 1px solid var(--divider);
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .controls legend {
+    padding: 0 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .controls button,
+  .controls input[type="search"] {
+    font: inherit;
+    color: inherit;
+    background: var(--bg-matrix);
+    border: 1px solid var(--divider);
+    border-radius: 3px;
+    padding: 4px 8px;
+  }
+
+  .matrix-container {
+    position: relative;
+    margin-top: 12px;
+  }
+
+  #dsm-matrix {
+    cursor: crosshair;
+    border: 1px solid var(--divider);
+    background: var(--bg-matrix);
+    display: block;
+  }
+
+  /* Tooltip via Popover API */
+  #tooltip {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    max-width: 320px;
+    border: none;
+    margin: 0;
+    /* Anchor Positioning quando disponível; fallback via JS */
+    position-anchor: --dsm-cursor;
+    position-area: bottom right;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+
+  .column-labels {
+    position: relative;
+    height: 120px;
+  }
+
+  .column-labels span {
+    position: absolute;
+    transform: rotate(-45deg);
+    transform-origin: top left;
+    white-space: nowrap;
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  .column-labels span.is-hovered,
+  .row-labels span.is-hovered {
+    color: var(--text-primary);
+    background: var(--label-highlight);
+  }
+
+  .column-labels span.is-pinned,
+  .row-labels span.is-pinned {
+    color: var(--text-primary);
+    background: var(--label-highlight);
+    font-weight: 600;
+  }
+
+  .row-labels {
+    position: absolute;
+    left: 0;
+    top: 120px;
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .row-labels span {
+    line-height: var(--cell-size);
+    height: var(--cell-size);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    padding-right: 6px;
+    color: var(--text-secondary);
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  /* Busca: filtragem visual puramente CSS */
+  .row-labels span[data-match="false"],
+  .column-labels span[data-match="false"] {
+    opacity: 0.15;
+  }
+
+  /* Filtro de externos */
+  body.hide-externals .row-labels span[data-kind^="external"],
+  body.hide-externals .column-labels span[data-kind^="external"] {
+    display: none;
+  }
+
+  /* Filtro de SCCs triviais */
+  body.only-cyclic .row-labels span[data-cyclic="false"],
+  body.only-cyclic .column-labels span[data-cyclic="false"] {
+    display: none;
+  }
+
+  footer {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .legend .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 0 4px 0 12px;
+    vertical-align: middle;
+    border: 1px solid var(--divider);
+  }
+
+  .legend .swatch-edge {
+    background: var(--cell-edge-4);
+  }
+
+  .legend .swatch-diagonal {
+    background: var(--diagonal);
+  }
+
+  .legend .swatch-scc {
+    background: transparent;
+    border: 2px solid var(--border-scc);
+  }
+}

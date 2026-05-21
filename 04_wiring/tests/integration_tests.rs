@@ -76,6 +76,35 @@ fn test_cli_imports_simple_sem_emit_trees() {
 }
 
 #[test]
+fn test_cli_imports_simple_com_emit_html() {
+    let dir = tmpdir("simple-html");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("imports-simple"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+
+    assert!(output_path.exists());
+    assert!(html_path.exists(), "dsm.html deveria existir com --emit-html");
+
+    let html = fs::read_to_string(&html_path).unwrap();
+    assert!(html.contains("<!DOCTYPE html>"));
+    assert!(html.contains("<canvas"));
+    assert!(html.contains("popover=\"manual\""));
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("HTML gravado"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
 fn test_cli_imports_workspace_com_emit_trees() {
     let dir = tmpdir("ws-emit-trees");
     let output_path = dir.join("graph.json");
