@@ -3,7 +3,8 @@
 **Camada**: L₁ (Núcleo)
 **Ficheiro alvo**: `01_core/src/entities/module_tree.rs`
 **Passo do roadmap**: 1.2 — Travessia de módulos por crate
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `dependency_graph-revisao.md` (ADR-0010 — `NodeId::placeholder()` removido; pureza de L₁ restaurada).
 
 ---
 

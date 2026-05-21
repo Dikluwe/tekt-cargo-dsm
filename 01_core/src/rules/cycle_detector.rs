@@ -159,9 +159,9 @@ mod tests {
     #[test]
     fn test_detect_cycles_dag() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
 
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, c, create_dummy_edge()).unwrap();
@@ -174,8 +174,8 @@ mod tests {
     #[test]
     fn test_detect_cycles_two_nodes() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
 
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, a, create_dummy_edge()).unwrap();
@@ -195,9 +195,9 @@ mod tests {
     #[test]
     fn test_detect_cycles_three_nodes() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
 
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, c, create_dummy_edge()).unwrap();
@@ -213,7 +213,7 @@ mod tests {
     #[test]
     fn test_detect_cycles_self_loop() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
         graph.add_edge(a, a, create_dummy_edge()).unwrap();
 
         let report = detect_cycles(&graph);
@@ -227,10 +227,10 @@ mod tests {
     #[test]
     fn test_detect_cycles_multiple_disjoint() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
-        let d = graph.add_internal_node("D".to_string(), "crate".to_string(), NodeId::test_new(3));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let d = graph.add_internal_node_with_tree("D".to_string(), "crate".to_string(), NodeId::test_new(3));
 
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, a, create_dummy_edge()).unwrap();
@@ -247,9 +247,9 @@ mod tests {
     #[test]
     fn test_detect_cycles_overlapping() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
 
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, a, create_dummy_edge()).unwrap();
@@ -268,15 +268,15 @@ mod tests {
     fn test_detect_cycles_ordering_by_size() {
         let mut graph = DependencyGraph::new();
         // Ciclo 1 (tamanho 2): B <-> C
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
         graph.add_edge(b, c, create_dummy_edge()).unwrap();
         graph.add_edge(c, b, create_dummy_edge()).unwrap();
 
         // Ciclo 2 (tamanho 3): D -> E -> F -> D
-        let d = graph.add_internal_node("D".to_string(), "crate".to_string(), NodeId::test_new(3));
-        let e = graph.add_internal_node("E".to_string(), "crate".to_string(), NodeId::test_new(4));
-        let f = graph.add_internal_node("F".to_string(), "crate".to_string(), NodeId::test_new(5));
+        let d = graph.add_internal_node_with_tree("D".to_string(), "crate".to_string(), NodeId::test_new(3));
+        let e = graph.add_internal_node_with_tree("E".to_string(), "crate".to_string(), NodeId::test_new(4));
+        let f = graph.add_internal_node_with_tree("F".to_string(), "crate".to_string(), NodeId::test_new(5));
         graph.add_edge(d, e, create_dummy_edge()).unwrap();
         graph.add_edge(e, f, create_dummy_edge()).unwrap();
         graph.add_edge(f, d, create_dummy_edge()).unwrap();
@@ -293,14 +293,14 @@ mod tests {
     fn test_detect_cycles_alphabetical_ordering() {
         let mut graph = DependencyGraph::new();
         // Ciclo 1 (tamanho 2): X <-> Y
-        let x = graph.add_internal_node("X".to_string(), "crate".to_string(), NodeId::test_new(0));
-        let y = graph.add_internal_node("Y".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let x = graph.add_internal_node_with_tree("X".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let y = graph.add_internal_node_with_tree("Y".to_string(), "crate".to_string(), NodeId::test_new(1));
         graph.add_edge(x, y, create_dummy_edge()).unwrap();
         graph.add_edge(y, x, create_dummy_edge()).unwrap();
 
         // Ciclo 2 (tamanho 2): A <-> B
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(2));
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(3));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(3));
         graph.add_edge(a, b, create_dummy_edge()).unwrap();
         graph.add_edge(b, a, create_dummy_edge()).unwrap();
 
@@ -315,7 +315,7 @@ mod tests {
     #[test]
     fn test_detect_cycles_external_nodes_no_cycle() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
         let ext = graph.add_external_node("serde".to_string(), ExternalKind::Crate);
 
         graph.add_edge(a, ext, create_dummy_edge()).unwrap();
@@ -329,12 +329,12 @@ mod tests {
     fn test_detect_cycles_mixed() {
         let mut graph = DependencyGraph::new();
         // Self-loop no A
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
         graph.add_edge(a, a, create_dummy_edge()).unwrap();
 
         // Multi-node B <-> C
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
         graph.add_edge(b, c, create_dummy_edge()).unwrap();
         graph.add_edge(c, b, create_dummy_edge()).unwrap();
 
@@ -351,11 +351,11 @@ mod tests {
     #[test]
     fn test_affected_node_count() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
         graph.add_edge(a, a, create_dummy_edge()).unwrap();
 
-        let b = graph.add_internal_node("B".to_string(), "crate".to_string(), NodeId::test_new(1));
-        let c = graph.add_internal_node("C".to_string(), "crate".to_string(), NodeId::test_new(2));
+        let b = graph.add_internal_node_with_tree("B".to_string(), "crate".to_string(), NodeId::test_new(1));
+        let c = graph.add_internal_node_with_tree("C".to_string(), "crate".to_string(), NodeId::test_new(2));
         graph.add_edge(b, c, create_dummy_edge()).unwrap();
         graph.add_edge(c, b, create_dummy_edge()).unwrap();
 
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn test_counts() {
         let mut graph = DependencyGraph::new();
-        let a = graph.add_internal_node("A".to_string(), "crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree("A".to_string(), "crate".to_string(), NodeId::test_new(0));
         graph.add_edge(a, a, create_dummy_edge()).unwrap();
 
         let report = detect_cycles(&graph);

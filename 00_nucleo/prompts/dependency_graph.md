@@ -3,7 +3,8 @@
 **Camada**: L₁ (Núcleo)
 **Ficheiro alvo**: `01_core/src/entities/dependency_graph.rs`
 **Passo do roadmap**: 1.4 — Construção do grafo
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `dependency_graph-revisao.md` (ADR-0010 — `NodeKind::Internal` substituído por `InternalWithTree` + `InternalWithoutTree`; API dividida em `add_internal_node_with_tree` e `add_internal_node_without_tree`).
 
 
 ---

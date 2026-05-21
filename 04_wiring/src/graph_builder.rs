@@ -1,6 +1,7 @@
 /*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/graph_builder.md
+ * @prompt 00_nucleo/prompts/dependency_graph-revisao.md
  * @layer L4
  * @updated 2026-05-20
  */
@@ -26,7 +27,7 @@ pub fn build_graph(
     for crate_name in sorted_crate_names {
         if let Some(tree) = trees.get(crate_name) {
             for (node_id, module_node) in tree.all_nodes() {
-                graph.add_internal_node(
+                graph.add_internal_node_with_tree(
                     module_node.canonical_path.clone(),
                     crate_name.clone(),
                     node_id,
