@@ -251,7 +251,7 @@ Versão inicial: `"1.0.0"`.
    deserializar, verificar equivalência semântica (mesmos nós,
    mesmas arestas).
 4. Documentar o schema em ficheiro próprio
-   (`docs/json-schema-v1.md`).
+   (`docs/graph-schema-v1.md`). [CUMPRIDO]
 5. Adicionar comando ou flag CLI em L₄ para gravar o JSON num
    ficheiro (`--output graph.json`).
 
