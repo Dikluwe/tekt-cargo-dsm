@@ -3,7 +3,8 @@
 **Camada**: L₁ (Núcleo)
 **Ficheiro alvo**: `01_core/src/entities/workspace.rs`
 **Passo do roadmap**: 1.1 — Resolução de workspace
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `workspace_entity-revisao.md` (ADR-0007 — extensão do `EntryKind` para 6 variantes; campo `entry_point` removido de `WorkspaceMember`).
 
 ---
 

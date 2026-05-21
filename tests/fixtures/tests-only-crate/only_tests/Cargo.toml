@@ -1,0 +1,8 @@
+[package]
+name = "only_tests"
+version = "0.1.0"
+edition = "2021"
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"

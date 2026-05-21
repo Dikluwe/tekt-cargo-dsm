@@ -1,23 +1,89 @@
 /*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/workspace_resolver.md
+ * @prompt 00_nucleo/prompts/workspace_entity-revisao.md
  * @layer L1
  * @updated 2026-05-20
  */
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EntryKind {
-    /// Apenas `lib.rs` (crate biblioteca).
-    Library,
+    /// Crate com apenas `lib.rs`.
+    Library { lib_path: PathBuf },
 
-    /// Apenas `main.rs` (crate binário).
-    Binary,
+    /// Crate com apenas `main.rs`.
+    Binary { main_path: PathBuf },
 
-    /// Tem ambos. Neste caso, `entry_point` aponta para `lib.rs`
-    /// (preferência para análise estrutural).
-    LibraryAndBinary { main_path: PathBuf },
+    /// Crate com `lib.rs` E `main.rs`.
+    LibraryAndBinary {
+        lib_path: PathBuf,
+        main_path: PathBuf,
+    },
+
+    /// Crate com `lib.rs` marcado como `proc-macro = true`.
+    /// Mesma estrutura física que `Library`, mas semântica
+    /// diferente para análise de imports.
+    ProcMacro { lib_path: PathBuf },
+
+    /// Crate sem lib/bin, mas com targets de teste integrados.
+    /// `test_paths` lista os ficheiros de teste descobertos
+    /// (geralmente em `tests/*.rs`).
+    /// Garantido: `test_paths` não está vazio.
+    TestsOnly { test_paths: Vec<PathBuf> },
+
+    /// Crate sem nenhum target compilável conhecido.
+    /// Ex: membros de workspace usados apenas para configuração.
+    /// Não tem caminho de entrada.
+    NoSourceTarget,
+}
+
+impl EntryKind {
+    /// Retorna o ficheiro de entrada primário, se houver:
+    /// - Library, ProcMacro: `lib_path`.
+    /// - Binary: `main_path`.
+    /// - LibraryAndBinary: `lib_path` (preferência por lib).
+    /// - TestsOnly: primeiro elemento de `test_paths`.
+    /// - NoSourceTarget: None.
+    pub fn primary_entry(&self) -> Option<&Path> {
+        match self {
+            EntryKind::Library { lib_path } => Some(lib_path),
+            EntryKind::Binary { main_path } => Some(main_path),
+            EntryKind::LibraryAndBinary { lib_path, .. } => Some(lib_path),
+            EntryKind::ProcMacro { lib_path } => Some(lib_path),
+            EntryKind::TestsOnly { test_paths } => test_paths.first().map(|p| p.as_path()),
+            EntryKind::NoSourceTarget => None,
+        }
+    }
+
+    /// `true` para variantes com código compilável tradicional:
+    /// `Library`, `Binary`, `LibraryAndBinary`, `ProcMacro`.
+    /// `false` para `TestsOnly` e `NoSourceTarget`.
+    pub fn has_main_source(&self) -> bool {
+        matches!(
+            self,
+            EntryKind::Library { .. }
+                | EntryKind::Binary { .. }
+                | EntryKind::LibraryAndBinary { .. }
+                | EntryKind::ProcMacro { .. }
+        )
+    }
+
+    /// `true` apenas para `TestsOnly`.
+    pub fn is_tests_only(&self) -> bool {
+        matches!(self, EntryKind::TestsOnly { .. })
+    }
+
+    /// `true` apenas para `NoSourceTarget`.
+    pub fn is_empty(&self) -> bool {
+        matches!(self, EntryKind::NoSourceTarget)
+    }
+
+    /// `true` apenas para `ProcMacro`.
+    pub fn is_proc_macro(&self) -> bool {
+        matches!(self, EntryKind::ProcMacro { .. })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -30,12 +96,7 @@ pub struct WorkspaceMember {
     /// Exemplo: "/home/user/projeto/01_core".
     pub crate_root: PathBuf,
 
-    /// Caminho absoluto do ficheiro de entrada do crate.
-    /// Para libs: ".../src/lib.rs".
-    /// Para binários: ".../src/main.rs".
-    pub entry_point: PathBuf,
-
-    /// Tipo do ponto de entrada: biblioteca, binário, ou ambos.
+    /// Tipo do crate, com caminhos de entrada embutidos.
     pub entry_kind: EntryKind,
 }
 
@@ -59,12 +120,14 @@ impl Workspace {
         self.members.len()
     }
 
-    /// Itera sobre os membros que são bibliotecas (Library ou LibraryAndBinary).
+    /// Itera sobre os membros que são bibliotecas (Library, LibraryAndBinary, ProcMacro).
     pub fn libraries(&self) -> impl Iterator<Item = &WorkspaceMember> {
         self.members.iter().filter(|m| {
             matches!(
                 m.entry_kind,
-                EntryKind::Library | EntryKind::LibraryAndBinary { .. }
+                EntryKind::Library { .. }
+                    | EntryKind::LibraryAndBinary { .. }
+                    | EntryKind::ProcMacro { .. }
             )
         })
     }
@@ -74,9 +137,36 @@ impl Workspace {
         self.members.iter().filter(|m| {
             matches!(
                 m.entry_kind,
-                EntryKind::Binary | EntryKind::LibraryAndBinary { .. }
+                EntryKind::Binary { .. } | EntryKind::LibraryAndBinary { .. }
             )
         })
+    }
+
+    /// Itera apenas membros com código tradicional (Library,
+    /// Binary, LibraryAndBinary, ProcMacro).
+    pub fn members_with_code(&self) -> impl Iterator<Item = &WorkspaceMember> {
+        self.members
+            .iter()
+            .filter(|m| m.entry_kind.has_main_source())
+    }
+
+    /// Itera apenas membros do tipo TestsOnly.
+    pub fn tests_only_members(&self) -> impl Iterator<Item = &WorkspaceMember> {
+        self.members
+            .iter()
+            .filter(|m| m.entry_kind.is_tests_only())
+    }
+
+    /// Itera apenas membros do tipo ProcMacro.
+    pub fn proc_macro_members(&self) -> impl Iterator<Item = &WorkspaceMember> {
+        self.members
+            .iter()
+            .filter(|m| m.entry_kind.is_proc_macro())
+    }
+
+    /// Itera apenas membros NoSourceTarget.
+    pub fn empty_members(&self) -> impl Iterator<Item = &WorkspaceMember> {
+        self.members.iter().filter(|m| m.entry_kind.is_empty())
     }
 }
 
@@ -86,16 +176,9 @@ mod tests {
 
     fn create_mock_member(name: &str, kind: EntryKind) -> WorkspaceMember {
         let crate_root = PathBuf::from(format!("/abs/path/{}", name));
-        let entry_point = match &kind {
-            EntryKind::Library | EntryKind::LibraryAndBinary { .. } => {
-                crate_root.join("src/lib.rs")
-            }
-            EntryKind::Binary => crate_root.join("src/main.rs"),
-        };
         WorkspaceMember {
             name: name.to_string(),
             crate_root,
-            entry_point,
             entry_kind: kind,
         }
     }
@@ -112,7 +195,12 @@ mod tests {
         // Workspace com 1 membro
         let ws_one = Workspace {
             root: PathBuf::from("/abs/path"),
-            members: vec![create_mock_member("crate_a", EntryKind::Library)],
+            members: vec![create_mock_member(
+                "crate_a",
+                EntryKind::Library {
+                    lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                },
+            )],
         };
         assert_eq!(ws_one.member_count(), 1);
         assert_eq!(ws_one.members[0].name, "crate_a");
@@ -121,11 +209,22 @@ mod tests {
         let ws_three = Workspace {
             root: PathBuf::from("/abs/path"),
             members: vec![
-                create_mock_member("crate_a", EntryKind::Library),
-                create_mock_member("crate_b", EntryKind::Binary),
+                create_mock_member(
+                    "crate_a",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "crate_b",
+                    EntryKind::Binary {
+                        main_path: PathBuf::from("/abs/path/crate_b/src/main.rs"),
+                    },
+                ),
                 create_mock_member(
                     "crate_c",
                     EntryKind::LibraryAndBinary {
+                        lib_path: PathBuf::from("/abs/path/crate_c/src/lib.rs"),
                         main_path: PathBuf::from("/abs/path/crate_c/src/main.rs"),
                     },
                 ),
@@ -139,8 +238,18 @@ mod tests {
         let ws = Workspace {
             root: PathBuf::from("/abs/path"),
             members: vec![
-                create_mock_member("crate_a", EntryKind::Library),
-                create_mock_member("crate_b", EntryKind::Binary),
+                create_mock_member(
+                    "crate_a",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "crate_b",
+                    EntryKind::Binary {
+                        main_path: PathBuf::from("/abs/path/crate_b/src/main.rs"),
+                    },
+                ),
             ],
         };
 
@@ -160,16 +269,36 @@ mod tests {
 
         let ws_1 = Workspace {
             root: PathBuf::from("/abs/path"),
-            members: vec![create_mock_member("crate_a", EntryKind::Library)],
+            members: vec![create_mock_member(
+                "crate_a",
+                EntryKind::Library {
+                    lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                },
+            )],
         };
         assert_eq!(ws_1.member_count(), 1);
 
         let ws_3 = Workspace {
             root: PathBuf::from("/abs/path"),
             members: vec![
-                create_mock_member("crate_a", EntryKind::Library),
-                create_mock_member("crate_b", EntryKind::Binary),
-                create_mock_member("crate_c", EntryKind::Library),
+                create_mock_member(
+                    "crate_a",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "crate_b",
+                    EntryKind::Binary {
+                        main_path: PathBuf::from("/abs/path/crate_b/src/main.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "crate_c",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/crate_c/src/lib.rs"),
+                    },
+                ),
             ],
         };
         assert_eq!(ws_3.member_count(), 3);
@@ -180,11 +309,22 @@ mod tests {
         let ws = Workspace {
             root: PathBuf::from("/abs/path"),
             members: vec![
-                create_mock_member("crate_lib", EntryKind::Library),
-                create_mock_member("crate_bin", EntryKind::Binary),
+                create_mock_member(
+                    "crate_lib",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/crate_lib/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "crate_bin",
+                    EntryKind::Binary {
+                        main_path: PathBuf::from("/abs/path/crate_bin/src/main.rs"),
+                    },
+                ),
                 create_mock_member(
                     "crate_both",
                     EntryKind::LibraryAndBinary {
+                        lib_path: PathBuf::from("/abs/path/crate_both/src/lib.rs"),
                         main_path: PathBuf::from("/abs/path/crate_both/src/main.rs"),
                     },
                 ),
@@ -208,20 +348,189 @@ mod tests {
     fn test_partial_eq() {
         let ws_a = Workspace {
             root: PathBuf::from("/abs/path"),
-            members: vec![create_mock_member("crate_a", EntryKind::Library)],
+            members: vec![create_mock_member(
+                "crate_a",
+                EntryKind::Library {
+                    lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                },
+            )],
         };
 
         let ws_b = Workspace {
             root: PathBuf::from("/abs/path"),
-            members: vec![create_mock_member("crate_a", EntryKind::Library)],
+            members: vec![create_mock_member(
+                "crate_a",
+                EntryKind::Library {
+                    lib_path: PathBuf::from("/abs/path/crate_a/src/lib.rs"),
+                },
+            )],
         };
 
         let ws_c = Workspace {
             root: PathBuf::from("/abs/path"),
-            members: vec![create_mock_member("crate_b", EntryKind::Library)],
+            members: vec![create_mock_member(
+                "crate_b",
+                EntryKind::Library {
+                    lib_path: PathBuf::from("/abs/path/crate_b/src/lib.rs"),
+                },
+            )],
         };
 
         assert_eq!(ws_a, ws_b);
         assert_ne!(ws_a, ws_c);
+    }
+
+    // --- Novos testes (ADR-0007) ---
+
+    #[test]
+    fn test_proc_macro_member() {
+        let member = create_mock_member(
+            "my_macros",
+            EntryKind::ProcMacro {
+                lib_path: PathBuf::from("/abs/path/my_macros/src/lib.rs"),
+            },
+        );
+        assert!(member.entry_kind.is_proc_macro());
+        assert!(member.entry_kind.has_main_source());
+        assert_eq!(
+            member.entry_kind.primary_entry(),
+            Some(Path::new("/abs/path/my_macros/src/lib.rs"))
+        );
+        assert!(!member.entry_kind.is_tests_only());
+        assert!(!member.entry_kind.is_empty());
+    }
+
+    #[test]
+    fn test_tests_only_member() {
+        let member = create_mock_member(
+            "integration_tests",
+            EntryKind::TestsOnly {
+                test_paths: vec![
+                    PathBuf::from("/abs/path/integration_tests/tests/foo.rs"),
+                    PathBuf::from("/abs/path/integration_tests/tests/bar.rs"),
+                ],
+            },
+        );
+        assert!(member.entry_kind.is_tests_only());
+        assert!(!member.entry_kind.has_main_source());
+        assert_eq!(
+            member.entry_kind.primary_entry(),
+            Some(Path::new("/abs/path/integration_tests/tests/foo.rs"))
+        );
+        assert!(!member.entry_kind.is_proc_macro());
+        assert!(!member.entry_kind.is_empty());
+    }
+
+    #[test]
+    fn test_no_source_target_member() {
+        let member = create_mock_member("config_only", EntryKind::NoSourceTarget);
+        assert!(member.entry_kind.is_empty());
+        assert!(!member.entry_kind.has_main_source());
+        assert!(member.entry_kind.primary_entry().is_none());
+        assert!(!member.entry_kind.is_tests_only());
+        assert!(!member.entry_kind.is_proc_macro());
+    }
+
+    #[test]
+    fn test_members_with_code() {
+        let ws = Workspace {
+            root: PathBuf::from("/abs/path"),
+            members: vec![
+                create_mock_member(
+                    "lib_crate",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/lib_crate/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "test_crate",
+                    EntryKind::TestsOnly {
+                        test_paths: vec![PathBuf::from("/abs/path/test_crate/tests/foo.rs")],
+                    },
+                ),
+                create_mock_member(
+                    "macro_crate",
+                    EntryKind::ProcMacro {
+                        lib_path: PathBuf::from("/abs/path/macro_crate/src/lib.rs"),
+                    },
+                ),
+                create_mock_member("empty_crate", EntryKind::NoSourceTarget),
+            ],
+        };
+
+        let with_code: Vec<&WorkspaceMember> = ws.members_with_code().collect();
+        assert_eq!(with_code.len(), 2);
+        assert!(with_code.iter().any(|m| m.name == "lib_crate"));
+        assert!(with_code.iter().any(|m| m.name == "macro_crate"));
+    }
+
+    #[test]
+    fn test_tests_only_members() {
+        let ws = Workspace {
+            root: PathBuf::from("/abs/path"),
+            members: vec![
+                create_mock_member(
+                    "lib_crate",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/lib_crate/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "test_crate",
+                    EntryKind::TestsOnly {
+                        test_paths: vec![PathBuf::from("/abs/path/test_crate/tests/foo.rs")],
+                    },
+                ),
+            ],
+        };
+
+        let tests_only: Vec<&WorkspaceMember> = ws.tests_only_members().collect();
+        assert_eq!(tests_only.len(), 1);
+        assert_eq!(tests_only[0].name, "test_crate");
+    }
+
+    #[test]
+    fn test_proc_macro_members() {
+        let ws = Workspace {
+            root: PathBuf::from("/abs/path"),
+            members: vec![
+                create_mock_member(
+                    "lib_crate",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/lib_crate/src/lib.rs"),
+                    },
+                ),
+                create_mock_member(
+                    "macro_crate",
+                    EntryKind::ProcMacro {
+                        lib_path: PathBuf::from("/abs/path/macro_crate/src/lib.rs"),
+                    },
+                ),
+            ],
+        };
+
+        let proc_macros: Vec<&WorkspaceMember> = ws.proc_macro_members().collect();
+        assert_eq!(proc_macros.len(), 1);
+        assert_eq!(proc_macros[0].name, "macro_crate");
+    }
+
+    #[test]
+    fn test_empty_members() {
+        let ws = Workspace {
+            root: PathBuf::from("/abs/path"),
+            members: vec![
+                create_mock_member(
+                    "lib_crate",
+                    EntryKind::Library {
+                        lib_path: PathBuf::from("/abs/path/lib_crate/src/lib.rs"),
+                    },
+                ),
+                create_mock_member("empty_crate", EntryKind::NoSourceTarget),
+            ],
+        };
+
+        let empties: Vec<&WorkspaceMember> = ws.empty_members().collect();
+        assert_eq!(empties.len(), 1);
+        assert_eq!(empties[0].name, "empty_crate");
     }
 }

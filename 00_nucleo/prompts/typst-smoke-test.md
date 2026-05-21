@@ -3,7 +3,8 @@
 **Camada**: L₄ (Fiação) — teste de integração
 **Ficheiro alvo**: `04_wiring/tests/typst_smoke_test.rs`
 **Passo do roadmap**: validação adicional, entre 1.5 e Fase 2
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `smoke-test-diagnostico.md` (impressão estruturada das falhas de `TraverseError` e `ExtractError`, com `attempted_paths` em `ModuleFileNotFound`).
 
 
 ---

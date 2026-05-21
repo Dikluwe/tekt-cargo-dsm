@@ -3,7 +3,8 @@
 **Camada**: L₃ (Infraestrutura)
 **Ficheiro alvo**: `03_infra/src/cargo_metadata_reader.rs`
 **Passo do roadmap**: 1.1 — Resolução de workspace
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `cargo_metadata_reader-revisao.md` (ADR-0007 — `classify_targets` retorna `EntryKind` directamente; variante `NoEntryPoint` removida; suporte a `ProcMacro`, `TestsOnly`, `NoSourceTarget`).
 
 ---
 

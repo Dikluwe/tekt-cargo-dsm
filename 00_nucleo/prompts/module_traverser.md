@@ -3,7 +3,8 @@
 **Camada**: L₃ (Infraestrutura)
 **Ficheiro alvo**: `03_infra/src/module_traverser.rs`
 **Passo do roadmap**: 1.2 — Travessia de módulos por crate
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
+**Revisão**: `module_traverser-revisao.md` (ADR-0008 — propagação de entry-style a partir do `WorkspaceMember`; remoção do check por nome `lib.rs`/`main.rs`).
 
 ---
 

@@ -314,6 +314,10 @@ pub fn extract_imports(
     tree: &ModuleTree,
     workspace_crate_names: &[String],
 ) -> Result<Vec<ImportEdge>, ExtractError> {
+    if member.entry_kind.is_empty() {
+        return Ok(Vec::new());
+    }
+
     let mut output = Vec::new();
     let from_crate = &member.name;
 

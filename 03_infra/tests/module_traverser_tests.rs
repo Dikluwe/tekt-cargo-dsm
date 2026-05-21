@@ -14,8 +14,9 @@ fn create_member(name: &str) -> WorkspaceMember {
     WorkspaceMember {
         name: name.to_string(),
         crate_root: root.clone(),
-        entry_point: root.join("src/lib.rs"),
-        entry_kind: EntryKind::Library,
+        entry_kind: EntryKind::Library {
+            lib_path: root.join("src/lib.rs"),
+        },
     }
 }
 
@@ -188,4 +189,38 @@ fn test_traverse_module_tree_cfg_duplicate() {
 
     let node_platform = tree.node(id_platform);
     assert!(node_platform.source_file.ends_with("src/platform/linux.rs"));
+}
+
+/// Regressão ADR-0008: entry point de target com nome não-canónico
+/// (ex: `[[test]] path = "src/runner.rs"`) deve ser tratado como
+/// entry-style, e `mod helper;` deve resolver para o ficheiro irmão
+/// `src/helper.rs`, não para `src/runner/helper.rs`.
+#[test]
+fn test_traverse_tests_only_entry_custom_name() {
+    let crate_root = get_fixture_path("tests-entry-custom-name").join("custom");
+    let entry = crate_root.join("src/runner.rs");
+    let member = WorkspaceMember {
+        name: "custom".to_string(),
+        crate_root,
+        entry_kind: EntryKind::TestsOnly {
+            test_paths: vec![entry],
+        },
+    };
+
+    let tree = traverse_crate(&member).expect("Falha ao percorrer crate custom");
+
+    assert_eq!(tree.node_count(), 2);
+
+    let id_helper = tree
+        .find_by_canonical_path("custom::helper")
+        .expect("módulo helper deveria ter sido resolvido como sibling");
+
+    let node_helper = tree.node(id_helper);
+    assert!(!node_helper.is_inline);
+    assert!(!node_helper.has_custom_path);
+    assert!(
+        node_helper.source_file.ends_with("custom/src/helper.rs"),
+        "esperado custom/src/helper.rs, obtido {:?}",
+        node_helper.source_file,
+    );
 }
