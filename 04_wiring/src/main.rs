@@ -2,6 +2,7 @@
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/cli.md
  * @prompt 00_nucleo/prompts/cli_output_flags.md
+ * @prompt 00_nucleo/prompts/html_renderer.md
  * @layer L4
  * @updated 2026-05-20
  */
@@ -10,7 +11,9 @@ use clap::Parser;
 use crystalline_dsm_core::entities::import_edge::ImportEdge;
 use crystalline_dsm_core::entities::module_tree::ModuleTree;
 use crystalline_dsm_core::rules::cycle_detector::detect_cycles;
+use crystalline_dsm_core::rules::dsm_partitioner::partition_for_dsm;
 use crystalline_dsm_infra::cargo_metadata_reader::{CargoMetadataError, read_workspace};
+use crystalline_dsm_infra::html_renderer::{HtmlRenderError, render_dsm_html};
 use crystalline_dsm_infra::import_extractor::extract_imports;
 use crystalline_dsm_infra::json_serializer::{JsonSerializeError, to_canonical_json};
 use crystalline_dsm_infra::module_traverser::traverse_crate;
@@ -36,6 +39,10 @@ struct Cli {
     /// Se presente, grava tambem trees.json no mesmo diretorio que --output
     #[arg(long)]
     emit_trees: bool,
+
+    /// Se presente, grava tambem dsm.html no mesmo diretorio que --output
+    #[arg(long)]
+    emit_html: bool,
 }
 
 #[derive(Debug)]
@@ -46,6 +53,7 @@ pub struct PipelineReport {
     pub cycle_count: usize,
     pub output_path: PathBuf,
     pub trees_path: Option<PathBuf>,
+    pub html_path: Option<PathBuf>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -58,6 +66,9 @@ pub enum PipelineError {
 
     #[error("Falha ao serializar trees.json: {0}")]
     TreesError(#[from] TreesSerializeError),
+
+    #[error("Falha ao renderizar dsm.html: {0}")]
+    HtmlError(#[from] HtmlRenderError),
 
     #[error("Falha ao gravar ficheiro {path}: {source}")]
     WriteFailed {
@@ -99,6 +110,7 @@ fn main() -> ExitCode {
                     report.cycle_count,
                     &report.output_path,
                     report.trees_path.as_deref(),
+                    report.html_path.as_deref(),
                 )
             );
             ExitCode::SUCCESS
@@ -176,6 +188,20 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
         None
     };
 
+    let html_path = if cli.emit_html {
+        let p = derive_html_path(&cli.output);
+        let partition = partition_for_dsm(&graph);
+        let html =
+            render_dsm_html(&graph, &partition, &cycles, &workspace, tool_version, &generated_at)?;
+        std::fs::write(&p, html).map_err(|e| PipelineError::WriteFailed {
+            path: p.clone(),
+            source: e,
+        })?;
+        Some(p)
+    } else {
+        None
+    };
+
     Ok(PipelineReport {
         member_count: workspace.member_count(),
         module_count: trees.values().map(|t| t.node_count()).sum(),
@@ -183,6 +209,7 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
         cycle_count: cycles.cycle_count(),
         output_path: cli.output.clone(),
         trees_path,
+        html_path,
     })
 }
 
@@ -193,6 +220,15 @@ fn derive_trees_path(output_path: &Path) -> PathBuf {
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     parent.join("trees.json")
+}
+
+/// Deriva o path do `dsm.html` no mesmo diretorio que `--output`.
+fn derive_html_path(output_path: &Path) -> PathBuf {
+    let parent = output_path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    parent.join("dsm.html")
 }
 
 /// Timestamp UTC em RFC 3339 (formato `YYYY-MM-DDTHH:MM:SSZ`).
@@ -225,6 +261,30 @@ mod tests {
         assert_eq!(
             derive_trees_path(Path::new("nome.json")),
             PathBuf::from("./trees.json"),
+        );
+    }
+
+    #[test]
+    fn test_derive_html_path_relative() {
+        assert_eq!(
+            derive_html_path(Path::new("./graph.json")),
+            PathBuf::from("./dsm.html"),
+        );
+    }
+
+    #[test]
+    fn test_derive_html_path_absolute() {
+        assert_eq!(
+            derive_html_path(Path::new("/abs/path/output.json")),
+            PathBuf::from("/abs/path/dsm.html"),
+        );
+    }
+
+    #[test]
+    fn test_derive_html_path_bare_filename() {
+        assert_eq!(
+            derive_html_path(Path::new("nome.json")),
+            PathBuf::from("./dsm.html"),
         );
     }
 
