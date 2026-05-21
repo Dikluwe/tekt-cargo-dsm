@@ -1,8 +1,15 @@
+/*
+ * Crystalline Lineage
+ * @prompt 00_nucleo/prompts/typst-smoke-test.md
+ * @prompt 00_nucleo/prompts/smoke-test-diagnostico.md
+ * @layer L4
+ * @updated 2026-05-20
+ */
 
 use crystalline_dsm_core::rules::cycle_detector::detect_cycles;
 use crystalline_dsm_infra::cargo_metadata_reader::read_workspace;
-use crystalline_dsm_infra::import_extractor::extract_imports;
-use crystalline_dsm_infra::module_traverser::traverse_crate;
+use crystalline_dsm_infra::import_extractor::{ExtractError, extract_imports};
+use crystalline_dsm_infra::module_traverser::{TraverseError, traverse_crate};
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -73,9 +80,38 @@ fn typst_smoke_test() {
     println!("Tempo: {:?}", t_traverse);
 
     if !traverse_failures.is_empty() {
-        println!("Falhas:");
+        println!("\nFalhas em traversal:");
         for (name, err) in &traverse_failures {
-            println!("  - {}: {:?}", name, err);
+            println!("  Crate: {}", name);
+            match err {
+                TraverseError::ModuleFileNotFound {
+                    module,
+                    parent_file,
+                    attempted_paths,
+                } => {
+                    println!("    Tipo: ModuleFileNotFound");
+                    println!("    Módulo procurado: {}", module);
+                    println!("    Declarado em: {}", parent_file.display());
+                    println!("    Caminhos tentados:");
+                    for p in attempted_paths {
+                        println!("      - {}", p.display());
+                    }
+                }
+                TraverseError::ParseFailed { file, source } => {
+                    println!("    Tipo: ParseFailed");
+                    println!("    Ficheiro: {}", file.display());
+                    println!("    Erro de parser: {}", source);
+                }
+                TraverseError::FileReadFailed { path, source } => {
+                    println!("    Tipo: FileReadFailed");
+                    println!("    Caminho: {}", path.display());
+                    println!("    Erro de I/O: {}", source);
+                }
+                TraverseError::TreeError(e) => {
+                    println!("    Tipo: TreeError");
+                    println!("    Detalhe: {:?}", e);
+                }
+            }
         }
     }
 
@@ -132,9 +168,21 @@ fn typst_smoke_test() {
     println!("Tempo: {:?}", t_imports);
 
     if !extract_failures.is_empty() {
-        println!("Falhas:");
+        println!("\nFalhas em extracção de imports:");
         for (name, err) in &extract_failures {
-            println!("  - {}: {:?}", name, err);
+            println!("  Crate: {}", name);
+            match err {
+                ExtractError::FileReadFailed { path, source } => {
+                    println!("    Tipo: FileReadFailed");
+                    println!("    Caminho: {}", path.display());
+                    println!("    Erro de I/O: {}", source);
+                }
+                ExtractError::ParseFailed { file, source } => {
+                    println!("    Tipo: ParseFailed");
+                    println!("    Ficheiro: {}", file.display());
+                    println!("    Erro de parser: {}", source);
+                }
+            }
         }
     }
 

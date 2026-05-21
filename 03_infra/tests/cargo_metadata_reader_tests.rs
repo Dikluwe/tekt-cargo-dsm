@@ -31,8 +31,11 @@ fn test_read_single_lib_crate() {
     assert_eq!(result.members.len(), 1);
     let member = &result.members[0];
     assert_eq!(member.name, "a");
-    assert_eq!(member.entry_kind, EntryKind::Library);
-    assert!(member.entry_point.ends_with("src/lib.rs"));
+    if let EntryKind::Library { lib_path } = &member.entry_kind {
+        assert!(lib_path.ends_with("src/lib.rs"));
+    } else {
+        panic!("Esperava-se EntryKind::Library");
+    }
 }
 
 #[test]
@@ -43,8 +46,11 @@ fn test_read_single_bin_crate() {
     assert_eq!(result.members.len(), 1);
     let member = &result.members[0];
     assert_eq!(member.name, "a");
-    assert_eq!(member.entry_kind, EntryKind::Binary);
-    assert!(member.entry_point.ends_with("src/main.rs"));
+    if let EntryKind::Binary { main_path } = &member.entry_kind {
+        assert!(main_path.ends_with("src/main.rs"));
+    } else {
+        panic!("Esperava-se EntryKind::Binary");
+    }
 }
 
 #[test]
@@ -55,12 +61,12 @@ fn test_read_lib_and_bin_crate() {
     assert_eq!(result.members.len(), 1);
     let member = &result.members[0];
     assert_eq!(member.name, "a");
-    if let EntryKind::LibraryAndBinary { main_path } = &member.entry_kind {
+    if let EntryKind::LibraryAndBinary { lib_path, main_path } = &member.entry_kind {
+        assert!(lib_path.ends_with("src/lib.rs"));
         assert!(main_path.ends_with("src/main.rs"));
     } else {
         panic!("Esperava-se EntryKind::LibraryAndBinary");
     }
-    assert!(member.entry_point.ends_with("src/lib.rs"));
 }
 
 #[test]
@@ -76,8 +82,11 @@ fn test_read_multi_crate_workspace() {
     assert!(names.contains(&"c".to_string()));
 
     for member in &result.members {
-        assert_eq!(member.entry_kind, EntryKind::Library);
-        assert!(member.entry_point.ends_with("src/lib.rs"));
+        if let EntryKind::Library { lib_path } = &member.entry_kind {
+            assert!(lib_path.ends_with("src/lib.rs"));
+        } else {
+            panic!("Membro {} deveria ser Library", member.name);
+        }
     }
 }
 
@@ -103,4 +112,46 @@ fn test_read_not_a_workspace() {
         result.unwrap_err(),
         CargoMetadataError::MetadataExecutionFailed { .. }
     ));
+}
+
+#[test]
+fn test_read_proc_macro_crate() {
+    let path = get_fixture_path("proc-macro-crate");
+    let result = read_workspace(&path).expect("Falha ao ler workspace");
+
+    assert_eq!(result.members.len(), 1);
+    let member = &result.members[0];
+    assert_eq!(member.name, "macros");
+    if let EntryKind::ProcMacro { lib_path } = &member.entry_kind {
+        assert!(lib_path.ends_with("macros/src/lib.rs"));
+    } else {
+        panic!("Esperava-se EntryKind::ProcMacro");
+    }
+}
+
+#[test]
+fn test_read_tests_only_crate() {
+    let path = get_fixture_path("tests-only-crate");
+    let result = read_workspace(&path).expect("Falha ao ler workspace");
+
+    assert_eq!(result.members.len(), 1);
+    let member = &result.members[0];
+    assert_eq!(member.name, "only_tests");
+    if let EntryKind::TestsOnly { test_paths } = &member.entry_kind {
+        assert_eq!(test_paths.len(), 1);
+        assert!(test_paths[0].ends_with("only_tests/tests/integration.rs"));
+    } else {
+        panic!("Esperava-se EntryKind::TestsOnly");
+    }
+}
+
+#[test]
+fn test_read_no_source_crate() {
+    let path = get_fixture_path("no-source-crate");
+    let result = read_workspace(&path).expect("Falha ao ler workspace");
+
+    assert_eq!(result.members.len(), 1);
+    let member = &result.members[0];
+    assert_eq!(member.name, "empty");
+    assert!(matches!(member.entry_kind, EntryKind::NoSourceTarget));
 }

@@ -1,6 +1,7 @@
 /*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/module_traverser.md
+ * @prompt 00_nucleo/prompts/module_traverser-revisao.md
  * @layer L3
  * @updated 2026-05-20
  */
@@ -59,9 +60,25 @@ fn get_path_attribute(attrs: &[syn::Attribute]) -> Option<String> {
     None
 }
 
+/// `true` apenas se o nome do ficheiro for `mod.rs` — única convenção
+/// sintáctica que herda entry-style por nome (ver ADR-0008).
+fn is_mod_rs(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|n| n.to_str())
+        .map(|n| n == "mod.rs")
+        .unwrap_or(false)
+}
+
 /// Resolve o caminho absoluto de um módulo externo com base no arquivo pai e nos atributos.
+///
+/// `parent_is_entry` indica se o `parent_file` é entry-style:
+/// `true` se for o ficheiro raiz da travessia (entry de target Cargo) ou
+/// um `mod.rs`. Quando `true`, `mod foo;` resolve para o mesmo
+/// directório do `parent_file`; quando `false`, resolve para
+/// `<stem>/foo.rs`.
 fn resolve_module_path(
     parent_file: &Path,
+    parent_is_entry: bool,
     module_ident: &syn::Ident,
     attrs: &[syn::Attribute],
 ) -> Result<(PathBuf, bool), TraverseError> {
@@ -83,13 +100,7 @@ fn resolve_module_path(
     }
 
     // 2. Sem #[path] (resolução padrão)
-    let file_name = parent_file
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("");
-    let is_mod_or_entry = file_name == "lib.rs" || file_name == "main.rs" || file_name == "mod.rs";
-
-    let search_dir = if is_mod_or_entry {
+    let search_dir = if parent_is_entry {
         parent_dir.to_path_buf()
     } else {
         let stem = parent_file
@@ -116,10 +127,14 @@ fn resolve_module_path(
 }
 
 /// Percorre um vetor de itens da AST do Rust para encontrar e processar declarações de módulos.
+///
+/// `parent_is_entry` flui para o resolvedor: indica se o
+/// `file_path` actual é entry-style (raiz da travessia ou `mod.rs`).
 fn traverse_items(
     tree: &mut ModuleTree,
     parent_node: NodeId,
     file_path: &Path,
+    parent_is_entry: bool,
     items: &[syn::Item],
     seen_children: &mut HashSet<(NodeId, String)>,
 ) -> Result<(), TraverseError> {
@@ -156,11 +171,23 @@ fn traverse_items(
                     false,
                 )?;
 
-                traverse_items(tree, child_id, file_path, inline_items, seen_children)?;
+                // Módulo inline herda o mesmo ficheiro e o mesmo estatuto entry-style.
+                traverse_items(
+                    tree,
+                    child_id,
+                    file_path,
+                    parent_is_entry,
+                    inline_items,
+                    seen_children,
+                )?;
             } else {
                 // Módulo externo: mod foo;
-                let (resolved_path, has_custom_path) =
-                    resolve_module_path(file_path, &item_mod.ident, &item_mod.attrs)?;
+                let (resolved_path, has_custom_path) = resolve_module_path(
+                    file_path,
+                    parent_is_entry,
+                    &item_mod.ident,
+                    &item_mod.attrs,
+                )?;
 
                 let child_id = tree.add_child(
                     parent_node,
@@ -170,7 +197,9 @@ fn traverse_items(
                     has_custom_path,
                 )?;
 
-                traverse_file(tree, child_id, &resolved_path, seen_children)?;
+                // Ao descer, só `mod.rs` herda entry-style por nome (ADR-0008).
+                let child_is_entry = is_mod_rs(&resolved_path);
+                traverse_file(tree, child_id, &resolved_path, child_is_entry, seen_children)?;
             }
         }
     }
@@ -178,10 +207,14 @@ fn traverse_items(
 }
 
 /// Lê, parseia e processa um arquivo de código Rust.
+///
+/// `is_entry` indica se este ficheiro é entry-style: raiz da
+/// travessia ou um `mod.rs`.
 fn traverse_file(
     tree: &mut ModuleTree,
     parent_node: NodeId,
     file_path: &Path,
+    is_entry: bool,
     seen_children: &mut HashSet<(NodeId, String)>,
 ) -> Result<(), TraverseError> {
     let content = fs::read_to_string(file_path).map_err(|e| TraverseError::FileReadFailed {
@@ -194,17 +227,27 @@ fn traverse_file(
         source: e,
     })?;
 
-    traverse_items(tree, parent_node, file_path, &ast.items, seen_children)?;
+    traverse_items(tree, parent_node, file_path, is_entry, &ast.items, seen_children)?;
     Ok(())
 }
 
 /// Realiza a travessia completa de um crate membro do workspace para gerar sua árvore de módulos lógica.
 pub fn traverse_crate(member: &WorkspaceMember) -> Result<ModuleTree, TraverseError> {
-    let mut tree = ModuleTree::new(member.name.clone(), member.entry_point.clone());
+    let entry_path = match member.entry_kind.primary_entry() {
+        Some(path) => path.to_path_buf(),
+        None => {
+            // NoSourceTarget ou similar: retorna árvore com raiz apontando para path vazio
+            let tree = ModuleTree::new(member.name.clone(), PathBuf::new());
+            return Ok(tree);
+        }
+    };
+
+    let mut tree = ModuleTree::new(member.name.clone(), entry_path.clone());
     let mut seen_children = HashSet::new();
 
     let root_id = tree.root();
-    traverse_file(&mut tree, root_id, &member.entry_point, &mut seen_children)?;
+    // O entry point do target é, por construção, entry-style (ADR-0008).
+    traverse_file(&mut tree, root_id, &entry_path, true, &mut seen_children)?;
 
     Ok(tree)
 }

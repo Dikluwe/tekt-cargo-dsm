@@ -1,6 +1,7 @@
 /*
  * Crystalline Lineage
  * @prompt 00_nucleo/prompts/cargo_metadata_reader.md
+ * @prompt 00_nucleo/prompts/cargo_metadata_reader-revisao.md
  * @layer L3
  * @updated 2026-05-20
  */
@@ -19,9 +20,6 @@ pub enum CargoMetadataError {
         #[from]
         source: cargo_metadata::Error,
     },
-
-    #[error("Workspace member '{name}' não tem nem lib nem binário")]
-    NoEntryPoint { name: String },
 
     #[error("Workspace não contém nenhum membro")]
     EmptyWorkspace,
@@ -63,33 +61,22 @@ pub fn read_workspace(workspace_path: &Path) -> Result<Workspace, CargoMetadataE
     for package_id in &metadata.workspace_members {
         let package = &metadata[package_id];
 
-        let (entry_kind, entry_point) = match classify_targets(package) {
-            Ok(res) => res,
-            Err(CargoMetadataError::NoEntryPoint { .. }) => {
-                // Silenciosamente ignora pacotes que não têm lib nem binário
-                // (como crates exclusivas de testes, benchmarks ou documentação)
-                continue;
-            }
-            Err(e) => return Err(e),
-        };
+        let entry_kind = classify_targets(package);
 
-        let manifest_dir =
-            package
-                .manifest_path
-                .parent()
-                .ok_or_else(|| CargoMetadataError::NoEntryPoint {
-                    name: package.name.clone(),
-                })?;
+        let manifest_dir = package
+            .manifest_path
+            .parent()
+            .map(|p| PathBuf::from(p.as_str()))
+            .unwrap_or_else(|| PathBuf::from(package.manifest_path.as_str()));
 
         members.push(WorkspaceMember {
             name: package.name.clone(),
-            crate_root: PathBuf::from(manifest_dir),
-            entry_point,
+            crate_root: manifest_dir,
             entry_kind,
         });
     }
 
-    let workspace_root = PathBuf::from(metadata.workspace_root);
+    let workspace_root = PathBuf::from(metadata.workspace_root.as_str());
 
     Ok(Workspace {
         root: workspace_root,
@@ -98,34 +85,52 @@ pub fn read_workspace(workspace_path: &Path) -> Result<Workspace, CargoMetadataE
 }
 
 /// Classifica os targets de um pacote Cargo para identificar o ponto de entrada principal e o tipo.
-fn classify_targets(
-    package: &cargo_metadata::Package,
-) -> Result<(EntryKind, PathBuf), CargoMetadataError> {
-    let mut lib_target = None;
-    let mut bin_target = None;
+fn classify_targets(package: &cargo_metadata::Package) -> EntryKind {
+    let mut lib_path = None;
+    let mut main_path = None;
+    let mut is_proc_macro = false;
+    let mut test_paths = Vec::new();
 
     for target in &package.targets {
+        // 1. Procurar lib
         if target.kind.iter().any(|k| {
-            k == "lib" || k == "rlib" || k == "staticlib" || k == "cdylib" || k == "proc-macro"
-        }) && lib_target.is_none()
+            k == "lib" || k == "rlib" || k == "dylib" || k == "staticlib" || k == "cdylib"
+        }) && lib_path.is_none()
         {
-            lib_target = Some(target);
-        } else if target.kind.iter().any(|k| k == "bin") && bin_target.is_none() {
-            bin_target = Some(target);
+            lib_path = Some(PathBuf::from(target.src_path.as_str()));
+        }
+
+        // 2. Procurar proc-macro
+        if target.kind.iter().any(|k| k == "proc-macro")
+            || target.crate_types.iter().any(|ct| ct == "proc-macro")
+        {
+            is_proc_macro = true;
+            if lib_path.is_none() {
+                lib_path = Some(PathBuf::from(target.src_path.as_str()));
+            }
+        }
+
+        // 3. Procurar bin
+        if target.kind.iter().any(|k| k == "bin") && main_path.is_none() {
+            main_path = Some(PathBuf::from(target.src_path.as_str()));
+        }
+
+        // 4. Procurar test
+        if target.kind.iter().any(|k| k == "test") {
+            test_paths.push(PathBuf::from(target.src_path.as_str()));
         }
     }
 
-    match (lib_target, bin_target) {
-        (Some(lib), Some(bin)) => Ok((
-            EntryKind::LibraryAndBinary {
-                main_path: PathBuf::from(&bin.src_path),
-            },
-            PathBuf::from(&lib.src_path),
-        )),
-        (Some(lib), None) => Ok((EntryKind::Library, PathBuf::from(&lib.src_path))),
-        (None, Some(bin)) => Ok((EntryKind::Binary, PathBuf::from(&bin.src_path))),
-        (None, None) => Err(CargoMetadataError::NoEntryPoint {
-            name: package.name.clone(),
-        }),
+    // 5. Decidir variante
+    match (is_proc_macro, lib_path, main_path) {
+        (true, Some(lib), _) => EntryKind::ProcMacro { lib_path: lib },
+        (_, Some(lib), Some(main)) => EntryKind::LibraryAndBinary {
+            lib_path: lib,
+            main_path: main,
+        },
+        (_, Some(lib), None) => EntryKind::Library { lib_path: lib },
+        (_, None, Some(main)) => EntryKind::Binary { main_path: main },
+        (_, None, None) if !test_paths.is_empty() => EntryKind::TestsOnly { test_paths },
+        (_, None, None) => EntryKind::NoSourceTarget,
     }
 }

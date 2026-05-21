@@ -15,8 +15,9 @@ fn create_member(fixture_name: &str) -> WorkspaceMember {
     WorkspaceMember {
         name: fixture_name.replace('-', "_"),
         crate_root: root.clone(),
-        entry_point: root.join("src/lib.rs"),
-        entry_kind: EntryKind::Library,
+        entry_kind: EntryKind::Library {
+            lib_path: root.join("src/lib.rs"),
+        },
     }
 }
 
@@ -111,8 +112,9 @@ fn test_imports_workspace() {
     let member_a = WorkspaceMember {
         name: "crate_a".to_string(),
         crate_root: get_fixture_path("imports-workspace/crate_a"),
-        entry_point: get_fixture_path("imports-workspace/crate_a/src/lib.rs"),
-        entry_kind: EntryKind::Library,
+        entry_kind: EntryKind::Library {
+            lib_path: get_fixture_path("imports-workspace/crate_a/src/lib.rs"),
+        },
     };
 
     let tree = traverse_crate(&member_a).unwrap();
