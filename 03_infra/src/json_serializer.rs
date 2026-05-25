@@ -220,14 +220,11 @@ pub(crate) fn to_dto(
         })
         .collect();
     cycle_items.sort_by(|a, b| {
-        b.nodes
-            .len()
-            .cmp(&a.nodes.len())
-            .then_with(|| {
-                let aa = a.nodes.first().map(|s| s.as_str()).unwrap_or("");
-                let bb = b.nodes.first().map(|s| s.as_str()).unwrap_or("");
-                aa.cmp(bb)
-            })
+        b.nodes.len().cmp(&a.nodes.len()).then_with(|| {
+            let aa = a.nodes.first().map(|s| s.as_str()).unwrap_or("");
+            let bb = b.nodes.first().map(|s| s.as_str()).unwrap_or("");
+            aa.cmp(bb)
+        })
     });
 
     let mut members: Vec<String> = workspace.members.iter().map(|m| m.name.clone()).collect();
@@ -290,18 +287,16 @@ pub(crate) fn from_dto(
     }
 
     for edge in &dto.graph.edges {
-        let from_id =
-            graph
-                .find_node(&edge.from)
-                .ok_or_else(|| JsonDeserializeError::DanglingEdgeReference {
-                    canonical_path: edge.from.clone(),
-                })?;
-        let to_id =
-            graph
-                .find_node(&edge.to)
-                .ok_or_else(|| JsonDeserializeError::DanglingEdgeReference {
-                    canonical_path: edge.to.clone(),
-                })?;
+        let from_id = graph.find_node(&edge.from).ok_or_else(|| {
+            JsonDeserializeError::DanglingEdgeReference {
+                canonical_path: edge.from.clone(),
+            }
+        })?;
+        let to_id = graph.find_node(&edge.to).ok_or_else(|| {
+            JsonDeserializeError::DanglingEdgeReference {
+                canonical_path: edge.to.clone(),
+            }
+        })?;
         graph.add_edge(
             from_id,
             to_id,
@@ -422,8 +417,7 @@ mod tests {
         cycles: &CycleReport,
         workspace: &Workspace,
     ) -> serde_json::Value {
-        let json =
-            to_canonical_json(graph, cycles, workspace, TOOL_VERSION, GENERATED_AT).unwrap();
+        let json = to_canonical_json(graph, cycles, workspace, TOOL_VERSION, GENERATED_AT).unwrap();
         serde_json::from_str(&json).unwrap()
     }
 
@@ -441,10 +435,7 @@ mod tests {
     #[test]
     fn test_serialize_one_internal_node() {
         let mut graph = DependencyGraph::new();
-        graph.add_internal_node_without_tree(
-            "my_crate::foo".to_string(),
-            "my_crate".to_string(),
-        );
+        graph.add_internal_node_without_tree("my_crate::foo".to_string(), "my_crate".to_string());
         let v = serialize_to_value(&graph, &empty_cycles(), &empty_workspace());
         let nodes = v["graph"]["nodes"].as_array().unwrap();
         assert_eq!(nodes.len(), 1);
@@ -552,9 +543,14 @@ mod tests {
         graph.add_internal_node_without_tree("z::z".into(), "z".into());
         graph.add_internal_node_without_tree("a::a".into(), "a".into());
         graph.add_internal_node_without_tree("m::m".into(), "m".into());
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let dto: GraphJsonDto = serde_json::from_str(&json).unwrap();
         let paths: Vec<&str> = dto
             .graph
@@ -575,9 +571,14 @@ mod tests {
         graph.add_edge(z, a, simple_edge("X", "Z::X")).unwrap();
         graph.add_edge(a, b, simple_edge("Y", "A::Y")).unwrap();
         graph.add_edge(a, b, simple_edge("X", "A::X")).unwrap();
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let dto: GraphJsonDto = serde_json::from_str(&json).unwrap();
         let keys: Vec<(String, String, String)> = dto
             .graph
@@ -626,9 +627,14 @@ mod tests {
     fn test_metadata_in_json() {
         let graph = DependencyGraph::new();
         let workspace = workspace_with_members(&["beta", "alpha"]);
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &workspace, TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &workspace,
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let v: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(v["schema_version"], "1.0.0");
         assert_eq!(v["tool"]["name"], "crystalline-dsm");
@@ -644,9 +650,14 @@ mod tests {
     #[test]
     fn test_roundtrip_empty() {
         let graph = DependencyGraph::new();
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let (g2, c2, _dto) = from_canonical_json(&json).unwrap();
         assert_eq!(g2.node_count(), 0);
         assert_eq!(g2.edge_count(), 0);
@@ -663,9 +674,14 @@ mod tests {
         graph.add_external_node("serde".into(), ExternalKind::Crate);
         graph.add_external_node("std::fmt".into(), ExternalKind::Stdlib);
 
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let (g2, _, _) = from_canonical_json(&json).unwrap();
 
         assert_eq!(g2.node_count(), 5);
@@ -701,9 +717,14 @@ mod tests {
         graph.add_edge(b, c, e_re.clone()).unwrap();
         graph.add_edge(b, c, e_normal.clone()).unwrap();
 
-        let json =
-            to_canonical_json(&graph, &empty_cycles(), &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &empty_cycles(),
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let (g2, _, _) = from_canonical_json(&json).unwrap();
 
         assert_eq!(g2.edge_count(), 5);
@@ -730,7 +751,9 @@ mod tests {
         ];
         for (f, t, e) in expected {
             assert!(
-                edges_g2.iter().any(|(f2, t2, e2)| f2 == &f && t2 == &t && e2 == &e),
+                edges_g2
+                    .iter()
+                    .any(|(f2, t2, e2)| f2 == &f && t2 == &t && e2 == &e),
                 "aresta {} → {} ({:?}) não encontrada",
                 f,
                 t,
@@ -759,9 +782,14 @@ mod tests {
             ],
         };
 
-        let json =
-            to_canonical_json(&graph, &cycles, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json(
+            &graph,
+            &cycles,
+            &empty_workspace(),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         let (_, c2, _) = from_canonical_json(&json).unwrap();
 
         assert_eq!(c2.cycle_count(), 2);
@@ -782,7 +810,11 @@ mod tests {
         // Cadeia + cross-edges
         for i in 0..49 {
             graph
-                .add_edge(ids[i], ids[i + 1], simple_edge(&format!("Item{}", i), &format!("p{}", i)))
+                .add_edge(
+                    ids[i],
+                    ids[i + 1],
+                    simple_edge(&format!("Item{}", i), &format!("p{}", i)),
+                )
                 .unwrap();
         }
         for i in 0..30 {
@@ -797,8 +829,12 @@ mod tests {
         // Externos com arestas
         let ext1 = graph.add_external_node("serde".into(), ExternalKind::Crate);
         let ext2 = graph.add_external_node("std::fmt".into(), ExternalKind::Stdlib);
-        graph.add_edge(ids[0], ext1, simple_edge("S", "serde::S")).unwrap();
-        graph.add_edge(ids[1], ext2, simple_edge("Debug", "std::fmt::Debug")).unwrap();
+        graph
+            .add_edge(ids[0], ext1, simple_edge("S", "serde::S"))
+            .unwrap();
+        graph
+            .add_edge(ids[1], ext2, simple_edge("Debug", "std::fmt::Debug"))
+            .unwrap();
 
         // Ciclo construído explicitamente
         graph
@@ -821,7 +857,10 @@ mod tests {
         assert_eq!(dto.workspace.members.len(), 5);
         // Round-trip JSON → JSON é estável
         let json2 = to_canonical_json(&g2, &c2, &ws, TOOL_VERSION, GENERATED_AT).unwrap();
-        assert_eq!(json, json2, "serialização deve ser determinística entre rodadas");
+        assert_eq!(
+            json, json2,
+            "serialização deve ser determinística entre rodadas"
+        );
     }
 
     // 19. Schema incompatível

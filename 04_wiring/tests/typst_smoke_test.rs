@@ -290,7 +290,11 @@ fn typst_smoke_test() {
     let t_html = t_html_start.elapsed();
 
     println!("\n--- Fase 7: Renderização HTML ---");
-    println!("Tamanho do HTML: {} bytes ({:.1} KB)", html.len(), html.len() as f64 / 1024.0);
+    println!(
+        "Tamanho do HTML: {} bytes ({:.1} KB)",
+        html.len(),
+        html.len() as f64 / 1024.0
+    );
     println!("Tempo: {:?}", t_html);
 
     // Grava o HTML num tmp para inspecção visual manual.
@@ -303,7 +307,10 @@ fn typst_smoke_test() {
 
     // Sanidade do HTML produzido
     assert!(html.contains("<canvas"), "HTML não tem canvas");
-    assert!(html.contains("popover=\"manual\""), "HTML não usa Popover API");
+    assert!(
+        html.contains("popover=\"manual\""),
+        "HTML não usa Popover API"
+    );
     assert!(
         html.len() > 100_000 && html.len() < 5_000_000,
         "HTML do Typst fora do range esperado (100KB-5MB): {} bytes",
@@ -317,8 +324,7 @@ fn typst_smoke_test() {
     );
 
     // Resumo total.
-    let t_total =
-        t_workspace + t_traverse + t_imports + t_graph + t_cycles + t_partition + t_html;
+    let t_total = t_workspace + t_traverse + t_imports + t_graph + t_cycles + t_partition + t_html;
     println!("\n=== RESUMO ===");
     println!("Tempo total do pipeline: {:?}", t_total);
     println!(

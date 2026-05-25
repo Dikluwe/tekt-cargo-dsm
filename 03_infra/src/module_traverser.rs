@@ -199,7 +199,13 @@ fn traverse_items(
 
                 // Ao descer, só `mod.rs` herda entry-style por nome (ADR-0008).
                 let child_is_entry = is_mod_rs(&resolved_path);
-                traverse_file(tree, child_id, &resolved_path, child_is_entry, seen_children)?;
+                traverse_file(
+                    tree,
+                    child_id,
+                    &resolved_path,
+                    child_is_entry,
+                    seen_children,
+                )?;
             }
         }
     }
@@ -227,7 +233,14 @@ fn traverse_file(
         source: e,
     })?;
 
-    traverse_items(tree, parent_node, file_path, is_entry, &ast.items, seen_children)?;
+    traverse_items(
+        tree,
+        parent_node,
+        file_path,
+        is_entry,
+        &ast.items,
+        seen_children,
+    )?;
     Ok(())
 }
 
