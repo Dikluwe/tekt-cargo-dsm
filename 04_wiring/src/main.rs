@@ -194,6 +194,8 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
             &workspace,
             tool_version,
             &generated_at,
+            None,
+            None,
         )?;
         std::fs::write(&p, html).map_err(|e| PipelineError::WriteFailed {
             path: p.clone(),

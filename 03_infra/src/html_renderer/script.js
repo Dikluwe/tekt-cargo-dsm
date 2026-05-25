@@ -71,6 +71,27 @@
     pairToEdge.set(pairKey(e.from, e.to), e);
   }
 
+  // --- Índices de Violações e SARIF ---
+  const violationsSet = new Set();
+  const violationsMap = new Map();
+  if (GRAPH_DATA.layer_violations) {
+    for (const v of GRAPH_DATA.layer_violations) {
+      const key = pairKey(v.from, v.to);
+      violationsSet.add(key);
+      violationsMap.set(key, v);
+    }
+  }
+
+  const sarifFindingsMap = new Map();
+  if (GRAPH_DATA.sarif_findings) {
+    for (const f of GRAPH_DATA.sarif_findings) {
+      if (!sarifFindingsMap.has(f.pos)) {
+        sarifFindingsMap.set(f.pos, []);
+      }
+      sarifFindingsMap.get(f.pos).push(f);
+    }
+  }
+
   // --- Cache de cores ---
   // getComputedStyle().getPropertyValue() em custom properties retorna a
   // STRING LITERAL declarada (ex.: "light-dark(#fff, #1e293b)"), não o
@@ -97,6 +118,8 @@
       diagonal: resolveVar("--diagonal"),
       borderScc: resolveVar("--border-scc"),
       divider: resolveVar("--divider"),
+      cellViolation: resolveVar("--cell-violation"),
+      markerSarif: resolveVar("--marker-sarif"),
     };
   }
   refreshColors();
@@ -136,7 +159,11 @@
     // Arestas
     for (const e of GRAPH_DATA.edges) {
       if (!shouldDrawIndex(e.from) || !shouldDrawIndex(e.to)) continue;
-      ctx.fillStyle = edgeColor(e.count);
+      if (violationsSet.has(pairKey(e.from, e.to))) {
+        ctx.fillStyle = COLORS.cellViolation;
+      } else {
+        ctx.fillStyle = edgeColor(e.count);
+      }
       ctx.fillRect(e.to * cellSize, e.from * cellSize, cellSize, cellSize);
     }
 
@@ -169,6 +196,16 @@
       ctx.lineTo(totalPx, pos);
       ctx.stroke();
     }
+
+    // Marcadores SARIF nas margens
+    ctx.fillStyle = COLORS.markerSarif;
+    for (const [pos, findings] of sarifFindingsMap.entries()) {
+      if (!shouldDrawIndex(pos)) continue;
+      // Marcador na linha (margem esquerda, ou seja, x = 0, y = pos * cellSize)
+      ctx.fillRect(0, pos * cellSize, Math.max(2, cellSize / 2), cellSize);
+      // Marcador na coluna (margem superior, ou seja, y = 0, x = pos * cellSize)
+      ctx.fillRect(pos * cellSize, 0, cellSize, Math.max(2, cellSize / 2));
+    }
   }
   draw();
 
@@ -200,7 +237,6 @@
     }
 
     setHover(row, col);
-
     const edge = pairToEdge.get(pairKey(row, col));
     let lines = [];
     lines.push("Row: " + GRAPH_DATA.labels[row]);
@@ -217,6 +253,30 @@
     } else {
       lines.push("(no edge)");
     }
+
+    const vKey = pairKey(row, col);
+    const violation = violationsMap.get(vKey);
+    if (violation) {
+      lines.push("⚠ Layer violation: " + violation.from_layer + " → " + violation.to_layer + " (forbidden)");
+    }
+
+    const rowFindings = sarifFindingsMap.get(row);
+    if (rowFindings && rowFindings.length > 0) {
+      lines.push("\nLint findings on " + GRAPH_DATA.labels[row] + ":");
+      for (const f of rowFindings) {
+        const lineStr = f.line ? " (line " + f.line + ")" : "";
+        lines.push("  • [" + f.rule_id + "] " + f.message + lineStr);
+      }
+    }
+    const colFindings = sarifFindingsMap.get(col);
+    if (col && col !== row && colFindings && colFindings.length > 0) {
+      lines.push("\nLint findings on " + GRAPH_DATA.labels[col] + ":");
+      for (const f of colFindings) {
+        const lineStr = f.line ? " (line " + f.line + ")" : "";
+        lines.push("  • [" + f.rule_id + "] " + f.message + lineStr);
+      }
+    }
+
     tooltip.textContent = lines.join("\n");
     tooltip.style.whiteSpace = "pre-line";
 

@@ -285,6 +285,8 @@ fn typst_smoke_test() {
         &workspace,
         env!("CARGO_PKG_VERSION"),
         "2026-05-20T22:30:00Z",
+        None,
+        None,
     )
     .expect("render_dsm_html falhou contra Typst real");
     let t_html = t_html_start.elapsed();
