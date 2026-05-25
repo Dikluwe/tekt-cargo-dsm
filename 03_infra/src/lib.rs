@@ -6,8 +6,10 @@
  */
 
 pub mod cargo_metadata_reader;
+pub mod crystalline_config_reader;
 pub mod html_renderer;
 pub mod import_extractor;
 pub mod json_serializer;
 pub mod module_traverser;
+pub mod sarif_reader;
 pub mod trees_serializer;
