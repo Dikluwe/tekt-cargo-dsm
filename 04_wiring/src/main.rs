@@ -12,11 +12,14 @@ use crystalline_dsm_core::entities::import_edge::ImportEdge;
 use crystalline_dsm_core::entities::module_tree::ModuleTree;
 use crystalline_dsm_core::rules::cycle_detector::detect_cycles;
 use crystalline_dsm_core::rules::dsm_partitioner::partition_for_dsm;
+use crystalline_dsm_core::rules::layer_violation_detector::detect_layer_violations;
 use crystalline_dsm_infra::cargo_metadata_reader::{CargoMetadataError, read_workspace};
+use crystalline_dsm_infra::crystalline_config_reader::read_layer_config;
 use crystalline_dsm_infra::html_renderer::{HtmlRenderError, render_dsm_html};
 use crystalline_dsm_infra::import_extractor::extract_imports;
 use crystalline_dsm_infra::json_serializer::{JsonSerializeError, to_canonical_json};
 use crystalline_dsm_infra::module_traverser::traverse_crate;
+use crystalline_dsm_infra::sarif_reader::read_sarif;
 use crystalline_dsm_infra::trees_serializer::{TreesSerializeError, to_canonical_json_trees};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -43,6 +46,14 @@ struct Cli {
     /// Se presente, grava tambem dsm.html no mesmo diretorio que --output
     #[arg(long)]
     emit_html: bool,
+
+    /// Caminho opcional para o crystalline.toml (configuração de camadas)
+    #[arg(long)]
+    config: Option<PathBuf>,
+
+    /// Caminho opcional para o relatório SARIF
+    #[arg(long)]
+    sarif: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -69,6 +80,12 @@ pub enum PipelineError {
 
     #[error("Falha ao renderizar dsm.html: {0}")]
     HtmlError(#[from] HtmlRenderError),
+
+    #[error("Falha ao ler configuração de camadas: {0}")]
+    ConfigError(#[from] crystalline_dsm_infra::crystalline_config_reader::ConfigReadError),
+
+    #[error("Falha ao ler relatório SARIF: {0}")]
+    SarifError(#[from] crystalline_dsm_infra::sarif_reader::SarifReadError),
 
     #[error("Falha ao gravar ficheiro {path}: {source}")]
     WriteFailed {
@@ -151,6 +168,34 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
     let graph = build_graph(&workspace, &trees, &edges_per_crate);
     let cycles = detect_cycles(&graph);
 
+    // Ler configuração de camadas se fornecida explicitamente ou se encontrada no root do workspace
+    let config_path = if let Some(ref path) = cli.config {
+        Some(path.clone())
+    } else {
+        let default_config = cli.workspace_path.join("crystalline.toml");
+        if default_config.exists() {
+            Some(default_config)
+        } else {
+            None
+        }
+    };
+
+    let layer_violations = if let Some(ref path) = config_path {
+        let layer_config = read_layer_config(path, &workspace)?;
+        let violations = detect_layer_violations(&graph, &layer_config);
+        Some(violations)
+    } else {
+        None
+    };
+
+    // Ler findings do SARIF se fornecido
+    let sarif_findings = if let Some(ref path) = cli.sarif {
+        let findings = read_sarif(path)?;
+        Some(findings)
+    } else {
+        None
+    };
+
     // Garantir directorios pai
     if let Some(parent) = cli
         .output
@@ -194,8 +239,8 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
             &workspace,
             tool_version,
             &generated_at,
-            None,
-            None,
+            layer_violations.as_deref(),
+            sarif_findings.as_deref(),
         )?;
         std::fs::write(&p, html).map_err(|e| PipelineError::WriteFailed {
             path: p.clone(),
@@ -303,5 +348,91 @@ mod tests {
         assert_eq!(b[13], b':');
         assert_eq!(b[16], b':');
         assert_eq!(b[19], b'Z');
+    }
+
+    #[test]
+    fn test_run_pipeline_with_config_and_sarif() {
+        let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let workspace_path = manifest
+            .parent()
+            .unwrap()
+            .join("tests/fixtures/imports-simple");
+        if !workspace_path.exists() {
+            return;
+        }
+
+        let temp_dir = std::env::temp_dir().join(format!(
+            "test_run_pipeline_{}",
+            chrono::Utc::now().timestamp_micros()
+        ));
+        std::fs::create_dir_all(&temp_dir).unwrap();
+
+        let config_path = temp_dir.join("crystalline.toml");
+        std::fs::write(
+            &config_path,
+            r#"[layers]
+L1 = "imports-simple"
+"#,
+        )
+        .unwrap();
+
+        let sarif_path = temp_dir.join("sarif.json");
+        std::fs::write(
+            &sarif_path,
+            r#"{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "crystalline-lint"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "V9",
+          "level": "error",
+          "message": {
+            "text": "Violation detected"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "imports-simple/src/lib.rs"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}"#,
+        )
+        .unwrap();
+
+        let output_json = temp_dir.join("graph.json");
+
+        let cli = Cli {
+            workspace_path,
+            output: output_json.clone(),
+            emit_trees: false,
+            emit_html: true,
+            config: Some(config_path),
+            sarif: Some(sarif_path),
+        };
+
+        let report = run_pipeline(&cli).unwrap();
+        assert!(report.html_path.is_some());
+
+        let html = std::fs::read_to_string(report.html_path.unwrap()).unwrap();
+        assert!(html.contains("Crystalline DSM"));
+        assert!(html.contains("1 lint finding"));
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }
