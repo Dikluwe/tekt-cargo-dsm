@@ -60,10 +60,17 @@ fn test_cli_imports_simple_sem_emit_trees() {
         .arg(&output_path)
         .output()
         .expect("Falha ao rodar a CLI");
-    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+    assert!(
+        status.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status.stderr)
+    );
 
     assert!(output_path.exists(), "graph.json deveria existir");
-    assert!(!trees_path.exists(), "trees.json NAO deveria existir sem --emit-trees");
+    assert!(
+        !trees_path.exists(),
+        "trees.json NAO deveria existir sem --emit-trees"
+    );
 
     // Verificar conteudo JSON parseavel
     let content = fs::read_to_string(&output_path).unwrap();
@@ -88,10 +95,17 @@ fn test_cli_imports_simple_com_emit_html() {
         .arg("--emit-html")
         .output()
         .expect("Falha ao rodar a CLI");
-    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+    assert!(
+        status.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status.stderr)
+    );
 
     assert!(output_path.exists());
-    assert!(html_path.exists(), "dsm.html deveria existir com --emit-html");
+    assert!(
+        html_path.exists(),
+        "dsm.html deveria existir com --emit-html"
+    );
 
     let html = fs::read_to_string(&html_path).unwrap();
     assert!(html.contains("<!DOCTYPE html>"));
@@ -117,10 +131,17 @@ fn test_cli_imports_workspace_com_emit_trees() {
         .arg("--emit-trees")
         .output()
         .expect("Falha ao rodar a CLI");
-    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+    assert!(
+        status.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status.stderr)
+    );
 
     assert!(output_path.exists());
-    assert!(trees_path.exists(), "trees.json deveria existir com --emit-trees");
+    assert!(
+        trees_path.exists(),
+        "trees.json deveria existir com --emit-trees"
+    );
 
     let trees_v: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(&trees_path).unwrap()).unwrap();
@@ -150,7 +171,11 @@ fn test_cli_output_path_absoluto_em_subdiretorio_inexistente() {
         .arg(&output_path)
         .output()
         .expect("Falha ao rodar a CLI");
-    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+    assert!(
+        status.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status.stderr)
+    );
     assert!(output_path.exists());
 
     fs::remove_dir_all(&dir).ok();
@@ -163,7 +188,11 @@ fn test_cli_output_path_absoluto_em_subdiretorio_inexistente() {
 fn test_cli_typst_real_com_emit_trees() {
     let typst_path = std::env::var("TYPST_PATH").expect("TYPST_PATH nao definida");
     let typst_path = Path::new(&typst_path);
-    assert!(typst_path.exists(), "TYPST_PATH inexistente: {:?}", typst_path);
+    assert!(
+        typst_path.exists(),
+        "TYPST_PATH inexistente: {:?}",
+        typst_path
+    );
 
     let dir = tmpdir("typst");
     let output_path = dir.join("graph.json");
@@ -176,7 +205,11 @@ fn test_cli_typst_real_com_emit_trees() {
         .arg("--emit-trees")
         .output()
         .expect("Falha ao rodar a CLI");
-    assert!(status.status.success(), "stderr: {}", String::from_utf8_lossy(&status.stderr));
+    assert!(
+        status.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status.stderr)
+    );
 
     let graph: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(&output_path).unwrap()).unwrap();
@@ -185,6 +218,96 @@ fn test_cli_typst_real_com_emit_trees() {
 
     assert_eq!(graph["workspace"]["members"].as_array().unwrap().len(), 21);
     assert_eq!(trees["trees"].as_array().unwrap().len(), 21);
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_imports_simple_sem_emit_html() {
+    let dir = tmpdir("simple-sem-html");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("imports-simple"))
+        .arg("--output")
+        .arg(&output_path)
+        .output()
+        .expect("Falha ao rodar a CLI");
+    assert!(status.status.success());
+
+    assert!(output_path.exists());
+    assert!(
+        !html_path.exists(),
+        "dsm.html nao deveria existir sem --emit-html"
+    );
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_imports_simple_com_html_e_trees() {
+    let dir = tmpdir("simple-html-trees");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+    let trees_path = dir.join("trees.json");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("imports-simple"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--emit-html")
+        .arg("--emit-trees")
+        .output()
+        .expect("Falha ao rodar a CLI");
+    assert!(status.status.success());
+
+    assert!(output_path.exists());
+    assert!(html_path.exists());
+    assert!(trees_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("graph.json"));
+    assert!(stdout.contains("trees.json"));
+    assert!(stdout.contains("HTML gravado"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+#[ignore = "requer TYPST_PATH apontando para lab/typst-original/"]
+fn test_cli_typst_real_com_emit_html() {
+    let typst_path = std::env::var("TYPST_PATH").expect("TYPST_PATH nao definida");
+    let typst_path = Path::new(&typst_path);
+    assert!(
+        typst_path.exists(),
+        "TYPST_PATH inexistente: {:?}",
+        typst_path
+    );
+
+    let dir = tmpdir("typst-html");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+    let trees_path = dir.join("trees.json");
+
+    let status = Command::new(bin_path())
+        .arg(typst_path)
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--emit-html")
+        .arg("--emit-trees")
+        .output()
+        .expect("Falha ao rodar a CLI");
+    assert!(status.status.success());
+
+    assert!(output_path.exists());
+    assert!(html_path.exists());
+    assert!(trees_path.exists());
+
+    let metadata = fs::metadata(&html_path).unwrap();
+    let size = metadata.len();
+    assert!(size >= 100 * 1024, "HTML muito pequeno: {} bytes", size);
+    assert!(size <= 5 * 1024 * 1024, "HTML muito grande: {} bytes", size);
 
     fs::remove_dir_all(&dir).ok();
 }

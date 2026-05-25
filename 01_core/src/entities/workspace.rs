@@ -152,16 +152,12 @@ impl Workspace {
 
     /// Itera apenas membros do tipo TestsOnly.
     pub fn tests_only_members(&self) -> impl Iterator<Item = &WorkspaceMember> {
-        self.members
-            .iter()
-            .filter(|m| m.entry_kind.is_tests_only())
+        self.members.iter().filter(|m| m.entry_kind.is_tests_only())
     }
 
     /// Itera apenas membros do tipo ProcMacro.
     pub fn proc_macro_members(&self) -> impl Iterator<Item = &WorkspaceMember> {
-        self.members
-            .iter()
-            .filter(|m| m.entry_kind.is_proc_macro())
+        self.members.iter().filter(|m| m.entry_kind.is_proc_macro())
     }
 
     /// Itera apenas membros NoSourceTarget.

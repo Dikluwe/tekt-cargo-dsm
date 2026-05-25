@@ -124,8 +124,7 @@ pub fn partition_for_dsm(graph: &DependencyGraph) -> PartitionedOrder {
 
     if !internals.is_empty() {
         // Subgrafo apenas com nós internos e arestas entre eles
-        let mut sub =
-            petgraph::Graph::<GraphNodeId, (), petgraph::Directed>::new();
+        let mut sub = petgraph::Graph::<GraphNodeId, (), petgraph::Directed>::new();
         let mut to_sub: HashMap<GraphNodeId, petgraph::graph::NodeIndex> =
             HashMap::with_capacity(internals.len());
         let mut from_sub: Vec<GraphNodeId> = Vec::with_capacity(internals.len());
@@ -202,9 +201,7 @@ pub fn partition_for_dsm(graph: &DependencyGraph) -> PartitionedOrder {
             adj.sort_unstable();
         }
 
-        let scc_key = |i: usize| -> &str {
-            graph.node(sccs_as_ids[i][0]).canonical_path.as_str()
-        };
+        let scc_key = |i: usize| -> &str { graph.node(sccs_as_ids[i][0]).canonical_path.as_str() };
 
         let mut heap: BinaryHeap<Reverse<(&str, usize)>> = BinaryHeap::new();
         for (i, &deg) in in_degree.iter().enumerate() {
@@ -235,8 +232,8 @@ pub fn partition_for_dsm(graph: &DependencyGraph) -> PartitionedOrder {
             }
             let end = order.len();
 
-            let is_cyclic = scc_nodes.len() > 1
-                || (scc_nodes.len() == 1 && has_self_loop(graph, scc_nodes[0]));
+            let is_cyclic =
+                scc_nodes.len() > 1 || (scc_nodes.len() == 1 && has_self_loop(graph, scc_nodes[0]));
 
             let new_idx = sccs.len();
             sccs.push(SccBlock {
@@ -447,10 +444,7 @@ mod tests {
         g.add_edge(a, std_io, placeholder_edge("x")).unwrap();
         g.add_edge(a, serde_de, placeholder_edge("x")).unwrap();
         let p = partition_for_dsm(&g);
-        assert_eq!(
-            paths(&p, &g),
-            vec!["A", "serde::de", "std::io", "tokio"]
-        );
+        assert_eq!(paths(&p, &g), vec!["A", "serde::de", "std::io", "tokio"]);
         assert_eq!(p.internal_boundary, 1);
     }
 

@@ -93,9 +93,11 @@ fn classify_targets(package: &cargo_metadata::Package) -> EntryKind {
 
     for target in &package.targets {
         // 1. Procurar lib
-        if target.kind.iter().any(|k| {
-            k == "lib" || k == "rlib" || k == "dylib" || k == "staticlib" || k == "cdylib"
-        }) && lib_path.is_none()
+        if target
+            .kind
+            .iter()
+            .any(|k| k == "lib" || k == "rlib" || k == "dylib" || k == "staticlib" || k == "cdylib")
+            && lib_path.is_none()
         {
             lib_path = Some(PathBuf::from(target.src_path.as_str()));
         }

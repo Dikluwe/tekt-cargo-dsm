@@ -15,7 +15,6 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-
 const STYLE_CSS: &str = include_str!("html_renderer/style.css");
 const SCRIPT_JS: &str = include_str!("html_renderer/script.js");
 
@@ -50,9 +49,8 @@ pub fn render_dsm_html(
     let edge_count = graph.edge_count();
     let cycle_count = cycles.cycle_count();
 
-    let mut html = String::with_capacity(
-        STYLE_CSS.len() + SCRIPT_JS.len() + data_js_literal.len() + 4096,
-    );
+    let mut html =
+        String::with_capacity(STYLE_CSS.len() + SCRIPT_JS.len() + data_js_literal.len() + 4096);
     html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
     html.push_str("<meta charset=\"utf-8\">\n");
     html.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
@@ -320,7 +318,10 @@ mod tests {
         assert!(html.contains("<html lang=\"en\">"));
         assert!(html.contains("<canvas"));
         assert!(html.contains("popover=\"manual\""));
-        assert!(html.contains("\"a\""), "label deve aparecer nos dados embutidos");
+        assert!(
+            html.contains("\"a\""),
+            "label deve aparecer nos dados embutidos"
+        );
     }
 
     // 2. HTML contém o workspace_name no <title> e <h1>
@@ -330,7 +331,8 @@ mod tests {
         g.add_internal_node_with_tree("x".into(), "x".into(), dummy_node_id());
         let p = partition_for_dsm(&g);
         let ws = make_workspace("typst-original");
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &ws, TOOL_VERSION, GENERATED_AT).unwrap();
+        let html =
+            render_dsm_html(&g, &p, &empty_cycles(), &ws, TOOL_VERSION, GENERATED_AT).unwrap();
         assert!(html.contains("<title>Crystalline DSM — typst-original</title>"));
         assert!(html.contains("<h1>typst-original</h1>"));
     }
@@ -343,7 +345,15 @@ mod tests {
             g.add_internal_node_with_tree(n.into(), n.into(), dummy_node_id());
         }
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         // Os labels saem no JSON embutido: "labels":["a","b","c"]
         assert!(html.contains("\"labels\":[\"a\",\"b\",\"c\"]"));
     }
@@ -358,7 +368,15 @@ mod tests {
         g.add_edge(a, x, placeholder_edge("x")).unwrap();
         g.add_edge(b, x, placeholder_edge("x")).unwrap();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(
             html.contains("\"internal_boundary\":2"),
             "esperava \"internal_boundary\":2; HTML não contém"
@@ -377,10 +395,22 @@ mod tests {
         g.add_edge(a, b, placeholder_edge("Z")).unwrap();
         g.add_edge(b, a, placeholder_edge("W")).unwrap();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         // Conta "count": no JSON. Deveria haver 2 (um por par).
         let occurrences = html.matches("\"count\":").count();
-        assert_eq!(occurrences, 2, "esperava 2 entradas agregadas, encontrou {}", occurrences);
+        assert_eq!(
+            occurrences, 2,
+            "esperava 2 entradas agregadas, encontrou {}",
+            occurrences
+        );
         assert!(html.contains("\"count\":3"));
         assert!(html.contains("\"count\":1"));
     }
@@ -390,7 +420,15 @@ mod tests {
     fn test_empty_graph_renders() {
         let g = DependencyGraph::new();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("empty"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("empty"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(html.contains("<canvas"));
         assert!(html.contains("\"labels\":[]"));
         assert!(html.contains("\"internal_boundary\":0"));
@@ -402,7 +440,15 @@ mod tests {
         let mut g = DependencyGraph::new();
         g.add_external_node("serde".into(), ExternalKind::Crate);
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(html.contains("\"internal_boundary\":0"));
         assert!(html.contains("\"kinds\":[\"external_crate\"]"));
     }
@@ -412,7 +458,15 @@ mod tests {
     fn test_css_uses_light_dark_and_custom_props() {
         let g = DependencyGraph::new();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(html.contains("--cell-size"));
         assert!(html.contains("--bg-page"));
         assert!(html.contains("light-dark("));
@@ -423,7 +477,15 @@ mod tests {
     fn test_tooltip_uses_popover_api() {
         let g = DependencyGraph::new();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(html.contains("popover=\"manual\""));
         assert!(html.contains("showPopover"));
     }
@@ -433,7 +495,15 @@ mod tests {
     fn test_css_uses_scope() {
         let g = DependencyGraph::new();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(html.contains("@scope (.dsm-root)"));
     }
 
@@ -443,7 +513,15 @@ mod tests {
     fn test_vars_not_in_root_selector() {
         let g = DependencyGraph::new();
         let p = partition_for_dsm(&g);
-        let html = render_dsm_html(&g, &p, &empty_cycles(), &make_workspace("w"), TOOL_VERSION, GENERATED_AT).unwrap();
+        let html = render_dsm_html(
+            &g,
+            &p,
+            &empty_cycles(),
+            &make_workspace("w"),
+            TOOL_VERSION,
+            GENERATED_AT,
+        )
+        .unwrap();
         assert!(
             !html.contains(":root {"),
             "variáveis devem viver em .dsm-root (via :scope), não em :root"
@@ -458,7 +536,10 @@ mod tests {
         use crate::module_traverser::traverse_crate;
 
         let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let root = manifest.parent().unwrap().join("tests/fixtures/imports-simple");
+        let root = manifest
+            .parent()
+            .unwrap()
+            .join("tests/fixtures/imports-simple");
         if !root.exists() {
             // Fixture pode estar ausente em alguns checkouts; skip silencioso.
             return;
@@ -500,13 +581,17 @@ mod tests {
                         let to_id = graph.find_node(&to_path).unwrap_or_else(|| {
                             graph.add_external_node(to_path, ExternalKind::Crate)
                         });
-                        all_edges_for_graph.push((from_id, to_id, GraphEdge {
-                            imported_item: e.imported_item.clone(),
-                            alias: e.alias.clone(),
-                            is_reexport: e.is_reexport,
-                            is_glob: e.is_glob,
-                            raw_use_path: e.raw_use_path.clone(),
-                        }));
+                        all_edges_for_graph.push((
+                            from_id,
+                            to_id,
+                            GraphEdge {
+                                imported_item: e.imported_item.clone(),
+                                alias: e.alias.clone(),
+                                is_reexport: e.is_reexport,
+                                is_glob: e.is_glob,
+                                raw_use_path: e.raw_use_path.clone(),
+                            },
+                        ));
                     }
                 }
             }
@@ -516,11 +601,16 @@ mod tests {
         }
         let cycles = detect_cycles(&graph);
         let partition = partition_for_dsm(&graph);
-        let html = render_dsm_html(&graph, &partition, &cycles, &ws, TOOL_VERSION, GENERATED_AT).unwrap();
+        let html =
+            render_dsm_html(&graph, &partition, &cycles, &ws, TOOL_VERSION, GENERATED_AT).unwrap();
 
         assert!(html.contains("<h1>imports-simple</h1>"));
         assert!(html.contains("type=\"module\""));
         assert!(html.contains("<canvas"));
-        assert!(html.len() > 8_000, "HTML pequeno demais: {} bytes", html.len());
+        assert!(
+            html.len() > 8_000,
+            "HTML pequeno demais: {} bytes",
+            html.len()
+        );
     }
 }

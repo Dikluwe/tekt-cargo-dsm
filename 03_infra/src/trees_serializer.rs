@@ -179,11 +179,11 @@ pub(crate) fn from_dto_trees(
                     parent_canonical_path: "<None em nó não-raiz>".to_string(),
                 }
             })?;
-            let parent_id = tree.find_by_canonical_path(parent_canonical).ok_or_else(|| {
-                TreesDeserializeError::DanglingParentReference {
+            let parent_id = tree
+                .find_by_canonical_path(parent_canonical)
+                .ok_or_else(|| TreesDeserializeError::DanglingParentReference {
                     parent_canonical_path: parent_canonical.clone(),
-                }
-            })?;
+                })?;
             let module_name = node_dto
                 .module_path
                 .last()
@@ -275,19 +275,27 @@ mod tests {
         let mut t = ModuleTree::new(name.to_string(), PathBuf::from("src/lib.rs"));
         let root = t.root();
         let a = t
-            .add_child(root, "a".to_string(), PathBuf::from("src/a.rs"), false, false)
+            .add_child(
+                root,
+                "a".to_string(),
+                PathBuf::from("src/a.rs"),
+                false,
+                false,
+            )
             .unwrap();
-        t.add_child(a, "b".to_string(), PathBuf::from("src/a/b.rs"), false, false)
-            .unwrap();
+        t.add_child(
+            a,
+            "b".to_string(),
+            PathBuf::from("src/a/b.rs"),
+            false,
+            false,
+        )
+        .unwrap();
         t
     }
 
-    fn serialize(
-        trees: &HashMap<String, ModuleTree>,
-        ws: &Workspace,
-    ) -> serde_json::Value {
-        let json =
-            to_canonical_json_trees(trees, ws, TOOL_VERSION, GENERATED_AT).unwrap();
+    fn serialize(trees: &HashMap<String, ModuleTree>, ws: &Workspace) -> serde_json::Value {
+        let json = to_canonical_json_trees(trees, ws, TOOL_VERSION, GENERATED_AT).unwrap();
         serde_json::from_str(&json).unwrap()
     }
 
@@ -349,7 +357,10 @@ mod tests {
         );
         let v = serialize(&trees, &empty_workspace());
         let arr = v["trees"].as_array().unwrap();
-        let names: Vec<&str> = arr.iter().map(|t| t["crate_name"].as_str().unwrap()).collect();
+        let names: Vec<&str> = arr
+            .iter()
+            .map(|t| t["crate_name"].as_str().unwrap())
+            .collect();
         assert_eq!(names, vec!["alpha", "mu", "zeta"]);
     }
 
@@ -358,8 +369,14 @@ mod tests {
     fn test_serialize_inline_module() {
         let mut t = ModuleTree::new("c".to_string(), PathBuf::from("src/lib.rs"));
         let root = t.root();
-        t.add_child(root, "inline".to_string(), PathBuf::from("src/lib.rs"), true, false)
-            .unwrap();
+        t.add_child(
+            root,
+            "inline".to_string(),
+            PathBuf::from("src/lib.rs"),
+            true,
+            false,
+        )
+        .unwrap();
         let mut trees = HashMap::new();
         trees.insert("c".to_string(), t);
         let v = serialize(&trees, &empty_workspace());
@@ -373,8 +390,14 @@ mod tests {
     fn test_serialize_custom_path_module() {
         let mut t = ModuleTree::new("c".to_string(), PathBuf::from("src/lib.rs"));
         let root = t.root();
-        t.add_child(root, "x".to_string(), PathBuf::from("src/custom/special.rs"), false, true)
-            .unwrap();
+        t.add_child(
+            root,
+            "x".to_string(),
+            PathBuf::from("src/custom/special.rs"),
+            false,
+            true,
+        )
+        .unwrap();
         let mut trees = HashMap::new();
         trees.insert("c".to_string(), t);
         let v = serialize(&trees, &empty_workspace());
@@ -388,8 +411,7 @@ mod tests {
     fn test_metadata_in_json() {
         let trees = HashMap::new();
         let ws = workspace_with_members(&["beta", "alpha"]);
-        let json =
-            to_canonical_json_trees(&trees, &ws, TOOL_VERSION, GENERATED_AT).unwrap();
+        let json = to_canonical_json_trees(&trees, &ws, TOOL_VERSION, GENERATED_AT).unwrap();
         let v: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(v["schema_version"], "1.0.0");
         assert_eq!(v["tool"]["name"], "crystalline-dsm");
@@ -404,9 +426,8 @@ mod tests {
     #[test]
     fn test_roundtrip_empty() {
         let trees: HashMap<String, ModuleTree> = HashMap::new();
-        let json =
-            to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
+            .unwrap();
         let (back, _dto) = from_canonical_json_trees(&json).unwrap();
         assert!(back.is_empty());
     }
@@ -419,9 +440,8 @@ mod tests {
             "x".to_string(),
             ModuleTree::new("x".to_string(), PathBuf::from("src/lib.rs")),
         );
-        let json =
-            to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
+            .unwrap();
         let (back, _) = from_canonical_json_trees(&json).unwrap();
         let tree = back.get("x").expect("crate x deveria existir");
         assert_eq!(tree.node_count(), 1);
@@ -433,9 +453,8 @@ mod tests {
     fn test_roundtrip_nested_tree() {
         let mut trees = HashMap::new();
         trees.insert("my_crate".to_string(), nested_tree());
-        let json =
-            to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
+            .unwrap();
         let (back, _) = from_canonical_json_trees(&json).unwrap();
         let t = back.get("my_crate").unwrap();
         assert_eq!(t.node_count(), 3);
@@ -457,7 +476,13 @@ mod tests {
         let mut t_beta = ModuleTree::new("beta".to_string(), PathBuf::from("b/src/lib.rs"));
         let bs_root = t_beta.root();
         t_beta
-            .add_child(bs_root, "only".to_string(), PathBuf::from("b/src/only.rs"), false, false)
+            .add_child(
+                bs_root,
+                "only".to_string(),
+                PathBuf::from("b/src/only.rs"),
+                false,
+                false,
+            )
             .unwrap();
         trees.insert("beta".to_string(), t_beta);
         trees.insert(
@@ -465,9 +490,8 @@ mod tests {
             ModuleTree::new("gamma".to_string(), PathBuf::from("g/src/lib.rs")),
         );
 
-        let json =
-            to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
+            .unwrap();
         let (back, _) = from_canonical_json_trees(&json).unwrap();
         assert_eq!(back.len(), 3);
         assert_eq!(back["alpha"].node_count(), 3);
@@ -480,16 +504,27 @@ mod tests {
     fn test_roundtrip_preserves_inline() {
         let mut t = ModuleTree::new("c".to_string(), PathBuf::from("src/lib.rs"));
         let root = t.root();
-        t.add_child(root, "inline".to_string(), PathBuf::from("src/lib.rs"), true, false)
-            .unwrap();
-        t.add_child(root, "ext".to_string(), PathBuf::from("src/ext.rs"), false, false)
-            .unwrap();
+        t.add_child(
+            root,
+            "inline".to_string(),
+            PathBuf::from("src/lib.rs"),
+            true,
+            false,
+        )
+        .unwrap();
+        t.add_child(
+            root,
+            "ext".to_string(),
+            PathBuf::from("src/ext.rs"),
+            false,
+            false,
+        )
+        .unwrap();
         let mut trees = HashMap::new();
         trees.insert("c".to_string(), t);
 
-        let json =
-            to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
-                .unwrap();
+        let json = to_canonical_json_trees(&trees, &empty_workspace(), TOOL_VERSION, GENERATED_AT)
+            .unwrap();
         let (back, _) = from_canonical_json_trees(&json).unwrap();
         let t2 = &back["c"];
         let inline_id = t2.find_by_canonical_path("c::inline").unwrap();
@@ -627,9 +662,7 @@ mod tests {
     #[test]
     fn test_cross_reference_with_graph_json() {
         use crate::json_serializer::{from_canonical_json, to_canonical_json};
-        use crystalline_dsm_core::entities::dependency_graph::{
-            DependencyGraph, NodeKind,
-        };
+        use crystalline_dsm_core::entities::dependency_graph::{DependencyGraph, NodeKind};
         use crystalline_dsm_core::rules::cycle_detector::CycleReport;
 
         // Árvore: my_crate → utils

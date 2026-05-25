@@ -4,7 +4,7 @@
 **Ficheiro alvo**: `04_wiring/src/main.rs` (revisão de arquivo já
   `IMPLEMENTADO` no M0)
 **Passo do roadmap**: 1.4 (parte CLI, último componente) — fecha M1
-**Status**: IMPLEMENTADO
+**Status**: IMPLEMENTADO (revisado)
 
 ---
 

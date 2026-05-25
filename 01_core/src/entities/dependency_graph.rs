@@ -295,7 +295,11 @@ mod tests {
     fn test_add_internal_node_single() {
         let mut graph = DependencyGraph::new();
         let path = "my_crate::foo".to_string();
-        let id = graph.add_internal_node_with_tree(path.clone(), "my_crate".to_string(), NodeId::test_new(0));
+        let id = graph.add_internal_node_with_tree(
+            path.clone(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
 
         assert_eq!(graph.node_count(), 1);
         assert_eq!(graph.internal_node_count(), 1);
@@ -308,9 +312,13 @@ mod tests {
     fn test_deduplication_internal() {
         let mut graph = DependencyGraph::new();
         let path = "my_crate::foo".to_string();
-        let id1 =
-            graph.add_internal_node_with_tree(path.clone(), "my_crate".to_string(), NodeId::test_new(0));
-        let id2 = graph.add_internal_node_with_tree(path, "my_crate".to_string(), NodeId::test_new(1));
+        let id1 = graph.add_internal_node_with_tree(
+            path.clone(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let id2 =
+            graph.add_internal_node_with_tree(path, "my_crate".to_string(), NodeId::test_new(1));
 
         assert_eq!(id1, id2);
         assert_eq!(graph.node_count(), 1);
@@ -345,10 +353,16 @@ mod tests {
     #[test]
     fn test_add_edge() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let b =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let b = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
 
         let edge = GraphEdge {
             imported_item: "Foo".to_string(),
@@ -367,10 +381,16 @@ mod tests {
     #[test]
     fn test_multiple_edges() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let b =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let b = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
 
         let edge1 = GraphEdge {
             imported_item: "X".to_string(),
@@ -397,8 +417,11 @@ mod tests {
     #[test]
     fn test_add_edge_invalid_id() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
         let invalid = GraphNodeId::test_new(999);
 
         let edge = GraphEdge {
@@ -417,12 +440,21 @@ mod tests {
     #[test]
     fn test_outgoing_incoming_edges() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let b =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
-        let c =
-            graph.add_internal_node_with_tree("C".to_string(), "my_crate".to_string(), NodeId::test_new(2));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let b = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
+        let c = graph.add_internal_node_with_tree(
+            "C".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(2),
+        );
 
         let edge1 = GraphEdge {
             imported_item: "X".to_string(),
@@ -460,12 +492,21 @@ mod tests {
     #[test]
     fn test_degrees() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let b =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
-        let c =
-            graph.add_internal_node_with_tree("C".to_string(), "my_crate".to_string(), NodeId::test_new(2));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let b = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
+        let c = graph.add_internal_node_with_tree(
+            "C".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(2),
+        );
 
         let edge = GraphEdge {
             imported_item: "X".to_string(),
@@ -490,10 +531,16 @@ mod tests {
     #[test]
     fn test_filtered_nodes_iteration() {
         let mut graph = DependencyGraph::new();
-        let _ =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let _ =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
+        let _ = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let _ = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
         let _ = graph.add_external_node("X".to_string(), ExternalKind::Crate);
         let _ = graph.add_external_node("Y".to_string(), ExternalKind::Crate);
         let _ = graph.add_external_node("Z".to_string(), ExternalKind::Stdlib);
@@ -570,10 +617,16 @@ mod tests {
     #[test]
     fn test_all_edges_endpoints() {
         let mut graph = DependencyGraph::new();
-        let a =
-            graph.add_internal_node_with_tree("A".to_string(), "my_crate".to_string(), NodeId::test_new(0));
-        let b =
-            graph.add_internal_node_with_tree("B".to_string(), "my_crate".to_string(), NodeId::test_new(1));
+        let a = graph.add_internal_node_with_tree(
+            "A".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(0),
+        );
+        let b = graph.add_internal_node_with_tree(
+            "B".to_string(),
+            "my_crate".to_string(),
+            NodeId::test_new(1),
+        );
 
         let edge = GraphEdge {
             imported_item: "Foo".to_string(),

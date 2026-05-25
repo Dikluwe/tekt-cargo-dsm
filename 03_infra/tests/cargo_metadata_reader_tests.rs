@@ -61,7 +61,11 @@ fn test_read_lib_and_bin_crate() {
     assert_eq!(result.members.len(), 1);
     let member = &result.members[0];
     assert_eq!(member.name, "a");
-    if let EntryKind::LibraryAndBinary { lib_path, main_path } = &member.entry_kind {
+    if let EntryKind::LibraryAndBinary {
+        lib_path,
+        main_path,
+    } = &member.entry_kind
+    {
         assert!(lib_path.ends_with("src/lib.rs"));
         assert!(main_path.ends_with("src/main.rs"));
     } else {

@@ -94,9 +94,7 @@ fn main() -> ExitCode {
 
     println!(
         "{}",
-        crystalline_dsm_shell::format_start_analysis(
-            &cli.workspace_path.display().to_string()
-        )
+        crystalline_dsm_shell::format_start_analysis(&cli.workspace_path.display().to_string())
     );
 
     match run_pipeline(&cli) {
@@ -168,8 +166,7 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
     let tool_version = env!("CARGO_PKG_VERSION");
     let generated_at = current_rfc3339_timestamp();
 
-    let graph_json =
-        to_canonical_json(&graph, &cycles, &workspace, tool_version, &generated_at)?;
+    let graph_json = to_canonical_json(&graph, &cycles, &workspace, tool_version, &generated_at)?;
     std::fs::write(&cli.output, graph_json).map_err(|e| PipelineError::WriteFailed {
         path: cli.output.clone(),
         source: e,
@@ -177,8 +174,7 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
 
     let trees_path = if cli.emit_trees {
         let p = derive_trees_path(&cli.output);
-        let trees_json =
-            to_canonical_json_trees(&trees, &workspace, tool_version, &generated_at)?;
+        let trees_json = to_canonical_json_trees(&trees, &workspace, tool_version, &generated_at)?;
         std::fs::write(&p, trees_json).map_err(|e| PipelineError::WriteFailed {
             path: p.clone(),
             source: e,
@@ -191,8 +187,14 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
     let html_path = if cli.emit_html {
         let p = derive_html_path(&cli.output);
         let partition = partition_for_dsm(&graph);
-        let html =
-            render_dsm_html(&graph, &partition, &cycles, &workspace, tool_version, &generated_at)?;
+        let html = render_dsm_html(
+            &graph,
+            &partition,
+            &cycles,
+            &workspace,
+            tool_version,
+            &generated_at,
+        )?;
         std::fs::write(&p, html).map_err(|e| PipelineError::WriteFailed {
             path: p.clone(),
             source: e,
