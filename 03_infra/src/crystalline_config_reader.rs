@@ -226,8 +226,11 @@ mod tests {
             config.layer_of_crate("crystalline_dsm_core"),
             Some(Layer::L1)
         );
-        // O original com hífens não deve achar no LayerConfig, a menos que normalizado a jusante
-        assert_eq!(config.layer_of_crate("crystalline-dsm-core"), None);
+        // O original com hífens agora deve achar no LayerConfig, pois normalizado a jusante
+        assert_eq!(
+            config.layer_of_crate("crystalline-dsm-core"),
+            Some(Layer::L1)
+        );
 
         fs::remove_file(file).ok();
     }

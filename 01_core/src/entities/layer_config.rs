@@ -79,7 +79,8 @@ impl LayerConfig {
     /// Retorna a camada de um crate, se conhecida.
     /// `None` para crates não mapeados.
     pub fn layer_of_crate(&self, crate_name: &str) -> Option<Layer> {
-        self.crate_to_layer.get(crate_name).copied()
+        let normalized = crate_name.replace('-', "_");
+        self.crate_to_layer.get(&normalized).copied()
     }
 
     /// Quantidade de crates mapeados.
