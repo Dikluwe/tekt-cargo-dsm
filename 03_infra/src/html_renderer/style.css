@@ -24,6 +24,8 @@
     --diagonal: light-dark(#9ca3af, #4b5563);
     --border-scc: light-dark(#ef4444, #f87171);
     --divider: light-dark(#374151, #9ca3af);
+    --cell-violation: light-dark(#dc2626, #f87171);
+    --marker-sarif: light-dark(#f59e0b, #fbbf24);
 
     /* Texto */
     --text-primary: light-dark(#111827, #e0e0e0);
@@ -210,5 +212,23 @@
   .legend .swatch-scc {
     background: transparent;
     border: 2px solid var(--border-scc);
+  }
+
+  .violation-count {
+    color: var(--cell-violation);
+    font-weight: 600;
+  }
+
+  .finding-count {
+    color: var(--marker-sarif);
+    font-weight: 600;
+  }
+
+  .legend .swatch-violation {
+    background: var(--cell-violation);
+  }
+
+  .legend .swatch-sarif {
+    background: var(--marker-sarif);
   }
 }
