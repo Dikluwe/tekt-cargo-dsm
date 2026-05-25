@@ -65,6 +65,8 @@ pub struct PipelineReport {
     pub output_path: PathBuf,
     pub trees_path: Option<PathBuf>,
     pub html_path: Option<PathBuf>,
+    pub layer_violation_count: usize,
+    pub sarif_finding_count: usize,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -80,6 +82,12 @@ pub enum PipelineError {
 
     #[error("Falha ao renderizar dsm.html: {0}")]
     HtmlError(#[from] HtmlRenderError),
+
+    #[error("Ficheiro de configuração não encontrado: {path}")]
+    ConfigNotFound { path: PathBuf },
+
+    #[error("Ficheiro SARIF não encontrado: {path}")]
+    SarifNotFound { path: PathBuf },
 
     #[error("Falha ao ler configuração de camadas: {0}")]
     ConfigError(#[from] crystalline_dsm_infra::crystalline_config_reader::ConfigReadError),
@@ -126,6 +134,8 @@ fn main() -> ExitCode {
                     &report.output_path,
                     report.trees_path.as_deref(),
                     report.html_path.as_deref(),
+                    report.layer_violation_count,
+                    report.sarif_finding_count,
                 )
             );
             ExitCode::SUCCESS
@@ -168,34 +178,6 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
     let graph = build_graph(&workspace, &trees, &edges_per_crate);
     let cycles = detect_cycles(&graph);
 
-    // Ler configuração de camadas se fornecida explicitamente ou se encontrada no root do workspace
-    let config_path = if let Some(ref path) = cli.config {
-        Some(path.clone())
-    } else {
-        let default_config = cli.workspace_path.join("crystalline.toml");
-        if default_config.exists() {
-            Some(default_config)
-        } else {
-            None
-        }
-    };
-
-    let layer_violations = if let Some(ref path) = config_path {
-        let layer_config = read_layer_config(path, &workspace)?;
-        let violations = detect_layer_violations(&graph, &layer_config);
-        Some(violations)
-    } else {
-        None
-    };
-
-    // Ler findings do SARIF se fornecido
-    let sarif_findings = if let Some(ref path) = cli.sarif {
-        let findings = read_sarif(path)?;
-        Some(findings)
-    } else {
-        None
-    };
-
     // Garantir directorios pai
     if let Some(parent) = cli
         .output
@@ -229,9 +211,46 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
         None
     };
 
+    let mut layer_violation_count = 0;
+    let mut sarif_finding_count = 0;
+
     let html_path = if cli.emit_html {
         let p = derive_html_path(&cli.output);
         let partition = partition_for_dsm(&graph);
+
+        let layer_violations = match resolve_config_path(cli)? {
+            Some(config_path) => {
+                let config = read_layer_config(&config_path, &workspace)?;
+                detect_layer_violations(&graph, &config)
+            }
+            None => Vec::new(),
+        };
+        layer_violation_count = layer_violations.len();
+
+        let sarif_findings = match &cli.sarif {
+            Some(sarif_path) => {
+                if !sarif_path.exists() {
+                    return Err(PipelineError::SarifNotFound {
+                        path: sarif_path.clone(),
+                    });
+                }
+                read_sarif(sarif_path)?
+            }
+            None => Vec::new(),
+        };
+        sarif_finding_count = sarif_findings.len();
+
+        let lv_opt = if layer_violations.is_empty() {
+            None
+        } else {
+            Some(layer_violations.as_slice())
+        };
+        let sf_opt = if sarif_findings.is_empty() {
+            None
+        } else {
+            Some(sarif_findings.as_slice())
+        };
+
         let html = render_dsm_html(
             &graph,
             &partition,
@@ -239,8 +258,8 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
             &workspace,
             tool_version,
             &generated_at,
-            layer_violations.as_deref(),
-            sarif_findings.as_deref(),
+            lv_opt,
+            sf_opt,
         )?;
         std::fs::write(&p, html).map_err(|e| PipelineError::WriteFailed {
             path: p.clone(),
@@ -259,7 +278,29 @@ fn run_pipeline(cli: &Cli) -> Result<PipelineReport, PipelineError> {
         output_path: cli.output.clone(),
         trees_path,
         html_path,
+        layer_violation_count,
+        sarif_finding_count,
     })
+}
+
+fn resolve_config_path(cli: &Cli) -> Result<Option<PathBuf>, PipelineError> {
+    match &cli.config {
+        Some(path) => {
+            if path.exists() {
+                Ok(Some(path.clone()))
+            } else {
+                Err(PipelineError::ConfigNotFound { path: path.clone() })
+            }
+        }
+        None => {
+            let default = cli.workspace_path.join("crystalline.toml");
+            if default.exists() {
+                Ok(Some(default))
+            } else {
+                Ok(None)
+            }
+        }
+    }
 }
 
 /// Deriva o path do `trees.json` no mesmo diretorio que `--output`.

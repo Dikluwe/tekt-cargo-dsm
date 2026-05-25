@@ -66,9 +66,20 @@ pub fn build_graph(
                 // Determinar nó destino
                 let to_id = match edge.kind {
                     ImportKind::CurrentCrate | ImportKind::WorkspaceCrate => {
-                        match graph.find_node(&target_module) {
-                            Some(id) => id,
-                            None => {
+                        if let Some(id) = graph.find_node(&target_module) {
+                            id
+                        } else {
+                            // Tentar converter o primeiro componente do path (nome do crate) de sublinhados para hífens
+                            // Ex: mini_infra::do_something -> mini-infra::do_something
+                            let parts: Vec<&str> = target_module.split("::").collect();
+                            let first = parts[0].replace('_', "-");
+                            let mut normalized_parts = parts;
+                            normalized_parts[0] = &first;
+                            let normalized = normalized_parts.join("::");
+
+                            if let Some(id) = graph.find_node(&normalized) {
+                                id
+                            } else {
                                 // Caso a referência interna não exista, vira externo
                                 graph.add_external_node(target_module, ExternalKind::Crate)
                             }

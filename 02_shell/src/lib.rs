@@ -14,6 +14,7 @@ pub fn format_start_analysis(workspace_path: &str) -> String {
 }
 
 /// Formata o resumo do pipeline com contagens e caminhos dos ficheiros gerados.
+#[allow(clippy::too_many_arguments)]
 pub fn format_summary(
     members: usize,
     modules: usize,
@@ -22,6 +23,8 @@ pub fn format_summary(
     output_path: &Path,
     trees_path: Option<&Path>,
     html_path: Option<&Path>,
+    layer_violations: usize,
+    sarif_findings: usize,
 ) -> String {
     let mut out = String::new();
     out.push_str("=== Crystalline DSM ===\n");
@@ -35,6 +38,18 @@ pub fn format_summary(
     }
     if let Some(html_path) = html_path {
         out.push_str(&format!("\nHTML gravado em: {}", html_path.display()));
+    }
+    if layer_violations > 0 {
+        out.push_str(&format!(
+            "\n⚠ Violações de camada detectadas: {}\n",
+            layer_violations
+        ));
+    }
+    if sarif_findings > 0 {
+        if layer_violations == 0 {
+            out.push('\n');
+        }
+        out.push_str(&format!("Findings do linter (SARIF): {}\n", sarif_findings));
     }
     out
 }
@@ -59,7 +74,7 @@ mod tests {
     #[test]
     fn test_format_summary_without_extras() {
         let out = PathBuf::from("./graph.json");
-        let s = format_summary(3, 12, 8, 1, &out, None, None);
+        let s = format_summary(3, 12, 8, 1, &out, None, None, 0, 0);
         assert!(s.contains("Crates: 3"));
         assert!(s.contains("Módulos: 12"));
         assert!(s.contains("Arestas: 8"));
@@ -67,13 +82,14 @@ mod tests {
         assert!(s.contains("./graph.json"));
         assert!(!s.contains("Trees gravadas"));
         assert!(!s.contains("HTML gravado"));
+        assert!(!s.contains("Violações de camada"));
     }
 
     #[test]
     fn test_format_summary_with_trees() {
         let out = PathBuf::from("./graph.json");
         let trees = PathBuf::from("./trees.json");
-        let s = format_summary(1, 1, 0, 0, &out, Some(&trees), None);
+        let s = format_summary(1, 1, 0, 0, &out, Some(&trees), None, 0, 0);
         assert!(s.contains("./trees.json"));
         assert!(s.contains("Trees gravadas"));
         assert!(!s.contains("HTML gravado"));
@@ -83,9 +99,18 @@ mod tests {
     fn test_format_summary_with_html() {
         let out = PathBuf::from("./graph.json");
         let html = PathBuf::from("./dsm.html");
-        let s = format_summary(1, 1, 0, 0, &out, None, Some(&html));
+        let s = format_summary(1, 1, 0, 0, &out, None, Some(&html), 0, 0);
         assert!(s.contains("./dsm.html"));
         assert!(s.contains("HTML gravado"));
+    }
+
+    #[test]
+    fn test_format_summary_with_violations_and_findings() {
+        let out = PathBuf::from("./graph.json");
+        let html = PathBuf::from("./dsm.html");
+        let s = format_summary(1, 1, 0, 0, &out, None, Some(&html), 2, 5);
+        assert!(s.contains("Violações de camada detectadas: 2"));
+        assert!(s.contains("Findings do linter (SARIF): 5"));
     }
 
     #[test]

@@ -35,9 +35,13 @@ fn classify_import_kind(
     from_crate: &str,
     workspace_crate_names: &[String],
 ) -> ImportKind {
-    if first_segment == from_crate {
+    let normalized_from = from_crate.replace('-', "_");
+    if first_segment == from_crate || first_segment == normalized_from {
         ImportKind::CurrentCrate
-    } else if workspace_crate_names.iter().any(|n| n == first_segment) {
+    } else if workspace_crate_names
+        .iter()
+        .any(|n| n == first_segment || n.replace('-', "_") == first_segment)
+    {
         ImportKind::WorkspaceCrate
     } else if first_segment == "std" || first_segment == "core" || first_segment == "alloc" {
         ImportKind::Stdlib

@@ -311,3 +311,214 @@ fn test_cli_typst_real_com_emit_html() {
 
     fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn test_cli_config_valido_com_emit_html() {
+    let dir = tmpdir("config-valido");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+    let config_path = fixture("crystalline-mini").join("crystalline.toml");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--config")
+        .arg(&config_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(status.status.success());
+    assert!(html_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("Violações de camada detectadas: 1"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_config_inexistente() {
+    let dir = tmpdir("config-inexistente");
+    let output_path = dir.join("graph.json");
+    let config_path = dir.join("inexistente.toml");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--config")
+        .arg(&config_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(!status.status.success());
+    let stderr = String::from_utf8_lossy(&status.stderr);
+    assert!(stderr.contains("Ficheiro de configuração não encontrado"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_sem_config_sem_toml_default() {
+    let dir = tmpdir("sem-config-toml");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+
+    // imports-simple NÃO tem crystalline.toml por padrão
+    let status = Command::new(bin_path())
+        .arg(fixture("imports-simple"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(status.status.success());
+    assert!(html_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(!stdout.contains("Violações de camada detectadas"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_sem_config_com_toml_default() {
+    let dir = tmpdir("toml-default");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+
+    // crystalline-mini TEM crystalline.toml no diretório do workspace,
+    // por isso deve detectar automaticamente.
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(status.status.success());
+    assert!(html_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("Violações de camada detectadas: 1"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_sarif_valido() {
+    let dir = tmpdir("sarif-valido");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+
+    let sarif_path = dir.join("sarif.json");
+    fs::write(
+        &sarif_path,
+        r#"{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "crystalline-lint"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "V9",
+          "level": "error",
+          "message": {
+            "text": "Violation in core"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "01_core/src/lib.rs"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}"#,
+    )
+    .unwrap();
+
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--sarif")
+        .arg(&sarif_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(status.status.success());
+    assert!(html_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("Findings do linter (SARIF): 1"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_sarif_inexistente() {
+    let dir = tmpdir("sarif-inexistente");
+    let output_path = dir.join("graph.json");
+    let sarif_path = dir.join("inexistente.json");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--sarif")
+        .arg(&sarif_path)
+        .arg("--emit-html")
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(!status.status.success());
+    let stderr = String::from_utf8_lossy(&status.stderr);
+    assert!(stderr.contains("Ficheiro SARIF não encontrado"));
+
+    fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn test_cli_config_sem_emit_html() {
+    let dir = tmpdir("config-sem-html");
+    let output_path = dir.join("graph.json");
+    let html_path = dir.join("dsm.html");
+    let config_path = fixture("crystalline-mini").join("crystalline.toml");
+
+    let status = Command::new(bin_path())
+        .arg(fixture("crystalline-mini"))
+        .arg("--output")
+        .arg(&output_path)
+        .arg("--config")
+        .arg(&config_path)
+        .output()
+        .expect("Falha ao rodar a CLI");
+
+    assert!(status.status.success());
+    assert!(!html_path.exists());
+
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    // Sem --emit-html, a detecção NÃO roda, então o summary não exibe violações detectadas
+    assert!(!stdout.contains("Violações de camada detectadas"));
+
+    fs::remove_dir_all(&dir).ok();
+}
