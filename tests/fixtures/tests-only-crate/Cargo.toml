@@ -1,3 +1,0 @@
-[workspace]
-members = ["only_tests"]
-resolver = "2"

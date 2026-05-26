@@ -1,7 +1,0 @@
-[package]
-name = "mini-infra"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-mini-core = { path = "../01_core" }
