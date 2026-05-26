@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Crystalline DSM — tekt-cargo-dsm</title>
+<style>
+/* Crystalline DSM — estilos embutidos. */
+
+@scope (.dsm-root) {
+
+  /* Variáveis viven no container `.dsm-root` (que é o <body>),
+     NÃO em :root — ver html_renderer.md (a interpolação de :root
+     dentro de @scope não escopa nada). */
+  :scope {
+    color-scheme: light dark;
+    --font-base: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --cell-size: 6px;
+
+    /* Surfaces */
+    --bg-page: light-dark(#fafafa, #121212);
+    --bg-matrix: light-dark(#ffffff, #1e293b);
+    --bg-extern: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+
+    /* Células de aresta — escala discreta por intensidade */
+    --cell-edge-1: light-dark(#bfdbfe, #1e3a8a);
+    --cell-edge-2: light-dark(#60a5fa, #1d4ed8);
+    --cell-edge-4: light-dark(#2563eb, #3b82f6);
+
+    /* Estrutura */
+    --diagonal: light-dark(#9ca3af, #4b5563);
+    --border-scc: light-dark(#ef4444, #f87171);
+    --divider: light-dark(#374151, #9ca3af);
+    --cell-violation: light-dark(#dc2626, #f87171);
+    --marker-sarif: light-dark(#f59e0b, #fbbf24);
+
+    /* Texto */
+    --text-primary: light-dark(#111827, #e0e0e0);
+    --text-secondary: light-dark(#6b7280, #9ca3af);
+    --label-highlight: light-dark(#dbeafe, #1e40af);
+
+    font-family: var(--font-base);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+  }
+
+  .metadata,
+  .stats {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .controls {
+    margin: 12px 0;
+  }
+
+  .controls fieldset {
+    border: 1px solid var(--divider);
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .controls legend {
+    padding: 0 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .controls button,
+  .controls input[type="search"] {
+    font: inherit;
+    color: inherit;
+    background: var(--bg-matrix);
+    border: 1px solid var(--divider);
+    border-radius: 3px;
+    padding: 4px 8px;
+  }
+
+  .matrix-container {
+    position: relative;
+    margin-top: 12px;
+  }
+
+  #dsm-matrix {
+    cursor: crosshair;
+    border: 1px solid var(--divider);
+    background: var(--bg-matrix);
+    display: block;
+  }
+
+  /* Tooltip via Popover API */
+  #tooltip {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    max-width: 320px;
+    border: none;
+    margin: 0;
+    /* Anchor Positioning quando disponível; fallback via JS */
+    position-anchor: --dsm-cursor;
+    position-area: bottom right;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+
+  .column-labels {
+    position: relative;
+    height: 120px;
+  }
+
+  .column-labels span {
+    position: absolute;
+    transform: rotate(-45deg);
+    transform-origin: top left;
+    white-space: nowrap;
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  .column-labels span.is-hovered,
+  .row-labels span.is-hovered {
+    color: var(--text-primary);
+    background: var(--label-highlight);
+  }
+
+  .column-labels span.is-pinned,
+  .row-labels span.is-pinned {
+    color: var(--text-primary);
+    background: var(--label-highlight);
+    font-weight: 600;
+  }
+
+  .row-labels {
+    position: absolute;
+    left: 0;
+    top: 120px;
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .row-labels span {
+    line-height: var(--cell-size);
+    height: var(--cell-size);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    padding-right: 6px;
+    color: var(--text-secondary);
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  /* Busca: filtragem visual puramente CSS */
+  .row-labels span[data-match="false"],
+  .column-labels span[data-match="false"] {
+    opacity: 0.15;
+  }
+
+  /* Filtro de externos — `:scope` refere o elemento que abriu o
+     @scope (o `.dsm-root`). Usar `body.hide-externals` directamente
+     não casa porque dentro de @scope os seletores são interpretados
+     contra descendentes do scope, e o `body` é o próprio scope. */
+  :scope.hide-externals .row-labels span[data-kind^="external"],
+  :scope.hide-externals .column-labels span[data-kind^="external"] {
+    display: none;
+  }
+
+  /* Filtro de SCCs triviais (mesma razão para usar :scope) */
+  :scope.only-cyclic .row-labels span[data-cyclic="false"],
+  :scope.only-cyclic .column-labels span[data-cyclic="false"] {
+    display: none;
+  }
+
+  footer {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .legend .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 0 4px 0 12px;
+    vertical-align: middle;
+    border: 1px solid var(--divider);
+  }
+
+  .legend .swatch-edge {
+    background: var(--cell-edge-4);
+  }
+
+  .legend .swatch-diagonal {
+    background: var(--diagonal);
+  }
+
+  .legend .swatch-scc {
+    background: transparent;
+    border: 2px solid var(--border-scc);
+  }
+
+  .violation-count {
+    color: var(--cell-violation);
+    font-weight: 600;
+  }
+
+  .finding-count {
+    color: var(--marker-sarif);
+    font-weight: 600;
+  }
+
+  .legend .swatch-violation {
+    background: var(--cell-violation);
+  }
+
+  .legend .swatch-sarif {
+    background: var(--marker-sarif);
+  }
+}
+
+</style>
+</head>
+<body class="dsm-root">
+<header>
+<h1>tekt-cargo-dsm</h1>
+<div class="metadata">Generated at 2026-05-25T16:57:51Z by crystalline-dsm v0.1.0</div>
+<div class="stats">53 nodes · 171 edges · 0 cycles</div>
+</header>
+<section class="controls">
+<fieldset>
+<legend>Filters</legend>
+<button id="toggle-external" type="button">Hide external nodes</button>
+<button id="toggle-trivial" type="button">Show only cyclic SCCs</button>
+<input type="search" id="search" placeholder="Filter nodes..." autocomplete="off">
+</fieldset>
+</section>
+<main class="matrix-container" style="--cell-size: 6px;">
+<div class="column-labels" role="region" aria-label="Column labels"></div>
+<div class="row-labels" role="region" aria-label="Row labels"></div>
+<canvas id="dsm-matrix" role="img" aria-label="Dependency structure matrix"></canvas>
+<div id="tooltip" popover="manual"></div>
+</main>
+<footer>
+<div class="legend">
+<span class="swatch swatch-edge"></span> Dependency
+<span class="swatch swatch-diagonal"></span> Diagonal
+<span class="swatch swatch-scc"></span> Cyclic SCC
+<span class="swatch swatch-violation"></span> Layer violation
+<span class="swatch swatch-sarif"></span> Lint finding
+</div>
+</footer>
+<script type="module">
+const GRAPH_DATA = {"crate_names":["crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-cli","crystalline-dsm-cli","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-core","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-infra","crystalline-dsm-cli","crystalline-dsm-cli","crystalline-dsm-infra","crystalline-dsm-shell","crystalline-dsm-shell",null,null,null,null,null,null,null,null,null,null,null,null,null],"edges":[{"count":1,"from":2,"has_glob":false,"items":["HashMap"],"to":49},{"count":1,"from":3,"has_glob":true,"items":["*"],"to":2},{"count":1,"from":4,"has_glob":false,"items":["PathBuf"],"to":51},{"count":1,"from":5,"has_glob":false,"items":["NodeId"],"to":4},{"count":1,"from":5,"has_glob":false,"items":["EdgeRef"],"to":44},{"count":1,"from":5,"has_glob":false,"items":["HashMap"],"to":49},{"count":1,"from":6,"has_glob":true,"items":["*"],"to":5},{"count":1,"from":7,"has_glob":false,"items":["NodeId"],"to":4},{"count":1,"from":8,"has_glob":true,"items":["*"],"to":7},{"count":1,"from":9,"has_glob":true,"items":["*"],"to":4},{"count":2,"from":10,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":1,"from":11,"has_glob":false,"items":["ModuleTree"],"to":4},{"count":3,"from":11,"has_glob":false,"items":["DependencyGraph","ExternalKind","GraphEdge"],"to":5},{"count":2,"from":11,"has_glob":false,"items":["ImportEdge","ImportKind"],"to":7},{"count":1,"from":11,"has_glob":false,"items":["Workspace"],"to":10},{"count":1,"from":11,"has_glob":false,"items":["HashMap"],"to":49},{"count":1,"from":12,"has_glob":false,"items":["NodeId"],"to":4},{"count":1,"from":12,"has_glob":true,"items":["*"],"to":11},{"count":1,"from":12,"has_glob":false,"items":["PathBuf"],"to":51},{"count":1,"from":13,"has_glob":true,"items":["*"],"to":10},{"count":2,"from":15,"has_glob":false,"items":["DependencyGraph","GraphNodeId"],"to":5},{"count":1,"from":15,"has_glob":false,"items":["EdgeRef"],"to":44},{"count":1,"from":16,"has_glob":false,"items":["NodeId"],"to":4},{"count":2,"from":16,"has_glob":false,"items":["ExternalKind","GraphEdge"],"to":5},{"count":1,"from":16,"has_glob":true,"items":["*"],"to":15},{"count":3,"from":17,"has_glob":false,"items":["DependencyGraph","GraphNodeId","NodeKind"],"to":5},{"count":1,"from":17,"has_glob":false,"items":["tarjan_scc"],"to":43},{"count":1,"from":17,"has_glob":false,"items":["Reverse"],"to":48},{"count":3,"from":17,"has_glob":false,"items":["BinaryHeap","HashMap","HashSet"],"to":49},{"count":1,"from":18,"has_glob":false,"items":["NodeId"],"to":4},{"count":2,"from":18,"has_glob":false,"items":["ExternalKind","GraphEdge"],"to":5},{"count":1,"from":18,"has_glob":true,"items":["*"],"to":17},{"count":2,"from":19,"has_glob":false,"items":["Layer","LayerConfig"],"to":2},{"count":3,"from":19,"has_glob":false,"items":["DependencyGraph","GraphNodeId","NodeKind"],"to":5},{"count":1,"from":19,"has_glob":false,"items":["HashSet"],"to":49},{"count":1,"from":20,"has_glob":false,"items":["NodeId"],"to":4},{"count":2,"from":20,"has_glob":false,"items":["ExternalKind","GraphEdge"],"to":5},{"count":1,"from":20,"has_glob":true,"items":["*"],"to":19},{"count":1,"from":20,"has_glob":false,"items":["HashMap"],"to":49},{"count":3,"from":22,"has_glob":false,"items":["EntryKind","Workspace","WorkspaceMember"],"to":10},{"count":1,"from":22,"has_glob":false,"items":["MetadataCommand"],"to":40},{"count":2,"from":22,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":2,"from":23,"has_glob":false,"items":["Layer","LayerConfig"],"to":2},{"count":1,"from":23,"has_glob":false,"items":["Workspace"],"to":10},{"count":1,"from":23,"has_glob":false,"items":["Deserialize"],"to":45},{"count":1,"from":23,"has_glob":false,"items":["fs"],"to":47},{"count":1,"from":23,"has_glob":false,"items":["HashMap"],"to":49},{"count":2,"from":23,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":2,"from":24,"has_glob":false,"items":["EntryKind","WorkspaceMember"],"to":10},{"count":1,"from":24,"has_glob":true,"items":["*"],"to":23},{"count":2,"from":25,"has_glob":false,"items":["ModuleTree","NodeId"],"to":4},{"count":2,"from":25,"has_glob":false,"items":["ImportEdge","ImportKind"],"to":7},{"count":1,"from":25,"has_glob":false,"items":["WorkspaceMember"],"to":10},{"count":1,"from":25,"has_glob":false,"items":["fs"],"to":47},{"count":1,"from":25,"has_glob":false,"items":["HashSet"],"to":49},{"count":2,"from":25,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":1,"from":26,"has_glob":true,"items":["*"],"to":25},{"count":5,"from":27,"has_glob":false,"items":["DependencyGraph","ExternalKind","GraphEdge","GraphError","NodeKind"],"to":5},{"count":1,"from":27,"has_glob":false,"items":["Workspace"],"to":10},{"count":3,"from":27,"has_glob":false,"items":["Cycle","CycleKind","CycleReport"],"to":15},{"count":2,"from":27,"has_glob":false,"items":["Deserialize","Serialize"],"to":45},{"count":3,"from":28,"has_glob":false,"items":["EntryKind","Workspace","WorkspaceMember"],"to":10},{"count":1,"from":28,"has_glob":true,"items":["*"],"to":27},{"count":1,"from":28,"has_glob":false,"items":["PathBuf"],"to":51},{"count":2,"from":29,"has_glob":false,"items":["ModuleTree","NodeId"],"to":4},{"count":1,"from":29,"has_glob":false,"items":["WorkspaceMember"],"to":10},{"count":1,"from":29,"has_glob":false,"items":["fs"],"to":47},{"count":1,"from":29,"has_glob":false,"items":["HashSet"],"to":49},{"count":2,"from":29,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":1,"from":30,"has_glob":false,"items":["Deserialize"],"to":45},{"count":1,"from":30,"has_glob":false,"items":["fs"],"to":47},{"count":2,"from":30,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":4,"from":31,"has_glob":false,"items":["DependencyGraph","ExternalKind","GraphNodeId","NodeKind"],"to":5},{"count":1,"from":31,"has_glob":false,"items":["Workspace"],"to":10},{"count":1,"from":31,"has_glob":false,"items":["CycleReport"],"to":15},{"count":1,"from":31,"has_glob":false,"items":["PartitionedOrder"],"to":17},{"count":1,"from":31,"has_glob":false,"items":["LayerViolation"],"to":19},{"count":1,"from":31,"has_glob":false,"items":["SarifFinding"],"to":30},{"count":1,"from":31,"has_glob":false,"items":["json"],"to":46},{"count":1,"from":31,"has_glob":false,"items":["HashMap"],"to":49},{"count":1,"from":31,"has_glob":false,"items":["Write"],"to":50},{"count":2,"from":32,"has_glob":false,"items":["ModuleTree","NodeId"],"to":4},{"count":1,"from":32,"has_glob":false,"items":["GraphEdge"],"to":5},{"count":2,"from":32,"has_glob":false,"items":["EntryKind","WorkspaceMember"],"to":10},{"count":1,"from":32,"has_glob":false,"items":["detect_cycles"],"to":15},{"count":1,"from":32,"has_glob":false,"items":["partition_for_dsm"],"to":17},{"count":1,"from":32,"has_glob":true,"items":["*"],"to":31},{"count":1,"from":32,"has_glob":false,"items":["PathBuf"],"to":51},{"count":1,"from":33,"has_glob":true,"items":["*"],"to":30},{"count":2,"from":34,"has_glob":false,"items":["ModuleTree","TreeError"],"to":4},{"count":1,"from":34,"has_glob":false,"items":["Workspace"],"to":10},{"count":3,"from":34,"has_glob":false,"items":["TOOL_NAME","ToolInfoDto","WorkspaceInfoDto"],"to":27},{"count":2,"from":34,"has_glob":false,"items":["Deserialize","Serialize"],"to":45},{"count":1,"from":34,"has_glob":false,"items":["HashMap"],"to":49},{"count":1,"from":34,"has_glob":false,"items":["PathBuf"],"to":51},{"count":1,"from":35,"has_glob":false,"items":["ModuleTree"],"to":4},{"count":1,"from":35,"has_glob":false,"items":["ImportEdge"],"to":7},{"count":1,"from":35,"has_glob":false,"items":["detect_cycles"],"to":15},{"count":1,"from":35,"has_glob":false,"items":["partition_for_dsm"],"to":17},{"count":1,"from":35,"has_glob":false,"items":["detect_layer_violations"],"to":19},{"count":2,"from":35,"has_glob":false,"items":["CargoMetadataError","read_workspace"],"to":22},{"count":1,"from":35,"has_glob":false,"items":["read_layer_config"],"to":23},{"count":1,"from":35,"has_glob":false,"items":["extract_imports"],"to":25},{"count":2,"from":35,"has_glob":false,"items":["JsonSerializeError","to_canonical_json"],"to":27},{"count":1,"from":35,"has_glob":false,"items":["traverse_crate"],"to":29},{"count":1,"from":35,"has_glob":false,"items":["read_sarif"],"to":30},{"count":2,"from":35,"has_glob":false,"items":["HtmlRenderError","render_dsm_html"],"to":31},{"count":2,"from":35,"has_glob":false,"items":["TreesSerializeError","to_canonical_json_trees"],"to":34},{"count":1,"from":35,"has_glob":false,"items":["Parser"],"to":41},{"count":1,"from":35,"has_glob":false,"items":["build_graph"],"to":42},{"count":1,"from":35,"has_glob":false,"items":["HashMap"],"to":49},{"count":2,"from":35,"has_glob":false,"items":["Path","PathBuf"],"to":51},{"count":1,"from":35,"has_glob":false,"items":["ExitCode"],"to":52},{"count":1,"from":36,"has_glob":true,"items":["*"],"to":35},{"count":3,"from":37,"has_glob":false,"items":["EntryKind","Workspace","WorkspaceMember"],"to":10},{"count":1,"from":37,"has_glob":true,"items":["*"],"to":34},{"count":1,"from":38,"has_glob":false,"items":["Path"],"to":51},{"count":1,"from":39,"has_glob":true,"items":["*"],"to":38},{"count":1,"from":39,"has_glob":false,"items":["PathBuf"],"to":51}],"internal_boundary":40,"kinds":["internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","internal","external_crate","external_crate","external_crate","external_crate","external_crate","external_crate","external_crate","external_stdlib","external_stdlib","external_stdlib","external_stdlib","external_stdlib","external_stdlib"],"labels":["crystalline-dsm-core","crystalline-dsm-core::entities","crystalline-dsm-core::entities::layer_config","crystalline-dsm-core::entities::layer_config::tests","crystalline-dsm-core::entities::module_tree","crystalline-dsm-core::entities::dependency_graph","crystalline-dsm-core::entities::dependency_graph::tests","crystalline-dsm-core::entities::import_edge","crystalline-dsm-core::entities::import_edge::tests","crystalline-dsm-core::entities::module_tree::tests","crystalline-dsm-core::entities::workspace","crystalline-dsm-cli::graph_builder","crystalline-dsm-cli::graph_builder::tests","crystalline-dsm-core::entities::workspace::tests","crystalline-dsm-core::rules","crystalline-dsm-core::rules::cycle_detector","crystalline-dsm-core::rules::cycle_detector::tests","crystalline-dsm-core::rules::dsm_partitioner","crystalline-dsm-core::rules::dsm_partitioner::tests","crystalline-dsm-core::rules::layer_violation_detector","crystalline-dsm-core::rules::layer_violation_detector::tests","crystalline-dsm-infra","crystalline-dsm-infra::cargo_metadata_reader","crystalline-dsm-infra::crystalline_config_reader","crystalline-dsm-infra::crystalline_config_reader::tests","crystalline-dsm-infra::import_extractor","crystalline-dsm-infra::import_extractor::tests","crystalline-dsm-infra::json_serializer","crystalline-dsm-infra::json_serializer::tests","crystalline-dsm-infra::module_traverser","crystalline-dsm-infra::sarif_reader","crystalline-dsm-infra::html_renderer","crystalline-dsm-infra::html_renderer::tests","crystalline-dsm-infra::sarif_reader::tests","crystalline-dsm-infra::trees_serializer","crystalline-dsm-cli","crystalline-dsm-cli::tests","crystalline-dsm-infra::trees_serializer::tests","crystalline-dsm-shell","crystalline-dsm-shell::tests","cargo_metadata","clap","graph_builder","petgraph::algo","petgraph::visit","serde","serde_json","std","std::cmp","std::collections","std::fmt","std::path","std::process"],"layer_violations":[],"sarif_findings":[],"scc_per_position":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52],"sccs":[{"cyclic":false,"end":1,"start":0},{"cyclic":false,"end":2,"start":1},{"cyclic":false,"end":3,"start":2},{"cyclic":false,"end":4,"start":3},{"cyclic":false,"end":5,"start":4},{"cyclic":false,"end":6,"start":5},{"cyclic":false,"end":7,"start":6},{"cyclic":false,"end":8,"start":7},{"cyclic":false,"end":9,"start":8},{"cyclic":false,"end":10,"start":9},{"cyclic":false,"end":11,"start":10},{"cyclic":false,"end":12,"start":11},{"cyclic":false,"end":13,"start":12},{"cyclic":false,"end":14,"start":13},{"cyclic":false,"end":15,"start":14},{"cyclic":false,"end":16,"start":15},{"cyclic":false,"end":17,"start":16},{"cyclic":false,"end":18,"start":17},{"cyclic":false,"end":19,"start":18},{"cyclic":false,"end":20,"start":19},{"cyclic":false,"end":21,"start":20},{"cyclic":false,"end":22,"start":21},{"cyclic":false,"end":23,"start":22},{"cyclic":false,"end":24,"start":23},{"cyclic":false,"end":25,"start":24},{"cyclic":false,"end":26,"start":25},{"cyclic":false,"end":27,"start":26},{"cyclic":false,"end":28,"start":27},{"cyclic":false,"end":29,"start":28},{"cyclic":false,"end":30,"start":29},{"cyclic":false,"end":31,"start":30},{"cyclic":false,"end":32,"start":31},{"cyclic":false,"end":33,"start":32},{"cyclic":false,"end":34,"start":33},{"cyclic":false,"end":35,"start":34},{"cyclic":false,"end":36,"start":35},{"cyclic":false,"end":37,"start":36},{"cyclic":false,"end":38,"start":37},{"cyclic":false,"end":39,"start":38},{"cyclic":false,"end":40,"start":39},{"cyclic":false,"end":41,"start":40},{"cyclic":false,"end":42,"start":41},{"cyclic":false,"end":43,"start":42},{"cyclic":false,"end":44,"start":43},{"cyclic":false,"end":45,"start":44},{"cyclic":false,"end":46,"start":45},{"cyclic":false,"end":47,"start":46},{"cyclic":false,"end":48,"start":47},{"cyclic":false,"end":49,"start":48},{"cyclic":false,"end":50,"start":49},{"cyclic":false,"end":51,"start":50},{"cyclic":false,"end":52,"start":51},{"cyclic":false,"end":53,"start":52}],"schema_version":"1.0.0","workspace_name":"tekt-cargo-dsm"};
+// Crystalline DSM — vanilla ES module embutido. Sem dependências.
+
+(function () {
+  const root = document.querySelector(".dsm-root");
+  const container = document.querySelector(".matrix-container");
+  const canvas = document.getElementById("dsm-matrix");
+  const tooltip = document.getElementById("tooltip");
+  const rowLabels = document.querySelector(".row-labels");
+  const colLabels = document.querySelector(".column-labels");
+  const ctx = canvas.getContext("2d");
+
+  const N = GRAPH_DATA.labels.length;
+
+  // --- Cell size adaptativo ---
+  function pickCellSize(n) {
+    if (n < 50) return 24;
+    if (n < 200) return 12;
+    if (n < 700) return 6;
+    return 3;
+  }
+  const cellSize = pickCellSize(N);
+  container.style.setProperty("--cell-size", cellSize + "px");
+
+  const totalPx = N * cellSize;
+  canvas.width = totalPx;
+  canvas.height = totalPx;
+  canvas.style.width = totalPx + "px";
+  canvas.style.height = totalPx + "px";
+  canvas.style.marginLeft = "160px"; // alinha com row-labels width
+
+  // --- Renderizar labels (DOM) ---
+  function renderLabels() {
+    const fragRow = document.createDocumentFragment();
+    const fragCol = document.createDocumentFragment();
+    for (let i = 0; i < N; i++) {
+      const label = GRAPH_DATA.labels[i];
+      const kind = GRAPH_DATA.kinds[i];
+      const sccIdx = GRAPH_DATA.scc_per_position[i];
+      const scc = GRAPH_DATA.sccs[sccIdx];
+      const cyclic = scc.cyclic ? "true" : "false";
+
+      const rowSpan = document.createElement("span");
+      rowSpan.textContent = label;
+      rowSpan.dataset.idx = String(i);
+      rowSpan.dataset.kind = kind;
+      rowSpan.dataset.cyclic = cyclic;
+      rowSpan.dataset.match = "true";
+      rowSpan.title = label;
+      fragRow.appendChild(rowSpan);
+
+      const colSpan = document.createElement("span");
+      colSpan.textContent = label;
+      colSpan.dataset.idx = String(i);
+      colSpan.dataset.kind = kind;
+      colSpan.dataset.cyclic = cyclic;
+      colSpan.dataset.match = "true";
+      colSpan.title = label;
+      colSpan.style.left = (160 + i * cellSize + cellSize / 2) + "px";
+      colSpan.style.top = "120px";
+      fragCol.appendChild(colSpan);
+    }
+    rowLabels.appendChild(fragRow);
+    colLabels.appendChild(fragCol);
+  }
+  renderLabels();
+
+  // --- Índices de adjacência ---
+  const pairKey = (from, to) => from + "-" + to;
+  const pairToEdge = new Map();
+  for (const e of GRAPH_DATA.edges) {
+    pairToEdge.set(pairKey(e.from, e.to), e);
+  }
+
+  // --- Índices de Violações e SARIF ---
+  const violationsSet = new Set();
+  const violationsMap = new Map();
+  if (GRAPH_DATA.layer_violations) {
+    for (const v of GRAPH_DATA.layer_violations) {
+      const key = pairKey(v.from, v.to);
+      violationsSet.add(key);
+      violationsMap.set(key, v);
+    }
+  }
+
+  const sarifFindingsMap = new Map();
+  if (GRAPH_DATA.sarif_findings) {
+    for (const f of GRAPH_DATA.sarif_findings) {
+      if (!sarifFindingsMap.has(f.pos)) {
+        sarifFindingsMap.set(f.pos, []);
+      }
+      sarifFindingsMap.get(f.pos).push(f);
+    }
+  }
+
+  // --- Cache de cores ---
+  // getComputedStyle().getPropertyValue() em custom properties retorna a
+  // STRING LITERAL declarada (ex.: "light-dark(#fff, #1e293b)"), não o
+  // valor resolvido. Para que o Canvas 2D receba uma cor utilizável
+  // (rgb/hex), usamos um elemento sonda invisível com `color: var(--x)`
+  // — aí o browser resolve light-dark() de acordo com o tema actual.
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;";
+  root.appendChild(probe);
+
+  function resolveVar(name) {
+    probe.style.color = "var(" + name + ")";
+    return getComputedStyle(probe).color;
+  }
+
+  let COLORS = {};
+  function refreshColors() {
+    COLORS = {
+      bgMatrix: resolveVar("--bg-matrix"),
+      bgExtern: resolveVar("--bg-extern"),
+      cellEdge1: resolveVar("--cell-edge-1"),
+      cellEdge2: resolveVar("--cell-edge-2"),
+      cellEdge4: resolveVar("--cell-edge-4"),
+      diagonal: resolveVar("--diagonal"),
+      borderScc: resolveVar("--border-scc"),
+      divider: resolveVar("--divider"),
+      cellViolation: resolveVar("--cell-violation"),
+      markerSarif: resolveVar("--marker-sarif"),
+    };
+  }
+  refreshColors();
+
+  function edgeColor(count) {
+    if (count >= 4) return COLORS.cellEdge4;
+    if (count >= 2) return COLORS.cellEdge2;
+    return COLORS.cellEdge1;
+  }
+
+  // --- Desenho ---
+  function shouldDrawIndex(i) {
+    if (root.classList.contains("hide-externals") && GRAPH_DATA.kinds[i] !== "internal") {
+      return false;
+    }
+    if (root.classList.contains("only-cyclic")) {
+      const sccIdx = GRAPH_DATA.scc_per_position[i];
+      if (!GRAPH_DATA.sccs[sccIdx].cyclic) return false;
+    }
+    return true;
+  }
+
+  function draw() {
+    ctx.fillStyle = COLORS.bgMatrix;
+    ctx.fillRect(0, 0, totalPx, totalPx);
+
+    // Região externa: fundo levemente diferente
+    const ib = GRAPH_DATA.internal_boundary;
+    if (ib < N) {
+      ctx.fillStyle = COLORS.bgExtern;
+      const externStart = ib * cellSize;
+      const externLen = (N - ib) * cellSize;
+      ctx.fillRect(externStart, 0, externLen, totalPx);
+      ctx.fillRect(0, externStart, totalPx, externLen);
+    }
+
+    // Arestas
+    for (const e of GRAPH_DATA.edges) {
+      if (!shouldDrawIndex(e.from) || !shouldDrawIndex(e.to)) continue;
+      if (violationsSet.has(pairKey(e.from, e.to))) {
+        ctx.fillStyle = COLORS.cellViolation;
+      } else {
+        ctx.fillStyle = edgeColor(e.count);
+      }
+      ctx.fillRect(e.to * cellSize, e.from * cellSize, cellSize, cellSize);
+    }
+
+    // Diagonal
+    ctx.fillStyle = COLORS.diagonal;
+    for (let i = 0; i < N; i++) {
+      if (!shouldDrawIndex(i)) continue;
+      ctx.fillRect(i * cellSize, i * cellSize, cellSize, cellSize);
+    }
+
+    // Bordas de SCCs cíclicos
+    ctx.strokeStyle = COLORS.borderScc;
+    ctx.lineWidth = Math.max(1, Math.floor(cellSize / 3));
+    for (const s of GRAPH_DATA.sccs) {
+      if (!s.cyclic) continue;
+      const x = s.start * cellSize;
+      const len = (s.end - s.start) * cellSize;
+      ctx.strokeRect(x + 0.5, x + 0.5, len, len);
+    }
+
+    // Linha divisória interno/externo
+    if (ib > 0 && ib < N) {
+      ctx.strokeStyle = COLORS.divider;
+      ctx.lineWidth = 1;
+      const pos = ib * cellSize + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, totalPx);
+      ctx.moveTo(0, pos);
+      ctx.lineTo(totalPx, pos);
+      ctx.stroke();
+    }
+
+    // Marcadores SARIF nas margens
+    ctx.fillStyle = COLORS.markerSarif;
+    for (const [pos, findings] of sarifFindingsMap.entries()) {
+      if (!shouldDrawIndex(pos)) continue;
+      // Marcador na linha (margem esquerda, ou seja, x = 0, y = pos * cellSize)
+      ctx.fillRect(0, pos * cellSize, Math.max(2, cellSize / 2), cellSize);
+      // Marcador na coluna (margem superior, ou seja, y = 0, x = pos * cellSize)
+      ctx.fillRect(pos * cellSize, 0, cellSize, Math.max(2, cellSize / 2));
+    }
+  }
+  draw();
+
+  // --- Listeners ---
+  let lastHoveredRow = -1;
+  let lastHoveredCol = -1;
+  const rowSpans = rowLabels.querySelectorAll("span");
+  const colSpans = colLabels.querySelectorAll("span");
+
+  function setHover(row, col) {
+    if (lastHoveredRow >= 0) rowSpans[lastHoveredRow]?.classList.remove("is-hovered");
+    if (lastHoveredCol >= 0) colSpans[lastHoveredCol]?.classList.remove("is-hovered");
+    if (row >= 0 && row < N) rowSpans[row]?.classList.add("is-hovered");
+    if (col >= 0 && col < N) colSpans[col]?.classList.add("is-hovered");
+    lastHoveredRow = row;
+    lastHoveredCol = col;
+  }
+
+  canvas.addEventListener("mousemove", (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const col = Math.floor(x / cellSize);
+    const row = Math.floor(y / cellSize);
+    if (row < 0 || row >= N || col < 0 || col >= N) {
+      tooltip.hidePopover();
+      setHover(-1, -1);
+      return;
+    }
+
+    setHover(row, col);
+    const edge = pairToEdge.get(pairKey(row, col));
+    let lines = [];
+    lines.push("Row: " + GRAPH_DATA.labels[row]);
+    lines.push("Col: " + GRAPH_DATA.labels[col]);
+    if (edge) {
+      lines.push("Edges: " + edge.count);
+      if (edge.items && edge.items.length > 0) {
+        const more = edge.truncated ? " (+more)" : "";
+        lines.push("Items: " + edge.items.join(", ") + more);
+      }
+      if (edge.has_glob) lines.push("(includes glob)");
+    } else if (row === col) {
+      lines.push("(diagonal)");
+    } else {
+      lines.push("(no edge)");
+    }
+
+    const vKey = pairKey(row, col);
+    const violation = violationsMap.get(vKey);
+    if (violation) {
+      lines.push("⚠ Layer violation: " + violation.from_layer + " → " + violation.to_layer + " (forbidden)");
+    }
+
+    const rowFindings = sarifFindingsMap.get(row);
+    if (rowFindings && rowFindings.length > 0) {
+      lines.push("\nLint findings on " + GRAPH_DATA.labels[row] + ":");
+      for (const f of rowFindings) {
+        const lineStr = f.line ? " (line " + f.line + ")" : "";
+        lines.push("  • [" + f.rule_id + "] " + f.message + lineStr);
+      }
+    }
+    const colFindings = sarifFindingsMap.get(col);
+    if (col && col !== row && colFindings && colFindings.length > 0) {
+      lines.push("\nLint findings on " + GRAPH_DATA.labels[col] + ":");
+      for (const f of colFindings) {
+        const lineStr = f.line ? " (line " + f.line + ")" : "";
+        lines.push("  • [" + f.rule_id + "] " + f.message + lineStr);
+      }
+    }
+
+    tooltip.textContent = lines.join("\n");
+    tooltip.style.whiteSpace = "pre-line";
+
+    // Fallback de posicionamento: nem todos os browsers suportam
+    // CSS Anchor Positioning de forma completa.
+    tooltip.style.position = "fixed";
+    tooltip.style.left = (event.clientX + 12) + "px";
+    tooltip.style.top = (event.clientY + 12) + "px";
+
+    try {
+      tooltip.showPopover();
+    } catch (_e) {
+      tooltip.style.display = "block";
+    }
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    try { tooltip.hidePopover(); } catch (_e) { tooltip.style.display = "none"; }
+    setHover(-1, -1);
+  });
+
+  canvas.addEventListener("click", (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const col = Math.floor(x / cellSize);
+    const row = Math.floor(y / cellSize);
+    if (row < 0 || row >= N || col < 0 || col >= N) return;
+    rowSpans[row]?.classList.toggle("is-pinned");
+    colSpans[col]?.classList.toggle("is-pinned");
+  });
+
+  // Botões de filtro: alternar classe no body e redesenhar
+  document.getElementById("toggle-external")?.addEventListener("click", () => {
+    root.classList.toggle("hide-externals");
+    draw();
+  });
+  document.getElementById("toggle-trivial")?.addEventListener("click", () => {
+    root.classList.toggle("only-cyclic");
+    draw();
+  });
+
+  // Busca: marca data-match nos labels
+  document.getElementById("search")?.addEventListener("input", (event) => {
+    const q = event.target.value.toLowerCase().trim();
+    for (let i = 0; i < N; i++) {
+      const matches = q === "" || GRAPH_DATA.labels[i].toLowerCase().includes(q);
+      const v = matches ? "true" : "false";
+      rowSpans[i].dataset.match = v;
+      colSpans[i].dataset.match = v;
+    }
+  });
+
+  // Mudanças de tema OS: recalcula cores e redesenha
+  if (window.matchMedia) {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => { refreshColors(); draw(); };
+    if (mql.addEventListener) mql.addEventListener("change", onChange);
+    else if (mql.addListener) mql.addListener(onChange);
+  }
+})();
+
+</script>
+</body>
+</html>
