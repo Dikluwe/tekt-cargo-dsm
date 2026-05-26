@@ -1,2 +1,0 @@
-// Dummy bench
-fn main() {}

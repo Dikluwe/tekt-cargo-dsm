@@ -1,7 +1,0 @@
-[package]
-name = "crystalline-dsm-shell"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-crystalline-dsm-core = { path = "../01_core" }
