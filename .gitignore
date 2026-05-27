@@ -1,6 +1,16 @@
-# Rust compilation artifacts
-/target
+# Rust — artefatos de compilação.
+# Sem barra inicial: pega target/ na raiz E em qualquer subcrate
+# (ex.: 01_core/target/, 02_io/target/ no futuro).
+target/
 
-# OS-specific files
+# Cargo.lock NÃO é ignorado: este é um projeto-aplicação, não uma
+# biblioteca publicada. O lockfile entra no repo para reproduzir
+# builds idênticos (rust-version 1.91 + edition 2024).
+
+# Working files do Claude Code (settings locais, transcrições, etc.).
+# Declarado aqui para o repo não depender de gitignore global.
+.claude/
+
+# OS-specific
 .DS_Store
 Thumbs.db

@@ -3,8 +3,14 @@
 **Estado**: Definição de propósito e objetivos
 **O que este documento é**: a definição do que se busca e por quê.
 **O que este documento não é**: arquitetura, escolha de tecnologia,
-ou plano de implementação. Esses vêm depois, e só depois de um
-protótipo concreto validar a ideia.
+ou plano de implementação.
+
+**A ordem de trabalho deste projeto**: dados primeiro, visualização
+por último. Olha-se o que as ferramentas conseguem extrair de um
+sistema; traduz-se esses dados para uma forma organizada; e só com os
+dados organizados na mão pensa-se em como mostrá-los. A visualização
+é construída sobre o que comprovadamente existe, nunca imaginada
+antes de se saber o que é obtível.
 
 ---
 
@@ -121,15 +127,23 @@ informação que ele precisa para decidir o que só ele pode decidir.
 
 ---
 
-## 5. A Interface
+## 5. A Interface (vem depois dos dados)
 
-### Começar de um paradigma de visualização conhecido
+A visualização é o último passo do trabalho, não o primeiro. Ela só
+é pensada depois de se saber quais dados as ferramentas conseguem
+extrair e de tê-los traduzidos para uma forma organizada (ver seções
+6 e 7). Pensar na tela antes disso arriscaria imaginar algo que
+depende de dados que não existem ou não são extraíveis. Com os dados
+organizados na mão, a visualização é livre: trabalha sobre o que
+comprovadamente se tem.
 
-A ideia de centrar a visualização no raio de impacto é nova. A forma
-de explorar algo novo não é inventar uma interface perfeita de
-cabeça, mas pegar uma forma de visualização que já se sabe que
-funciona, colocar a ideia dentro ela, e refinar — ou trocar — com
-base no que se mostra eficaz.
+### Explorar a partir de um paradigma conhecido
+
+Quando chegar a hora de mostrar, a forma de explorar uma ideia de
+visualização nova não é inventar uma interface perfeita de cabeça,
+mas pegar uma forma de visualização que já se sabe que funciona,
+colocar os dados dentro dela, e refinar — ou trocar — com base no que
+se mostra eficaz.
 
 ### A informação é uma; as projeções podem ser várias
 
@@ -148,17 +162,15 @@ Projeções candidatas, cada uma forte para uma inclinação:
 | Matriz de dependências | "Onde estão os pontos frágeis do todo?" |
 | Foco mais contexto (lista + detalhe navegável) | "Mostre o essencial, deixe-me explorar" |
 
-### O primeiro passo é uma projeção só
+### O primeiro passo de visualização é uma projeção só
 
-Implementar primeiro **uma** projeção — a que mais provavelmente
-entrega os dez segundos. As outras ficam como evolução, a adicionar
-quando a primeira funcionar e para servir os jeitos diferentes de
-pensar.
+Quando a visualização começar, implementa-se primeiro **uma**
+projeção — a que mais provavelmente entrega os dez segundos sobre os
+dados que se tem. As outras ficam como evolução, a adicionar quando a
+primeira funcionar e para servir os jeitos diferentes de pensar.
 
-Qual começar é uma decisão a tomar testando, não argumentando. Um
-caminho de teste: pegar um sistema pequeno e conhecido, escolher um
-ponto, e ver em qual projeção a compreensão do raio chega mais
-rápido.
+Qual começar é uma decisão a tomar testando, não argumentando, e
+sobre os dados reais já organizados — não sobre dados imaginados.
 
 ### Princípios da interface
 
@@ -193,18 +205,35 @@ sai de graça.
 
 ---
 
-## 7. Como o Sistema é Analisado
+## 7. Como o Sistema é Analisado (o ponto de partida)
+
+Este é o primeiro passo concreto do projeto. Antes de pensar em
+qualquer tela, olha-se o que as ferramentas existentes conseguem
+extrair de um sistema.
 
 A análise das dependências — descobrir o que depende de quê — não é o
-foco do projeto e não precisa ser construída do zero. Existem
-ferramentas que já extraem essa informação de um código. A lente
-consome o que essas ferramentas produzem e concentra o esforço no
-que é o valor real: a visão da consequência.
+foco do projeto e não se constrói do zero. Existem ferramentas que já
+extraem essa informação de um código. A lente parte do que essas
+ferramentas conseguem entregar.
 
-Qual ferramenta usar como fonte, e como, é uma decisão posterior —
-depende de verificar qual delas fornece a informação na granularidade
-necessária e em formato utilizável. Isso se confirma na fase de
-arquitetura.
+A ordem é:
+
+1. **Ver os dados que a ferramenta entrega.** Olhar uma ferramenta
+   existente e estabelecer, concretamente, que informação ela
+   consegue extrair de um sistema, em que granularidade, e em que
+   formato.
+
+2. **Traduzir os dados para uma forma organizada.** A partir do que a
+   ferramenta entrega, definir a estrutura de dados que representa o
+   sistema de forma utilizável pela lente — independente de como a
+   ferramenta os produziu.
+
+3. **Mostrar os dados organizados.** Só então (seção 5) pensar em
+   como visualizá-los para responder à pergunta dos dez segundos.
+
+A escolha da ferramenta e a forma de consumir sua saída são as
+primeiras decisões de arquitetura do projeto, tomadas olhando o que
+existe — não derivadas de uma visualização imaginada de antemão.
 
 ---
 
@@ -225,28 +254,38 @@ por quanto aproxima ou afasta dos dez segundos de compreensão.
 
 ## 9. Próximos Passos
 
-Em ordem, sem pular etapas:
+Em ordem, sem pular etapas. Dados primeiro, visualização por último:
 
-1. **Escolher a projeção inicial testando.** Pegar um sistema
-   pequeno e conhecido, selecionar um ponto, e descobrir em qual
-   projeção o raio de impacto se entende mais rápido. A vencedora é
-   por onde se começa.
+1. **Ver o que a ferramenta entrega.** Olhar uma ferramenta de
+   análise existente e estabelecer concretamente que dados ela extrai
+   de um sistema, em que granularidade e em que formato. Esta é a
+   primeira decisão de arquitetura, e ela nasce do que existe.
 
-2. **Definir a fonte da análise.** Verificar qual ferramenta
-   existente fornece o grafo de dependências na granularidade
-   necessária, em formato utilizável. Isso define de onde vêm os
-   dados.
+2. **Traduzir os dados.** Definir a forma organizada — a estrutura
+   que representa o sistema de modo utilizável — a partir do que a
+   ferramenta entrega.
 
-3. **Só então** arquitetura e construção, com a lente como centro e a
-   análise como insumo externo.
+3. **Descobrir como mostrar, testando.** Com os dados organizados na
+   mão, pegar um sistema pequeno e conhecido, selecionar um ponto, e
+   descobrir em qual projeção o raio de impacto se entende mais
+   rápido. A vencedora é a primeira projeção a construir.
 
-As etapas 1 e 2 não exigem escrever código de produção. A etapa 1 é
-exploração; a etapa 2 é verificação. A construção começa depois das
-duas.
+4. **Construir.** Arquitetura e implementação, com a lente como
+   centro e a análise como insumo externo já estabelecido nos passos
+   anteriores.
+
+O passo 1 é verificação do que existe; o passo 2 é tradução; o passo
+3 é exploração sobre dados reais. A construção plena começa no passo
+4, depois que se sabe o que se tem e como mostrá-lo.
 
 ---
 
 ## 10. O Princípio que Orienta o Trabalho
+
+Dados primeiro, visualização por último. Olha-se o que existe para
+extrair, traduz-se o que se consegue, e só então pensa-se em mostrar.
+Nunca o contrário: imaginar a tela e depois caçar quem tem os dados
+arrisca depender do que não existe.
 
 Nada se constrói até a ideia estar clara o suficiente para ser
 explicada a outra pessoa em palavras simples. Multiplicidade de
