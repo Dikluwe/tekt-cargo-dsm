@@ -1,0 +1,71 @@
+{
+  "nome": "egui-wgpu",
+  "erro": null,
+  "tempo_fork_seg": 12.333356642,
+  "tempo_total_seg": 12.360870669,
+  "nodes_antes": 195,
+  "nodes_depois": 195,
+  "edges": 552,
+  "colisoes": 3,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 3,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 3,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 1,
+    "folhas": 81,
+    "bases": 89,
+    "intermediarios": 20,
+    "soma_uses_entrada": 440,
+    "soma_montante": 2045,
+    "n": 191
+  },
+  "top10_transitivos": [
+    [
+      "core::option::Option",
+      64
+    ],
+    [
+      "alloc::alloc::Global",
+      57
+    ],
+    [
+      "wgpu::api::device::Device",
+      50
+    ],
+    [
+      "alloc::string::String",
+      46
+    ],
+    [
+      "core::result::Result",
+      44
+    ],
+    [
+      "wgpu::api::adapter::Adapter",
+      44
+    ],
+    [
+      "alloc::sync::Arc",
+      42
+    ],
+    [
+      "wgpu::api::bind_group::BindGroup",
+      40
+    ],
+    [
+      "wgpu::api::surface::Surface",
+      40
+    ],
+    [
+      "wgpu::api::texture::Texture",
+      40
+    ]
+  ],
+  "folhas_comportamentais": 25
+}

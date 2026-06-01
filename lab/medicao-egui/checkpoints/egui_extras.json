@@ -1,0 +1,71 @@
+{
+  "nome": "egui_extras",
+  "erro": null,
+  "tempo_fork_seg": 19.482586796,
+  "tempo_total_seg": 19.608014708,
+  "nodes_antes": 396,
+  "nodes_depois": 396,
+  "edges": 1111,
+  "colisoes": 0,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 0,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 0,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 7,
+    "folhas": 256,
+    "bases": 102,
+    "intermediarios": 31,
+    "soma_uses_entrada": 809,
+    "soma_montante": 2400,
+    "n": 396
+  },
+  "top10_transitivos": [
+    [
+      "alloc::alloc::Global",
+      142
+    ],
+    [
+      "core::option::Option",
+      114
+    ],
+    [
+      "emath::range::Rangef",
+      101
+    ],
+    [
+      "alloc::vec::Vec",
+      93
+    ],
+    [
+      "egui::ui::Ui",
+      84
+    ],
+    [
+      "alloc::sync::Arc",
+      80
+    ],
+    [
+      "alloc::string::String",
+      78
+    ],
+    [
+      "core::result::Result",
+      77
+    ],
+    [
+      "egui::sense::Sense",
+      76
+    ],
+    [
+      "egui::layout::Layout",
+      75
+    ]
+  ],
+  "folhas_comportamentais": 47
+}

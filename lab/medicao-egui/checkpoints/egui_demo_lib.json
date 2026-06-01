@@ -1,0 +1,71 @@
+{
+  "nome": "egui_demo_lib",
+  "erro": null,
+  "tempo_fork_seg": 45.247113817,
+  "tempo_total_seg": 45.639197347,
+  "nodes_antes": 702,
+  "nodes_depois": 702,
+  "edges": 1841,
+  "colisoes": 0,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 0,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 0,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 21,
+    "folhas": 482,
+    "bases": 144,
+    "intermediarios": 55,
+    "soma_uses_entrada": 1258,
+    "soma_montante": 2382,
+    "n": 702
+  },
+  "top10_transitivos": [
+    [
+      "alloc::string::String",
+      180
+    ],
+    [
+      "egui::ui::Ui",
+      171
+    ],
+    [
+      "alloc::alloc::Global",
+      121
+    ],
+    [
+      "alloc::vec::Vec",
+      103
+    ],
+    [
+      "core::result::Result",
+      97
+    ],
+    [
+      "ecolor::color32::Color32",
+      81
+    ],
+    [
+      "core::option::Option",
+      67
+    ],
+    [
+      "emath::align::Align",
+      54
+    ],
+    [
+      "emath::vec2::Vec2",
+      49
+    ],
+    [
+      "serde_core::de::Deserializer",
+      43
+    ]
+  ],
+  "folhas_comportamentais": 121
+}

@@ -1,0 +1,2895 @@
+{
+  "agregados": {
+    "total_colisoes_proprias": 384,
+    "decididas_e1": 116,
+    "decididas_e2": 23,
+    "nao_determinado": 245
+  },
+  "por_crate": [
+    {
+      "nome": "typst_bundle",
+      "total_nodes": 158,
+      "total_edges": 488,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst",
+      "total_nodes": 625,
+      "total_edges": 2043,
+      "colisoes_totais": 10,
+      "colisoes_proprias": 10,
+      "decididas_e1": 10,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": [
+        {
+          "path": "typst::args::Output::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::SerializationFormat::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::DepsFormat::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::Feature::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::world::WorldCreationError::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::OutputFormat::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::DiagnosticFormat::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::Input::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::Target::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst::args::PdfStandard::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_eval",
+      "total_nodes": 211,
+      "total_edges": 692,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_html",
+      "total_nodes": 591,
+      "total_edges": 1775,
+      "colisoes_totais": 7,
+      "colisoes_proprias": 7,
+      "decididas_e1": 3,
+      "decididas_e2": 1,
+      "nao_determinado": 3,
+      "detalhes": [
+        {
+          "path": "typst_html::dom::HtmlNode::from",
+          "n_nos": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Tag>\", \"From<HtmlElement>\")"
+        },
+        {
+          "path": "typst_html::dom::HtmlTag::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_html::dom::HtmlDocument::introspector",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"introspector\" para tipo \"HtmlDocument\" — esperava 2+ traits distintos; encontrei [\"Output\"]"
+        },
+        {
+          "path": "typst_html::dom::HtmlAttr::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_html::HtmlElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"HtmlElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_html::introspect::HtmlIntrospector::position",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"position\" para tipo \"HtmlIntrospector\" — esperava 2+ traits distintos; encontrei [\"Introspector\"]"
+        },
+        {
+          "path": "typst_html::num::nonzero::NonZero::into_attr",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_ide",
+      "total_nodes": 243,
+      "total_edges": 686,
+      "colisoes_totais": 2,
+      "colisoes_proprias": 2,
+      "decididas_e1": 2,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": [
+        {
+          "path": "typst_ide::document::PagedDocument::Position",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_ide::dom::HtmlDocument::Position",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_kit",
+      "total_nodes": 269,
+      "total_edges": 801,
+      "colisoes_totais": 1,
+      "colisoes_proprias": 1,
+      "decididas_e1": 1,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": [
+        {
+          "path": "typst_kit::downloader::Progress::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_layout",
+      "total_nodes": 1152,
+      "total_edges": 5573,
+      "colisoes_totais": 4,
+      "colisoes_proprias": 4,
+      "decididas_e1": 1,
+      "decididas_e2": 1,
+      "nao_determinado": 2,
+      "detalhes": [
+        {
+          "path": "typst_layout::document::PagedDocument::introspector",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"introspector\" para tipo \"PagedDocument\" — esperava 2+ traits distintos; encontrei [\"Output\"]"
+        },
+        {
+          "path": "typst_layout::math::fragment::MathFragment::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<GlyphFragment>\", \"From<FrameFragment>\")"
+        },
+        {
+          "path": "typst_layout::introspect::PagedIntrospector::position",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"position\" para tipo \"PagedIntrospector\" — esperava 2+ traits distintos; encontrei [\"Introspector\"]"
+        },
+        {
+          "path": "typst_layout::inline::line::ItemEntry::from",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_library",
+      "total_nodes": 9072,
+      "total_edges": 33276,
+      "colisoes_totais": 316,
+      "colisoes_proprias": 316,
+      "decididas_e1": 78,
+      "decididas_e2": 21,
+      "nao_determinado": 217,
+      "detalhes": [
+        {
+          "path": "typst_library::loading::toml_::toml",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=7, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"toml\" para tipo \"toml_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::color::Color::from",
+          "n_nos": 8,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Luma>\", \"From<Oklab>\")"
+        },
+        {
+          "path": "typst_library::foundations::dict::Dict::from",
+          "n_nos": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<IndexMap<Str, Value, FxBuildHasher>>\", \"From<PagedPosition>\")"
+        },
+        {
+          "path": "typst_library::layout::grid::GridHLine::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"GridHLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::UndershellElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"UndershellElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::matrix::Augment::into_value",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"into_value\" para tipo \"Augment\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::container::BoxElem::Type",
+          "n_nos": 10,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=3, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"BoxElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::func::Func::eq",
+          "n_nos": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"PartialEq\", \"PartialEq<&'static NativeFuncData>\")"
+        },
+        {
+          "path": "typst_library::layout::length::Length::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::align::Alignment::from",
+          "n_nos": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Side>\", \"From<HAlignment>\")"
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::add",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"Add\", \"Add<T>\")"
+        },
+        {
+          "path": "typst_library::foundations::calc::floor",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"floor\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::outlined",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"outlined\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Outlinable\"]"
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::from_bits_retain",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::outline::OutlineElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OutlineElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::binom",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"binom\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::asin",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"asin\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::result::Result::input",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::lcm",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"lcm\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::datetime::Datetime::Output",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::text::raw::RawLine::Type",
+          "n_nos": 4,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::style::bb",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"bb\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::acosh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"acosh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::lr::round",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"round\" para tipo \"lr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::sinh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"sinh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::result::Result::output",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::pad::PadElem::Type",
+          "n_nos": 8,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::link::DirectLinkElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"DirectLinkElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::raw::RawElem::Type",
+          "n_nos": 8,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RawElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::introspection::position::DocumentPosition::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<PagedPosition>\", \"From<HtmlPosition>\")"
+        },
+        {
+          "path": "typst_library::visualize::image::ImageKind::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<RasterImage>\", \"From<SvgImage>\")"
+        },
+        {
+          "path": "typst_library::math::equation::EquationElem::Type",
+          "n_nos": 14,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"EquationElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::Content::add",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::length::Length::Output",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::atanh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"atanh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveCubic::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=5. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CurveCubic\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::xml_::xml",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=5, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"xml\" para tipo \"xml_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::matrix::CasesElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CasesElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::image::ImageFormat::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<R>\", \"From<VectorFormat>\")"
+        },
+        {
+          "path": "typst_library::model::figure::FigureElem::Type",
+          "n_nos": 12,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"FigureElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::enum_::EnumElem::Type",
+          "n_nos": 11,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"EnumElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::Output",
+          "n_nos": 8,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::cosh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"cosh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::span",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"span\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::foundations::datetime::Datetime::sub",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"Sub<Duration>\", \"Sub\")"
+        },
+        {
+          "path": "typst_library::foundations::calc::clamp",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"clamp\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::stack::StackElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StackElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::span::Spanned::Output",
+          "n_nos": 4,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::table::TableFooter::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=3, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TableFooter\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::acos",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"acos\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::styles::Style::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Property>\", \"From<Recipe>\")"
+        },
+        {
+          "path": "typst_library::model::link::LinkElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"LinkElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::columns::ColumnsElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ColumnsElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::shape::EllipseElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"EllipseElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::deco::UnderlineElem::Type",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"UnderlineElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::version::Version::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::repr::repr",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"repr\" para tipo \"repr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::footnote::FootnoteEntry::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"FootnoteEntry\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::lang::Region::eq",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::prefix",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"prefix\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Outlinable\"]"
+        },
+        {
+          "path": "typst_library::layout::page::PageElem::Type",
+          "n_nos": 18,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PageElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::accent::AccentElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"AccentElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::align::Alignment::Output",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Output\" para tipo \"Alignment\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::OverbracketElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OverbracketElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::em::Em::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::attach::StretchElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StretchElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::trunc",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"trunc\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::line::LineElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"LineElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::array::Array::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<EcoVec<Value>>\", \"From<&[Value]>\")"
+        },
+        {
+          "path": "typst_library::text::smartquote::SmartQuoteElem::Type",
+          "n_nos": 4,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::into_value",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::max",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=8, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"max\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::italic",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"italic\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::spacing::Spacing::from",
+          "n_nos": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Abs>\", \"From<Em>\")"
+        },
+        {
+          "path": "typst_library::string::EcoString::from",
+          "n_nos": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<FileError>\", \"From<PackageError>\")"
+        },
+        {
+          "path": "typst_library::diag::Tracepoint::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::castable",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::log",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"log\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::case::lower",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"lower\" para tipo \"case\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::into_value",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"into_value\" para tipo \"Rel\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::grid::GridElem::Type",
+          "n_nos": 11,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::from",
+          "n_nos": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Abs>\", \"From<Em>\")"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::realize_title",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=5. Estratégia 2 (fontes): 0 impl(s) com método \"realize_title\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::table::TableCell::Type",
+          "n_nos": 12,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TableCell\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::diag::FileError::from",
+          "n_nos": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Utf8Error>\", \"From<FromUtf8Error>\")"
+        },
+        {
+          "path": "typst_library::foundations::symbol::Symbol::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::link::LinkMarker::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"LinkMarker\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::csv_::csv",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=9, exclusivas_b=5, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"csv\" para tipo \"csv_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::bits",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::par::ParLine::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ParLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::shift::SuperElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"SuperElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::exp",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"exp\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::spacing::HElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"HElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::place::PlaceElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PlaceElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::root::RootElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RootElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::pdf::accessibility::table_summary",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"table_summary\" para tipo \"accessibility\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::counter",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"counter\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Refable\"]"
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveMove::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CurveMove\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::min",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=8, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"min\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::mul_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::fract",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"fract\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::rowspan",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"rowspan\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::result::Result::castable",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::asinh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"asinh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::terms::TermItem::Type",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::default",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"default\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Default\"]"
+        },
+        {
+          "path": "typst_library::math::lr::ceil",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"ceil\" para tipo \"lr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::em::Em::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::grid::GridVLine::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"GridVLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::strong::StrongElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StrongElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::cbor_::cbor",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=7, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"cbor\" para tipo \"cbor_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::sqrt",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=5, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"sqrt\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::matrix::MatElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"MatElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::abs",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"abs\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::table::TableHeader::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TableHeader\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::scope",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"scope\" para tipo \"Type\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::footnote::FootnoteElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"FootnoteElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::pow",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"pow\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::yaml_::yaml",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=7, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"yaml\" para tipo \"yaml_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::norm",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"norm\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveQuad::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=0, compartilhadas=4. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CurveQuad\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::duration::Duration::Output",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::visualize::shape::SquareElem::Type",
+          "n_nos": 9,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"SquareElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CurveElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::OverparenElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OverparenElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::assert",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=7, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"assert\" para tipo \"foundations\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::align::HAlignment::Output",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Output\" para tipo \"HAlignment\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::table::TableElem::Type",
+          "n_nos": 12,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::page::PagebreakElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PagebreakElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::vtable::Handle::eq",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"eq\" para tipo \"Handle\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::stroke::Stroke::into_value",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"into_value\" para tipo \"Stroke\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::upright",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 0 impl(s) com método \"upright\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::eq",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::repeat::RepeatElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RepeatElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::bold",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"bold\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::ceil",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"ceil\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::case::upper",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"upper\" para tipo \"case\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::document::DocumentElem::Type",
+          "n_nos": 8,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"DocumentElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::OverbraceElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OverbraceElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::table::TableHLine::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TableHLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::transform::MoveElem::Type",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::quote::QuoteElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"QuoteElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::reference::RefElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=3, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RefElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::even",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"even\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::bibliography::BibliographyElem::Type",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=3, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"BibliographyElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::shape::RectElem::Type",
+          "n_nos": 8,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RectElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::OvershellElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OvershellElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=6. Estratégia 2 (fontes): 0 impl(s) com método \"__ComemoCall\" para tipo \"engine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::introspection::state::StateUpdateElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StateUpdateElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::plugin_::plugin",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=5, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"plugin\" para tipo \"plugin_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::container::Sizing::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Smart<Rel>>\", \"From<T>\")"
+        },
+        {
+          "path": "typst_library::foundations::calc::odd",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"odd\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::clone",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::style::cal",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"cal\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::diag::PackageError::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::pdf::accessibility::ArtifactElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ArtifactElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::table::TableVLine::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TableVLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::transform::RotateElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"RotateElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::update",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"update\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Count\"]"
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::Output",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::fmt",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::hash",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::synthesize",
+          "n_nos": 11,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=7. Estratégia 2 (fontes): 1 impl(s) com método \"synthesize\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Synthesize\"]"
+        },
+        {
+          "path": "typst_library::math::style::scr",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"scr\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::target_::target",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"target\" para tipo \"target_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::tan",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"tan\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::Output",
+          "n_nos": 11,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::sum",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::text::shift::SubElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"SubElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::point::Point::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::enum_::EnumItem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"EnumItem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::sans",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"sans\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::mul",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::from_value",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::cancel::CancelElem::Type",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CancelElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::json_::json",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=7, exclusivas_b=7, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"json\" para tipo \"json_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::StyledElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StyledElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::decimal::Decimal::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::asset::AssetElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"AssetElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::result::Result::at",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=5. Estratégia 2 (fontes): 1 impl(s) com método \"at\" para tipo \"Result\" — esperava 2+ traits distintos; encontrei [\"At<T>\"]"
+        },
+        {
+          "path": "typst_library::introspection::counter::CounterDisplayElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CounterDisplayElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::Output",
+          "n_nos": 7,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::lr::norm",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"norm\" para tipo \"lr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::x",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"x\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::span::Spanned::load",
+          "n_nos": 4,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::style::display",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"display\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::par::ParLineMarker::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ParLineMarker\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::tanh",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"tanh\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::terms::TermsElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TermsElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::measure_::measure",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=12, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"measure\" para tipo \"measure_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::introspection::counter::CounterUpdateElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CounterUpdateElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::grid::GridHeader::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"GridHeader\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::lr::abs",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"abs\" para tipo \"lr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::shape::CircleElem::Type",
+          "n_nos": 8,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CircleElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::styles::Styles::from",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::heading::HeadingElem::Type",
+          "n_nos": 10,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"HeadingElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::lr::LrElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"LrElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::duration::Duration::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::result::Result::hint",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::outline::OutlineEntry::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OutlineEntry\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::frac::FracElem::Type",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::introspection::here_::here",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"here\" para tipo \"here_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::pdf::accessibility::data_cell",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"data_cell\" para tipo \"accessibility\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::plain_text",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"plain_text\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"PlainText\"]"
+        },
+        {
+          "path": "typst_library::model::cite::CiteElem::Type",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CiteElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::font::book::InternalBitFlags::Output",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::style::mono",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"mono\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::cos",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"cos\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::show_set",
+          "n_nos": 12,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"show_set\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ShowSet\"]"
+        },
+        {
+          "path": "typst_library::math::matrix::VecElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"VecElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::numbering_::numbering",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=11, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"numbering\" para tipo \"numbering_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::realize",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=7. Estratégia 2 (fontes): 0 impl(s) com método \"realize\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::transform::SkewElem::Type",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::Output",
+          "n_nos": 8,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::op::OpElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OpElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::eval",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=9, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"eval\" para tipo \"foundations\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::erf",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"erf\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::panic",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"panic\" para tipo \"foundations\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::list::ListElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ListElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::deco::OverlineElem::Type",
+          "n_nos": 6,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"OverlineElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::layout_::layout",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"layout\" para tipo \"layout_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::grid::GridFooter::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=3, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"GridFooter\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::smallcaps_::SmallcapsElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"SmallcapsElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::resolve_cell",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=16. Estratégia 2 (fontes): 1 impl(s) com método \"resolve_cell\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::output",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::bitor",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::diag::FileError::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::outline::PrefixInfo::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PrefixInfo\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::Output",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::str::Str::from",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::underover::UnderparenElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"UnderparenElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::script",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"script\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::grid::GridCell::Type",
+          "n_nos": 11,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"GridCell\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::gcd",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"gcd\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::pdf::accessibility::header_cell",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"header_cell\" para tipo \"accessibility\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::engine::__ComemoSurface",
+          "n_nos": 3,
+          "veredito": "Distintos/VizinhancaDisjunta",
+          "estrategia": "E1",
+          "detalhe": "exclusivas_a=3, exclusivas_b=1"
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::constructor",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"constructor\" para tipo \"Type\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::align::VAlignment::Output",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Output\" para tipo \"VAlignment\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::container::BlockElem::Type",
+          "n_nos": 14,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"BlockElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::engine::__ComemoSurfaceMut",
+          "n_nos": 3,
+          "veredito": "Distintos/VizinhancaDisjunta",
+          "estrategia": "E1",
+          "detalhe": "exclusivas_a=3, exclusivas_b=11"
+        },
+        {
+          "path": "typst_library::visualize::polygon::PolygonElem::Type",
+          "n_nos": 4,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PolygonElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::TextElem::Type",
+          "n_nos": 41,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"TextElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::hide::HideElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"HideElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::quo",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"quo\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::Content::Output",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::rem_euclid",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"rem_euclid\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::pdf::accessibility::PdfMarkerTag::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"PdfMarkerTag\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::fact",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"fact\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::frak",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"frak\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::lorem_::lorem",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"lorem\" para tipo \"lorem_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::font::book::InternalBitFlags::fmt",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::pdf::attach::AttachElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"AttachElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::deco::StrikeElem::Type",
+          "n_nos": 5,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"StrikeElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::div_euclid",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"div_euclid\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::image::raster::RasterFormat::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<ExchangeFormat>\", \"From<PixelFormat>\")"
+        },
+        {
+          "path": "typst_library::math::underover::UnderbracketElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"UnderbracketElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::round",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"round\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::numbering",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"numbering\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Refable\"]"
+        },
+        {
+          "path": "typst_library::result::Result::into_result",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=6. Estratégia 2 (fontes): 0 impl(s) com método \"into_result\" para tipo \"Result\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::em::Em::Output",
+          "n_nos": 7,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::model::figure::FigureCaption::Type",
+          "n_nos": 8,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"FigureCaption\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::root",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"root\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::input",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::root::sqrt",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=2, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"sqrt\" para tipo \"root\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::calc::atan",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"atan\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::attach::AttachElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"AttachElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::bitand",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::style::inline",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"inline\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::func::Func::scope",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"scope\" para tipo \"Func\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::str::Str::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::introspection::query_::query",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=9, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"query\" para tipo \"query_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::Content::add_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::add",
+          "n_nos": 3,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::supplement",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"supplement\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Refable\"]"
+        },
+        {
+          "path": "typst_library::text::deco::HighlightElem::Type",
+          "n_nos": 7,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=3, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"HighlightElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::Output",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::zero",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::body",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"body\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"Outlinable\"]"
+        },
+        {
+          "path": "typst_library::introspection::location::Location::hash",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::visualize::paint::Paint::from",
+          "n_nos": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Tiling>\", \"From<T>\")"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::y",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"y\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::foundations::calc::rem",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"rem\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::model::par::ParElem::Type",
+          "n_nos": 8,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::diag::ReportPos::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"Range<usize>>\", \"From<LineCol>\")"
+        },
+        {
+          "path": "typst_library::foundations::calc::ln",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=6, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"ln\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::spacing::VElem::Type",
+          "n_nos": 3,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"VElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::func::Func::from",
+          "n_nos": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<FuncInner>\", \"From<&'static NativeFuncData>\")"
+        },
+        {
+          "path": "typst_library::math::ClassElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ClassElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::introspection::locate_::locate",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=10, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"locate\" para tipo \"locate_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::loading::read_::read",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=9, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"read\" para tipo \"read_\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::attach::LimitsElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"LimitsElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::determine_format",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=3, compartilhadas=4. Estratégia 2 (fontes): 0 impl(s) com método \"determine_format\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::align::AlignElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"AlignElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::image::ImageElem::Type",
+          "n_nos": 10,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=2, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"ImageElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::transform::ScaleElem::Type",
+          "n_nos": 6,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::math::frac::BinomElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=2, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"BinomElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveLine::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=3, exclusivas_b=0, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"CurveLine\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::length::Length::from",
+          "n_nos": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "estrategia": "E2",
+          "detalhe": "traits=(\"From<Abs>\", \"From<Em>\")"
+        },
+        {
+          "path": "typst_library::foundations::calc::perm",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"perm\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::colspan",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"colspan\" para tipo \"Packed\" — esperava 2+ traits distintos; encontrei [\"ResolvableCell\"]"
+        },
+        {
+          "path": "typst_library::math::lr::floor",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=4, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"floor\" para tipo \"lr\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::grid::Celled::resolve",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=4, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 1 impl(s) com método \"resolve\" para tipo \"Celled\" — esperava 2+ traits distintos; encontrei [\"Resolve\"]"
+        },
+        {
+          "path": "typst_library::foundations::calc::atan2",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"atan2\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::layout::point::Point::Output",
+          "n_nos": 5,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_library::foundations::calc::sin",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"sin\" para tipo \"calc\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::underover::UnderbraceElem::Type",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=0, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"Type\" para tipo \"UnderbraceElem\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::sscript",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"sscript\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_library::math::style::serif",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=1, compartilhadas=3. Estratégia 2 (fontes): 0 impl(s) com método \"serif\" para tipo \"style\" — esperava 2+ traits distintos; encontrei []"
+        }
+      ]
+    },
+    {
+      "nome": "typst_macros",
+      "total_nodes": 277,
+      "total_edges": 856,
+      "colisoes_totais": 17,
+      "colisoes_proprias": 16,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 16,
+      "detalhes": [
+        {
+          "path": "typst_macros::util::kw::ext",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"ext\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::ty",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=21, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"ty\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::func",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=37, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"func\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::keywords",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"keywords\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::name",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"name\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::elem",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=42, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"elem\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::scope",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=21, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"scope\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::scope",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"scope\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::cast",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=24, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"cast\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::time",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=13, exclusivas_b=1, compartilhadas=1. Estratégia 2 (fontes): 0 impl(s) com método \"time\" para tipo \"typst_macros\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::title",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"title\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::contextual",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"contextual\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::span",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"span\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::cast",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"cast\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::parent",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"parent\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        },
+        {
+          "path": "typst_macros::util::kw::constructor",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=17, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 0 impl(s) com método \"constructor\" para tipo \"kw\" — esperava 2+ traits distintos; encontrei []"
+        }
+      ]
+    },
+    {
+      "nome": "typst_pdf",
+      "total_nodes": 811,
+      "total_edges": 2774,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_realize",
+      "total_nodes": 131,
+      "total_edges": 331,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_render",
+      "total_nodes": 117,
+      "total_edges": 268,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_svg",
+      "total_nodes": 216,
+      "total_edges": 625,
+      "colisoes_totais": 8,
+      "colisoes_proprias": 8,
+      "decididas_e1": 1,
+      "decididas_e2": 0,
+      "nao_determinado": 7,
+      "detalhes": [
+        {
+          "path": "typst_svg::path::SvgPathBuilder::curve_to",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"curve_to\" para tipo \"SvgPathBuilder\" — esperava 2+ traits distintos; encontrei [\"OutlineBuilder\"]"
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::line_to",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"line_to\" para tipo \"SvgPathBuilder\" — esperava 2+ traits distintos; encontrei [\"OutlineBuilder\"]"
+        },
+        {
+          "path": "typst_svg::write::SvgIdRef::fmt",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=4. Estratégia 2 (fontes): 1 impl(s) com método \"fmt\" para tipo \"SvgIdRef\" — esperava 2+ traits distintos; encontrei [\"SvgDisplay\"]"
+        },
+        {
+          "path": "typst_svg::write::SvgFormatter::push_str",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=1, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"push_str\" para tipo \"SvgFormatter\" — esperava 2+ traits distintos; encontrei [\"SvgWrite\"]"
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::close",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::quad_to",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"quad_to\" para tipo \"SvgPathBuilder\" — esperava 2+ traits distintos; encontrei [\"OutlineBuilder\"]"
+        },
+        {
+          "path": "typst_svg::DedupId::fmt",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=2, exclusivas_b=3, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"fmt\" para tipo \"DedupId\" — esperava 2+ traits distintos; encontrei [\"SvgDisplay\"]"
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::move_to",
+          "n_nos": 2,
+          "veredito": "NaoDeterminado",
+          "estrategia": "—",
+          "detalhe": "Estratégia 1 (vizinhança): inconclusiva — exclusivas_a=1, exclusivas_b=0, compartilhadas=2. Estratégia 2 (fontes): 1 impl(s) com método \"move_to\" para tipo \"SvgPathBuilder\" — esperava 2+ traits distintos; encontrei [\"OutlineBuilder\"]"
+        }
+      ]
+    },
+    {
+      "nome": "typst_syntax",
+      "total_nodes": 1501,
+      "total_edges": 4353,
+      "colisoes_totais": 6,
+      "colisoes_proprias": 6,
+      "decididas_e1": 6,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": [
+        {
+          "path": "typst_syntax::node::Unnumberable::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_syntax::package::VersionBound::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_syntax::package::PackageSpec::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_syntax::package::VersionlessPackageSpec::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_syntax::ast::Expr::hash",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_syntax::package::PackageVersion::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst_timing",
+      "total_nodes": 41,
+      "total_edges": 63,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_utils",
+      "total_nodes": 262,
+      "total_edges": 555,
+      "colisoes_totais": 14,
+      "colisoes_proprias": 14,
+      "decididas_e1": 14,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": [
+        {
+          "path": "typst_utils::scalar::Scalar::sum",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::sub",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::div",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::pico::ResolvedPicoStr::fmt",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::add",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::sub_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::Output",
+          "n_nos": 11,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::rem",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::mul_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::rem_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::div_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::eq",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::add_assign",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::mul",
+          "n_nos": 2,
+          "veredito": "MesmoItem",
+          "estrategia": "E1",
+          "detalhe": ""
+        }
+      ]
+    },
+    {
+      "nome": "typst",
+      "total_nodes": 78,
+      "total_edges": 119,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "decididas_e1": 0,
+      "decididas_e2": 0,
+      "nao_determinado": 0,
+      "detalhes": []
+    }
+  ]
+}

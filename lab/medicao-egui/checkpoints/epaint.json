@@ -1,0 +1,71 @@
+{
+  "nome": "epaint",
+  "erro": null,
+  "tempo_fork_seg": 6.683565746,
+  "tempo_total_seg": 8.250266059,
+  "nodes_antes": 1231,
+  "nodes_depois": 1231,
+  "edges": 4360,
+  "colisoes": 29,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 29,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 29,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 13,
+    "folhas": 941,
+    "bases": 134,
+    "intermediarios": 100,
+    "soma_uses_entrada": 3232,
+    "soma_montante": 15319,
+    "n": 1188
+  },
+  "top10_transitivos": [
+    [
+      "alloc::alloc::Global",
+      576
+    ],
+    [
+      "ecolor::color32::Color32",
+      540
+    ],
+    [
+      "alloc::sync::Arc",
+      462
+    ],
+    [
+      "alloc::vec::Vec",
+      433
+    ],
+    [
+      "emath::vec2::Vec2",
+      409
+    ],
+    [
+      "core::option::Option",
+      394
+    ],
+    [
+      "emath::pos2::Pos2",
+      390
+    ],
+    [
+      "emath::rect::Rect",
+      349
+    ],
+    [
+      "epaint::TextureId",
+      321
+    ],
+    [
+      "font_types::tag::Tag",
+      272
+    ]
+  ],
+  "folhas_comportamentais": 314
+}

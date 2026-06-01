@@ -1,0 +1,71 @@
+{
+  "nome": "emath",
+  "erro": null,
+  "tempo_fork_seg": 4.172451286,
+  "tempo_total_seg": 4.325332178,
+  "nodes_antes": 513,
+  "nodes_depois": 513,
+  "edges": 1222,
+  "colisoes": 20,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 20,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 20,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 41,
+    "folhas": 380,
+    "bases": 49,
+    "intermediarios": 13,
+    "soma_uses_entrada": 748,
+    "soma_montante": 976,
+    "n": 483
+  },
+  "top10_transitivos": [
+    [
+      "emath::pos2::Pos2",
+      179
+    ],
+    [
+      "emath::rect::Rect",
+      133
+    ],
+    [
+      "emath::vec2::Vec2",
+      107
+    ],
+    [
+      "emath::align::Align",
+      55
+    ],
+    [
+      "emath::align::Align2",
+      42
+    ],
+    [
+      "core::result::Result",
+      40
+    ],
+    [
+      "emath::range::Rangef",
+      29
+    ],
+    [
+      "alloc::collections::vec_deque::VecDeque",
+      27
+    ],
+    [
+      "alloc::alloc::Global",
+      26
+    ],
+    [
+      "emath::history::History",
+      25
+    ]
+  ],
+  "folhas_comportamentais": 63
+}
