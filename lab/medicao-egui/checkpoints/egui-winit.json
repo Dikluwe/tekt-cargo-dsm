@@ -1,0 +1,71 @@
+{
+  "nome": "egui-winit",
+  "erro": null,
+  "tempo_fork_seg": 12.876379393,
+  "tempo_total_seg": 12.890403491,
+  "nodes_antes": 158,
+  "nodes_depois": 158,
+  "edges": 344,
+  "colisoes": 0,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 0,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 0,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 3,
+    "folhas": 80,
+    "bases": 71,
+    "intermediarios": 4,
+    "soma_uses_entrada": 257,
+    "soma_montante": 685,
+    "n": 158
+  },
+  "top10_transitivos": [
+    [
+      "core::option::Option",
+      58
+    ],
+    [
+      "emath::pos2::Pos2",
+      44
+    ],
+    [
+      "egui::context::Context",
+      36
+    ],
+    [
+      "arboard::Clipboard",
+      35
+    ],
+    [
+      "smithay_clipboard::Clipboard",
+      35
+    ],
+    [
+      "alloc::string::String",
+      34
+    ],
+    [
+      "egui_winit::clipboard::Clipboard",
+      33
+    ],
+    [
+      "emath::rect::Rect",
+      33
+    ],
+    [
+      "egui::data::output::CursorIcon",
+      30
+    ],
+    [
+      "egui::viewport::ViewportId",
+      30
+    ]
+  ],
+  "folhas_comportamentais": 9
+}

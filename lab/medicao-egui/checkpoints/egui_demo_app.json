@@ -1,0 +1,30 @@
+{
+  "nome": "egui_demo_app",
+  "erro": "cargo modules export-json falhou (exit Some(1)): Error: Multiple targets present in package,\nplease explicitly select one via --lib or --bin flag.\n\nTargets present in package:\n- egui_demo_app (--lib)\n- egui_demo_app (--bin egui_demo_app)\n\n",
+  "tempo_fork_seg": 0.0,
+  "tempo_total_seg": 0.487902723,
+  "nodes_antes": 0,
+  "nodes_depois": 0,
+  "edges": 0,
+  "colisoes": 0,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 0,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 0,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 0,
+    "folhas": 0,
+    "bases": 0,
+    "intermediarios": 0,
+    "soma_uses_entrada": 0,
+    "soma_montante": 0,
+    "n": 0
+  },
+  "top10_transitivos": [],
+  "folhas_comportamentais": 0
+}

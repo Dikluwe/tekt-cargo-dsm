@@ -1,0 +1,71 @@
+{
+  "nome": "egui",
+  "erro": null,
+  "tempo_fork_seg": 7.787779335,
+  "tempo_total_seg": 23.170517409,
+  "nodes_antes": 3694,
+  "nodes_depois": 3694,
+  "edges": 13937,
+  "colisoes": 31,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 31,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 25,
+  "trait_ref_igual": 6,
+  "perfil": {
+    "isolados": 18,
+    "folhas": 3077,
+    "bases": 269,
+    "intermediarios": 289,
+    "soma_uses_entrada": 10429,
+    "soma_montante": 263795,
+    "n": 3653
+  },
+  "top10_transitivos": [
+    [
+      "core::option::Option",
+      2270
+    ],
+    [
+      "alloc::alloc::Global",
+      2080
+    ],
+    [
+      "alloc::string::String",
+      1905
+    ],
+    [
+      "alloc::sync::Arc",
+      1873
+    ],
+    [
+      "emath::vec2::Vec2",
+      1816
+    ],
+    [
+      "core::num::nonzero::NonZero",
+      1705
+    ],
+    [
+      "ecolor::color32::Color32",
+      1683
+    ],
+    [
+      "egui::id::Id",
+      1642
+    ],
+    [
+      "emath::rect::Rect",
+      1617
+    ],
+    [
+      "alloc::vec::Vec",
+      1575
+    ]
+  ],
+  "folhas_comportamentais": 699
+}

@@ -1,0 +1,71 @@
+{
+  "nome": "egui_glow",
+  "erro": null,
+  "tempo_fork_seg": 10.334237374,
+  "tempo_total_seg": 10.339740974,
+  "nodes_antes": 92,
+  "nodes_depois": 92,
+  "edges": 222,
+  "colisoes": 1,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 1,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 1,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 4,
+    "folhas": 49,
+    "bases": 31,
+    "intermediarios": 8,
+    "soma_uses_entrada": 159,
+    "soma_montante": 430,
+    "n": 92
+  },
+  "top10_transitivos": [
+    [
+      "glow::native::Context",
+      37
+    ],
+    [
+      "core::option::Option",
+      32
+    ],
+    [
+      "glow::HasContext",
+      32
+    ],
+    [
+      "egui_glow::vao::BufferInfo",
+      30
+    ],
+    [
+      "alloc::alloc::Global",
+      29
+    ],
+    [
+      "alloc::vec::Vec",
+      29
+    ],
+    [
+      "egui_glow::vao::VertexArrayObject",
+      28
+    ],
+    [
+      "alloc::sync::Arc",
+      26
+    ],
+    [
+      "std::collections::hash::map::HashMap",
+      26
+    ],
+    [
+      "epaint::TextureId",
+      25
+    ]
+  ],
+  "folhas_comportamentais": 14
+}

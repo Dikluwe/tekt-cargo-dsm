@@ -1,0 +1,802 @@
+{
+  "crates_total": 12,
+  "crates_ok": 11,
+  "crates_com_erro": 1,
+  "tempo_total_seg": 279.766879378,
+  "nodes_total": 7436,
+  "edges_total": 24764,
+  "colisoes_total": 97,
+  "vereditos_total": {
+    "distintos_vizinhanca_disjunta": 97,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "perfil_total": {
+    "isolados": 112,
+    "folhas": 5653,
+    "bases": 997,
+    "intermediarios": 544,
+    "soma_uses_entrada": 18145,
+    "soma_montante": 290941,
+    "n": 7306
+  },
+  "folhas_comportamentais_total": 1354,
+  "crates": [
+    {
+      "nome": "ecolor",
+      "erro": null,
+      "tempo_fork_seg": 123.125269075,
+      "tempo_total_seg": 123.141269543,
+      "nodes_antes": 169,
+      "nodes_depois": 169,
+      "edges": 377,
+      "colisoes": 8,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 8,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 8,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 3,
+        "folhas": 129,
+        "bases": 25,
+        "intermediarios": 2,
+        "soma_uses_entrada": 220,
+        "soma_montante": 226,
+        "n": 159
+      },
+      "top10_transitivos": [
+        [
+          "ecolor::color32::Color32",
+          63
+        ],
+        [
+          "ecolor::rgba::Rgba",
+          44
+        ],
+        [
+          "ecolor::hsva::Hsva",
+          28
+        ],
+        [
+          "core::result::Result",
+          18
+        ],
+        [
+          "ecolor::hex_color_runtime::HexColor",
+          11
+        ],
+        [
+          "ecolor::hsva_gamma::HsvaGamma",
+          9
+        ],
+        [
+          "core::num::error::ParseIntError",
+          8
+        ],
+        [
+          "core::fmt::Error",
+          7
+        ],
+        [
+          "core::fmt::Formatter",
+          7
+        ],
+        [
+          "ecolor::hex_color_runtime::ParseHexColorError",
+          7
+        ]
+      ],
+      "folhas_comportamentais": 30
+    },
+    {
+      "nome": "egui_demo_app",
+      "erro": "cargo modules export-json falhou (exit Some(1)): Error: Multiple targets present in package,\nplease explicitly select one via --lib or --bin flag.\n\nTargets present in package:\n- egui_demo_app (--lib)\n- egui_demo_app (--bin egui_demo_app)\n\n",
+      "tempo_fork_seg": 0.0,
+      "tempo_total_seg": 0.487902723,
+      "nodes_antes": 0,
+      "nodes_depois": 0,
+      "edges": 0,
+      "colisoes": 0,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 0,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 0,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 0,
+        "folhas": 0,
+        "bases": 0,
+        "intermediarios": 0,
+        "soma_uses_entrada": 0,
+        "soma_montante": 0,
+        "n": 0
+      },
+      "top10_transitivos": [],
+      "folhas_comportamentais": 0
+    },
+    {
+      "nome": "egui_demo_lib",
+      "erro": null,
+      "tempo_fork_seg": 45.247113817,
+      "tempo_total_seg": 45.639197347,
+      "nodes_antes": 702,
+      "nodes_depois": 702,
+      "edges": 1841,
+      "colisoes": 0,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 0,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 0,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 21,
+        "folhas": 482,
+        "bases": 144,
+        "intermediarios": 55,
+        "soma_uses_entrada": 1258,
+        "soma_montante": 2382,
+        "n": 702
+      },
+      "top10_transitivos": [
+        [
+          "alloc::string::String",
+          180
+        ],
+        [
+          "egui::ui::Ui",
+          171
+        ],
+        [
+          "alloc::alloc::Global",
+          121
+        ],
+        [
+          "alloc::vec::Vec",
+          103
+        ],
+        [
+          "core::result::Result",
+          97
+        ],
+        [
+          "ecolor::color32::Color32",
+          81
+        ],
+        [
+          "core::option::Option",
+          67
+        ],
+        [
+          "emath::align::Align",
+          54
+        ],
+        [
+          "emath::vec2::Vec2",
+          49
+        ],
+        [
+          "serde_core::de::Deserializer",
+          43
+        ]
+      ],
+      "folhas_comportamentais": 121
+    },
+    {
+      "nome": "egui_extras",
+      "erro": null,
+      "tempo_fork_seg": 19.482586796,
+      "tempo_total_seg": 19.608014708,
+      "nodes_antes": 396,
+      "nodes_depois": 396,
+      "edges": 1111,
+      "colisoes": 0,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 0,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 0,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 7,
+        "folhas": 256,
+        "bases": 102,
+        "intermediarios": 31,
+        "soma_uses_entrada": 809,
+        "soma_montante": 2400,
+        "n": 396
+      },
+      "top10_transitivos": [
+        [
+          "alloc::alloc::Global",
+          142
+        ],
+        [
+          "core::option::Option",
+          114
+        ],
+        [
+          "emath::range::Rangef",
+          101
+        ],
+        [
+          "alloc::vec::Vec",
+          93
+        ],
+        [
+          "egui::ui::Ui",
+          84
+        ],
+        [
+          "alloc::sync::Arc",
+          80
+        ],
+        [
+          "alloc::string::String",
+          78
+        ],
+        [
+          "core::result::Result",
+          77
+        ],
+        [
+          "egui::sense::Sense",
+          76
+        ],
+        [
+          "egui::layout::Layout",
+          75
+        ]
+      ],
+      "folhas_comportamentais": 47
+    },
+    {
+      "nome": "egui_glow",
+      "erro": null,
+      "tempo_fork_seg": 10.334237374,
+      "tempo_total_seg": 10.339740974,
+      "nodes_antes": 92,
+      "nodes_depois": 92,
+      "edges": 222,
+      "colisoes": 1,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 1,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 1,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 4,
+        "folhas": 49,
+        "bases": 31,
+        "intermediarios": 8,
+        "soma_uses_entrada": 159,
+        "soma_montante": 430,
+        "n": 92
+      },
+      "top10_transitivos": [
+        [
+          "glow::native::Context",
+          37
+        ],
+        [
+          "core::option::Option",
+          32
+        ],
+        [
+          "glow::HasContext",
+          32
+        ],
+        [
+          "egui_glow::vao::BufferInfo",
+          30
+        ],
+        [
+          "alloc::alloc::Global",
+          29
+        ],
+        [
+          "alloc::vec::Vec",
+          29
+        ],
+        [
+          "egui_glow::vao::VertexArrayObject",
+          28
+        ],
+        [
+          "alloc::sync::Arc",
+          26
+        ],
+        [
+          "std::collections::hash::map::HashMap",
+          26
+        ],
+        [
+          "epaint::TextureId",
+          25
+        ]
+      ],
+      "folhas_comportamentais": 14
+    },
+    {
+      "nome": "egui_kittest",
+      "erro": null,
+      "tempo_fork_seg": 15.835035689,
+      "tempo_total_seg": 15.894845945,
+      "nodes_antes": 285,
+      "nodes_depois": 285,
+      "edges": 798,
+      "colisoes": 5,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 5,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 4,
+      "trait_ref_igual": 1,
+      "perfil": {
+        "isolados": 0,
+        "folhas": 178,
+        "bases": 83,
+        "intermediarios": 22,
+        "soma_uses_entrada": 593,
+        "soma_montante": 2683,
+        "n": 283
+      },
+      "top10_transitivos": [
+        [
+          "alloc::alloc::Global",
+          136
+        ],
+        [
+          "std::path::PathBuf",
+          120
+        ],
+        [
+          "alloc::vec::Vec",
+          115
+        ],
+        [
+          "core::option::Option",
+          87
+        ],
+        [
+          "egui::data::input::Modifiers",
+          87
+        ],
+        [
+          "alloc::boxed::Box",
+          86
+        ],
+        [
+          "egui::data::input::Event",
+          86
+        ],
+        [
+          "epaint::mutex::Mutex",
+          86
+        ],
+        [
+          "alloc::string::String",
+          85
+        ],
+        [
+          "egui_kittest::node::EventType",
+          85
+        ]
+      ],
+      "folhas_comportamentais": 32
+    },
+    {
+      "nome": "egui-wgpu",
+      "erro": null,
+      "tempo_fork_seg": 12.333356642,
+      "tempo_total_seg": 12.360870669,
+      "nodes_antes": 195,
+      "nodes_depois": 195,
+      "edges": 552,
+      "colisoes": 3,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 3,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 3,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 1,
+        "folhas": 81,
+        "bases": 89,
+        "intermediarios": 20,
+        "soma_uses_entrada": 440,
+        "soma_montante": 2045,
+        "n": 191
+      },
+      "top10_transitivos": [
+        [
+          "core::option::Option",
+          64
+        ],
+        [
+          "alloc::alloc::Global",
+          57
+        ],
+        [
+          "wgpu::api::device::Device",
+          50
+        ],
+        [
+          "alloc::string::String",
+          46
+        ],
+        [
+          "core::result::Result",
+          44
+        ],
+        [
+          "wgpu::api::adapter::Adapter",
+          44
+        ],
+        [
+          "alloc::sync::Arc",
+          42
+        ],
+        [
+          "wgpu::api::bind_group::BindGroup",
+          40
+        ],
+        [
+          "wgpu::api::surface::Surface",
+          40
+        ],
+        [
+          "wgpu::api::texture::Texture",
+          40
+        ]
+      ],
+      "folhas_comportamentais": 25
+    },
+    {
+      "nome": "egui-winit",
+      "erro": null,
+      "tempo_fork_seg": 12.876379393,
+      "tempo_total_seg": 12.890403491,
+      "nodes_antes": 158,
+      "nodes_depois": 158,
+      "edges": 344,
+      "colisoes": 0,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 0,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 0,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 3,
+        "folhas": 80,
+        "bases": 71,
+        "intermediarios": 4,
+        "soma_uses_entrada": 257,
+        "soma_montante": 685,
+        "n": 158
+      },
+      "top10_transitivos": [
+        [
+          "core::option::Option",
+          58
+        ],
+        [
+          "emath::pos2::Pos2",
+          44
+        ],
+        [
+          "egui::context::Context",
+          36
+        ],
+        [
+          "arboard::Clipboard",
+          35
+        ],
+        [
+          "smithay_clipboard::Clipboard",
+          35
+        ],
+        [
+          "alloc::string::String",
+          34
+        ],
+        [
+          "egui_winit::clipboard::Clipboard",
+          33
+        ],
+        [
+          "emath::rect::Rect",
+          33
+        ],
+        [
+          "egui::data::output::CursorIcon",
+          30
+        ],
+        [
+          "egui::viewport::ViewportId",
+          30
+        ]
+      ],
+      "folhas_comportamentais": 9
+    },
+    {
+      "nome": "egui",
+      "erro": null,
+      "tempo_fork_seg": 7.787779335,
+      "tempo_total_seg": 23.170517409,
+      "nodes_antes": 3694,
+      "nodes_depois": 3694,
+      "edges": 13937,
+      "colisoes": 31,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 31,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 25,
+      "trait_ref_igual": 6,
+      "perfil": {
+        "isolados": 18,
+        "folhas": 3077,
+        "bases": 269,
+        "intermediarios": 289,
+        "soma_uses_entrada": 10429,
+        "soma_montante": 263795,
+        "n": 3653
+      },
+      "top10_transitivos": [
+        [
+          "core::option::Option",
+          2270
+        ],
+        [
+          "alloc::alloc::Global",
+          2080
+        ],
+        [
+          "alloc::string::String",
+          1905
+        ],
+        [
+          "alloc::sync::Arc",
+          1873
+        ],
+        [
+          "emath::vec2::Vec2",
+          1816
+        ],
+        [
+          "core::num::nonzero::NonZero",
+          1705
+        ],
+        [
+          "ecolor::color32::Color32",
+          1683
+        ],
+        [
+          "egui::id::Id",
+          1642
+        ],
+        [
+          "emath::rect::Rect",
+          1617
+        ],
+        [
+          "alloc::vec::Vec",
+          1575
+        ]
+      ],
+      "folhas_comportamentais": 699
+    },
+    {
+      "nome": "emath",
+      "erro": null,
+      "tempo_fork_seg": 4.172451286,
+      "tempo_total_seg": 4.325332178,
+      "nodes_antes": 513,
+      "nodes_depois": 513,
+      "edges": 1222,
+      "colisoes": 20,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 20,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 20,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 41,
+        "folhas": 380,
+        "bases": 49,
+        "intermediarios": 13,
+        "soma_uses_entrada": 748,
+        "soma_montante": 976,
+        "n": 483
+      },
+      "top10_transitivos": [
+        [
+          "emath::pos2::Pos2",
+          179
+        ],
+        [
+          "emath::rect::Rect",
+          133
+        ],
+        [
+          "emath::vec2::Vec2",
+          107
+        ],
+        [
+          "emath::align::Align",
+          55
+        ],
+        [
+          "emath::align::Align2",
+          42
+        ],
+        [
+          "core::result::Result",
+          40
+        ],
+        [
+          "emath::range::Rangef",
+          29
+        ],
+        [
+          "alloc::collections::vec_deque::VecDeque",
+          27
+        ],
+        [
+          "alloc::alloc::Global",
+          26
+        ],
+        [
+          "emath::history::History",
+          25
+        ]
+      ],
+      "folhas_comportamentais": 63
+    },
+    {
+      "nome": "epaint",
+      "erro": null,
+      "tempo_fork_seg": 6.683565746,
+      "tempo_total_seg": 8.250266059,
+      "nodes_antes": 1231,
+      "nodes_depois": 1231,
+      "edges": 4360,
+      "colisoes": 29,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 29,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 29,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 13,
+        "folhas": 941,
+        "bases": 134,
+        "intermediarios": 100,
+        "soma_uses_entrada": 3232,
+        "soma_montante": 15319,
+        "n": 1188
+      },
+      "top10_transitivos": [
+        [
+          "alloc::alloc::Global",
+          576
+        ],
+        [
+          "ecolor::color32::Color32",
+          540
+        ],
+        [
+          "alloc::sync::Arc",
+          462
+        ],
+        [
+          "alloc::vec::Vec",
+          433
+        ],
+        [
+          "emath::vec2::Vec2",
+          409
+        ],
+        [
+          "core::option::Option",
+          394
+        ],
+        [
+          "emath::pos2::Pos2",
+          390
+        ],
+        [
+          "emath::rect::Rect",
+          349
+        ],
+        [
+          "epaint::TextureId",
+          321
+        ],
+        [
+          "font_types::tag::Tag",
+          272
+        ]
+      ],
+      "folhas_comportamentais": 314
+    },
+    {
+      "nome": "epaint_default_fonts",
+      "erro": null,
+      "tempo_fork_seg": 3.6534303120000002,
+      "tempo_total_seg": 3.653435913,
+      "nodes_antes": 1,
+      "nodes_depois": 1,
+      "edges": 0,
+      "colisoes": 0,
+      "vereditos": {
+        "distintos_vizinhanca_disjunta": 0,
+        "distintos_impl_traits_diferentes": 0,
+        "mesmo_item": 0,
+        "nao_determinado": 0
+      },
+      "nao_determinado_amostra": [],
+      "trait_ref_distinto": 0,
+      "trait_ref_igual": 0,
+      "perfil": {
+        "isolados": 1,
+        "folhas": 0,
+        "bases": 0,
+        "intermediarios": 0,
+        "soma_uses_entrada": 0,
+        "soma_montante": 0,
+        "n": 1
+      },
+      "top10_transitivos": [
+        [
+          "epaint_default_fonts",
+          0
+        ]
+      ],
+      "folhas_comportamentais": 0
+    }
+  ]
+}

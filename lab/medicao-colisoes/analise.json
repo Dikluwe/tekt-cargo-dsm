@@ -1,0 +1,3572 @@
+{
+  "por_crate": [
+    {
+      "nome": "typst_bundle",
+      "total_nodes": 158,
+      "total_edges": 488,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst",
+      "total_nodes": 625,
+      "total_edges": 2043,
+      "colisoes_totais": 10,
+      "colisoes_proprias": 10,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst::args::DepsFormat::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::DiagnosticFormat::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::Feature::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::Input::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::Output::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::OutputFormat::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::PdfStandard::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::SerializationFormat::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::args::Target::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst::world::WorldCreationError::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        }
+      ]
+    },
+    {
+      "nome": "typst_eval",
+      "total_nodes": 211,
+      "total_edges": 692,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_html",
+      "total_nodes": 591,
+      "total_edges": 1775,
+      "colisoes_totais": 7,
+      "colisoes_proprias": 7,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_html::HtmlElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_html::dom::HtmlAttr::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_html::dom::HtmlDocument::introspector",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Output']",
+          "traits": [
+            "Output"
+          ]
+        },
+        {
+          "path": "typst_html::dom::HtmlNode::from",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Tag>",
+            "From<HtmlElement>",
+            "From<HtmlFrame>"
+          ]
+        },
+        {
+          "path": "typst_html::dom::HtmlTag::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_html::introspect::HtmlIntrospector::position",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Introspector']",
+          "traits": [
+            "Introspector"
+          ]
+        },
+        {
+          "path": "typst_html::num::nonzero::NonZero::into_attr",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        }
+      ]
+    },
+    {
+      "nome": "typst_ide",
+      "total_nodes": 243,
+      "total_edges": 686,
+      "colisoes_totais": 2,
+      "colisoes_proprias": 2,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_ide::document::PagedDocument::Position",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_ide::dom::HtmlDocument::Position",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        }
+      ]
+    },
+    {
+      "nome": "typst_kit",
+      "total_nodes": 269,
+      "total_edges": 801,
+      "colisoes_totais": 1,
+      "colisoes_proprias": 1,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_kit::downloader::Progress::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "typst_layout",
+      "total_nodes": 1152,
+      "total_edges": 5573,
+      "colisoes_totais": 4,
+      "colisoes_proprias": 4,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_layout::document::PagedDocument::introspector",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Output']",
+          "traits": [
+            "Output"
+          ]
+        },
+        {
+          "path": "typst_layout::inline::line::ItemEntry::from",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<&'a Item<'a>>",
+            "From<Item<'a>>"
+          ]
+        },
+        {
+          "path": "typst_layout::introspect::PagedIntrospector::position",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Introspector']",
+          "traits": [
+            "Introspector"
+          ]
+        },
+        {
+          "path": "typst_layout::math::fragment::MathFragment::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<GlyphFragment>",
+            "From<FrameFragment>"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "typst_library",
+      "total_nodes": 9072,
+      "total_edges": 33276,
+      "colisoes_totais": 316,
+      "colisoes_proprias": 316,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_library::diag::FileError::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::diag::FileError::from",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Utf8Error>",
+            "From<FromUtf8Error>",
+            "From<PackageError>"
+          ]
+        },
+        {
+          "path": "typst_library::diag::PackageError::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::diag::ReportPos::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Range<usize>>",
+            "From<LineCol>"
+          ]
+        },
+        {
+          "path": "typst_library::diag::Tracepoint::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall",
+          "n_nos": 3,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::clone",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::eq",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::engine::__ComemoCall::hash",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::engine::__ComemoSurface",
+          "n_nos": 3,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::engine::__ComemoSurfaceMut",
+          "n_nos": 3,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::array::Array::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<EcoVec<Value>>",
+            "From<&[Value]>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::assert",
+          "n_nos": 2,
+          "arestas_agregadas": 12,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::abs",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::acos",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::acosh",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::asin",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::asinh",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::atan",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::atan2",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::atanh",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::binom",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::ceil",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::clamp",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::cos",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::cosh",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::div_euclid",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::erf",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::even",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::exp",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::fact",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::floor",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::fract",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::gcd",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::lcm",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::ln",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::log",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::max",
+          "n_nos": 2,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::min",
+          "n_nos": 2,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::norm",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::odd",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::perm",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::pow",
+          "n_nos": 2,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::quo",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::rem",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::rem_euclid",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::root",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::round",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::sin",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::sinh",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::sqrt",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::tan",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::tanh",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::calc::trunc",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::Content::Output",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::Content::add",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Add",
+            "Add<&'a Self>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::Content::add_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "AddAssign",
+            "AddAssign<&Self>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::StyledElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::body",
+          "n_nos": 3,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Outlinable']",
+          "traits": [
+            "Outlinable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::colspan",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::counter",
+          "n_nos": 3,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Refable']",
+          "traits": [
+            "Refable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::default",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Default']",
+          "traits": [
+            "Default"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::determine_format",
+          "n_nos": 2,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::numbering",
+          "n_nos": 3,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Refable']",
+          "traits": [
+            "Refable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::outlined",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Outlinable']",
+          "traits": [
+            "Outlinable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::plain_text",
+          "n_nos": 6,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['PlainText']",
+          "traits": [
+            "PlainText"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::prefix",
+          "n_nos": 3,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Outlinable']",
+          "traits": [
+            "Outlinable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::realize",
+          "n_nos": 5,
+          "arestas_agregadas": 13,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::realize_title",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::resolve_cell",
+          "n_nos": 2,
+          "arestas_agregadas": 18,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::rowspan",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::show_set",
+          "n_nos": 12,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ShowSet']",
+          "traits": [
+            "ShowSet"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::span",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::supplement",
+          "n_nos": 3,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Refable']",
+          "traits": [
+            "Refable"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::synthesize",
+          "n_nos": 11,
+          "arestas_agregadas": 18,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Synthesize']",
+          "traits": [
+            "Synthesize"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::update",
+          "n_nos": 6,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Count']",
+          "traits": [
+            "Count"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::x",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::packed::Packed::y",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['ResolvableCell']",
+          "traits": [
+            "ResolvableCell"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::content::vtable::Handle::eq",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::datetime::Datetime::Output",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::datetime::Datetime::sub",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Sub<Duration>",
+            "Sub"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::decimal::Decimal::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::dict::Dict::from",
+          "n_nos": 4,
+          "arestas_agregadas": 9,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<IndexMap<Str, Value, FxBuildHasher>>",
+            "From<PagedPosition>",
+            "From<FirstLineIndent>",
+            "From<PixelFormat>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::duration::Duration::Output",
+          "n_nos": 6,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::duration::Duration::div",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div<f64>",
+            "Div"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::eval",
+          "n_nos": 2,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::func::Func::eq",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "PartialEq",
+            "PartialEq<&'static NativeFuncData>",
+            "PartialEq<Element>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::func::Func::from",
+          "n_nos": 5,
+          "arestas_agregadas": 7,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<FuncInner>",
+            "From<&'static NativeFuncData>",
+            "From<Element>",
+            "From<Closure>",
+            "From<PluginFunc>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::func::Func::scope",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::panic",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::plugin_::plugin",
+          "n_nos": 2,
+          "arestas_agregadas": 14,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::repr::repr",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::str::Str::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::str::Str::from",
+          "n_nos": 5,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<char>",
+            "From<&str>",
+            "From<EcoString>",
+            "From<String>",
+            "From<Cow<'_, str>>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::styles::Style::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Property>",
+            "From<Recipe>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::styles::Styles::from",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<LazyHash<Style>>",
+            "From<[LazyHash<Style>; N]>",
+            "From<Style>"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::symbol::Symbol::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::target_::target",
+          "n_nos": 2,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::constructor",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::foundations::ty::Type::scope",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::foundations::version::Version::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_library::introspection::counter::CounterDisplayElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::counter::CounterUpdateElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::here_::here",
+          "n_nos": 2,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::locate_::locate",
+          "n_nos": 2,
+          "arestas_agregadas": 13,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::location::Location::hash",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::position::DocumentPosition::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<PagedPosition>",
+            "From<HtmlPosition>"
+          ]
+        },
+        {
+          "path": "typst_library::introspection::query_::query",
+          "n_nos": 2,
+          "arestas_agregadas": 12,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::introspection::state::StateUpdateElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::Output",
+          "n_nos": 7,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::div",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div<f64>",
+            "Div"
+          ]
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::sum",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Sum",
+            "Sum<&'a Self>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::abs::Abs::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::align::AlignElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::align::Alignment::Output",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::align::Alignment::from",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Side>",
+            "From<HAlignment>",
+            "From<VAlignment>",
+            "From<SpecificAlignment<H, V>>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::align::HAlignment::Output",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::align::VAlignment::Output",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::Output",
+          "n_nos": 6,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::div",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div",
+            "Div<f64>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::angle::Angle::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::Output",
+          "n_nos": 11,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::bitand",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "BitAnd",
+            "BitAnd<bool>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::bitor",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "BitOr",
+            "BitOr<bool>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::axes::Axes::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::columns::ColumnsElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::container::BlockElem::Type",
+          "n_nos": 14,
+          "arestas_agregadas": 12,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::container::BoxElem::Type",
+          "n_nos": 10,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::container::Sizing::from",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Smart<Rel>>",
+            "From<T>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::em::Em::Output",
+          "n_nos": 7,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::em::Em::div",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div<f64>",
+            "Div"
+          ]
+        },
+        {
+          "path": "typst_library::layout::em::Em::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::Output",
+          "n_nos": 6,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::div",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div",
+            "Div<f64>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::fr::Fr::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::grid::Celled::resolve",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Resolve']",
+          "traits": [
+            "Resolve"
+          ]
+        },
+        {
+          "path": "typst_library::layout::grid::GridCell::Type",
+          "n_nos": 11,
+          "arestas_agregadas": 13,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::grid::GridElem::Type",
+          "n_nos": 11,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::grid::GridFooter::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::grid::GridHLine::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::grid::GridHeader::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::grid::GridVLine::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::hide::HideElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::layout_::layout",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::length::Length::Output",
+          "n_nos": 6,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::length::Length::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Abs>",
+            "From<Em>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::length::Length::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::measure_::measure",
+          "n_nos": 2,
+          "arestas_agregadas": 15,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::pad::PadElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::page::PageElem::Type",
+          "n_nos": 18,
+          "arestas_agregadas": 15,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::page::PagebreakElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::place::PlaceElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::point::Point::Output",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::point::Point::zero",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Numeric']",
+          "traits": [
+            "Numeric"
+          ]
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::Output",
+          "n_nos": 8,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::add",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Add",
+            "Add<T>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::div",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div",
+            "Div<f64>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::mul",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Mul",
+            "Mul<f64>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::ratio::Ratio::mul_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::Output",
+          "n_nos": 8,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::add",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Add",
+            "Add<T>",
+            "Add<Ratio>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::from",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Abs>",
+            "From<Em>",
+            "From<T>",
+            "From<Ratio>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::rel::Rel::into_value",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::repeat::RepeatElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::spacing::HElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::spacing::Spacing::from",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Abs>",
+            "From<Em>",
+            "From<Length>",
+            "From<Fr>"
+          ]
+        },
+        {
+          "path": "typst_library::layout::spacing::VElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::stack::StackElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::transform::MoveElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::transform::RotateElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::transform::ScaleElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::layout::transform::SkewElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::cbor_::cbor",
+          "n_nos": 2,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::csv_::csv",
+          "n_nos": 2,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::json_::json",
+          "n_nos": 2,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::read_::read",
+          "n_nos": 2,
+          "arestas_agregadas": 12,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::toml_::toml",
+          "n_nos": 2,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::xml_::xml",
+          "n_nos": 2,
+          "arestas_agregadas": 14,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::loading::yaml_::yaml",
+          "n_nos": 2,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::ClassElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::accent::AccentElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::attach::AttachElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::attach::LimitsElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::attach::StretchElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::cancel::CancelElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::equation::EquationElem::Type",
+          "n_nos": 14,
+          "arestas_agregadas": 14,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::frac::BinomElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::frac::FracElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::LrElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::abs",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::ceil",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::floor",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::norm",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::lr::round",
+          "n_nos": 2,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::matrix::Augment::into_value",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::matrix::CasesElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::matrix::MatElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::matrix::VecElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::op::OpElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::root::RootElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::root::sqrt",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::bb",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::bold",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::cal",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::display",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::frak",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::inline",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::italic",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::mono",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::sans",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::scr",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::script",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::serif",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::sscript",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::style::upright",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::OverbraceElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::OverbracketElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::OverparenElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::OvershellElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::UnderbraceElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::UnderbracketElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::UnderparenElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::math::underover::UndershellElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::asset::AssetElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::bibliography::BibliographyElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 12,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::cite::CiteElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::document::DocumentElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::enum_::EnumElem::Type",
+          "n_nos": 11,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::enum_::EnumItem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::figure::FigureCaption::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::figure::FigureElem::Type",
+          "n_nos": 12,
+          "arestas_agregadas": 15,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::footnote::FootnoteElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::footnote::FootnoteEntry::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::heading::HeadingElem::Type",
+          "n_nos": 10,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::link::DirectLinkElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::link::LinkElem::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::link::LinkMarker::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::list::ListElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::numbering_::numbering",
+          "n_nos": 2,
+          "arestas_agregadas": 14,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::outline::OutlineElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::outline::OutlineEntry::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::outline::PrefixInfo::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::par::ParElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::par::ParLine::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::par::ParLineMarker::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::quote::QuoteElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::reference::RefElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::strong::StrongElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableCell::Type",
+          "n_nos": 12,
+          "arestas_agregadas": 14,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableElem::Type",
+          "n_nos": 12,
+          "arestas_agregadas": 17,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableFooter::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableHLine::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableHeader::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::table::TableVLine::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 9,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::terms::TermItem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::model::terms::TermsElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::castable",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::from_value",
+          "n_nos": 5,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::input",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::into_value",
+          "n_nos": 5,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::num::nonzero::NonZero::output",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::accessibility::ArtifactElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::accessibility::PdfMarkerTag::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::accessibility::data_cell",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::accessibility::header_cell",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::accessibility::table_summary",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::pdf::attach::AttachElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::result::Result::at",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['At<T>']",
+          "traits": [
+            "At<T>"
+          ]
+        },
+        {
+          "path": "typst_library::result::Result::castable",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::result::Result::hint",
+          "n_nos": 2,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Hint<T>']",
+          "traits": [
+            "Hint<T>"
+          ]
+        },
+        {
+          "path": "typst_library::result::Result::input",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::result::Result::into_result",
+          "n_nos": 3,
+          "arestas_agregadas": 8,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::result::Result::output",
+          "n_nos": 3,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::span::Spanned::Output",
+          "n_nos": 4,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::span::Spanned::load",
+          "n_nos": 4,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Load']",
+          "traits": [
+            "Load"
+          ]
+        },
+        {
+          "path": "typst_library::string::EcoString::from",
+          "n_nos": 3,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<FileError>",
+            "From<PackageError>",
+            "From<Str>"
+          ]
+        },
+        {
+          "path": "typst_library::text::TextElem::Type",
+          "n_nos": 41,
+          "arestas_agregadas": 34,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::case::lower",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::case::upper",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::deco::HighlightElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::deco::OverlineElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::deco::StrikeElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::deco::UnderlineElem::Type",
+          "n_nos": 6,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::Output",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::bits",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::fmt",
+          "n_nos": 5,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::FontFlags::from_bits_retain",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::InternalBitFlags::Output",
+          "n_nos": 5,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::font::book::InternalBitFlags::fmt",
+          "n_nos": 6,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::lang::Region::eq",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['PartialEq<&str>']",
+          "traits": [
+            "PartialEq<&str>"
+          ]
+        },
+        {
+          "path": "typst_library::text::lorem_::lorem",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::raw::RawElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 15,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::raw::RawLine::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::shift::SubElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::shift::SuperElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::smallcaps_::SmallcapsElem::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::text::smartquote::SmartQuoteElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::color::Color::from",
+          "n_nos": 8,
+          "arestas_agregadas": 12,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Luma>",
+            "From<Oklab>",
+            "From<Oklch>",
+            "From<Rgb>",
+            "From<LinearRgb>",
+            "From<Cmyk>",
+            "From<Hsl>",
+            "From<Hsv>"
+          ]
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveCubic::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveLine::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveMove::Type",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::curve::CurveQuad::Type",
+          "n_nos": 3,
+          "arestas_agregadas": 6,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::image::ImageElem::Type",
+          "n_nos": 10,
+          "arestas_agregadas": 16,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::image::ImageFormat::from",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<R>",
+            "From<VectorFormat>"
+          ]
+        },
+        {
+          "path": "typst_library::visualize::image::ImageKind::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<RasterImage>",
+            "From<SvgImage>"
+          ]
+        },
+        {
+          "path": "typst_library::visualize::image::raster::RasterFormat::from",
+          "n_nos": 2,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<ExchangeFormat>",
+            "From<PixelFormat>"
+          ]
+        },
+        {
+          "path": "typst_library::visualize::line::LineElem::Type",
+          "n_nos": 5,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::paint::Paint::from",
+          "n_nos": 3,
+          "arestas_agregadas": 4,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "From<Tiling>",
+            "From<T>",
+            "From<Gradient>"
+          ]
+        },
+        {
+          "path": "typst_library::visualize::polygon::PolygonElem::Type",
+          "n_nos": 4,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::shape::CircleElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::shape::EllipseElem::Type",
+          "n_nos": 7,
+          "arestas_agregadas": 10,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::shape::RectElem::Type",
+          "n_nos": 8,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::shape::SquareElem::Type",
+          "n_nos": 9,
+          "arestas_agregadas": 11,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_library::visualize::stroke::Stroke::into_value",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        }
+      ]
+    },
+    {
+      "nome": "typst_macros",
+      "total_nodes": 277,
+      "total_edges": 856,
+      "colisoes_totais": 17,
+      "colisoes_proprias": 16,
+      "stdlib_colisoes": 1,
+      "detalhes": [
+        {
+          "path": "typst_macros::cast",
+          "n_nos": 2,
+          "arestas_agregadas": 26,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::elem",
+          "n_nos": 2,
+          "arestas_agregadas": 44,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::func",
+          "n_nos": 2,
+          "arestas_agregadas": 39,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::scope",
+          "n_nos": 2,
+          "arestas_agregadas": 23,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::time",
+          "n_nos": 2,
+          "arestas_agregadas": 15,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::ty",
+          "n_nos": 2,
+          "arestas_agregadas": 23,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::cast",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::constructor",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::contextual",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::ext",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::keywords",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::name",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::parent",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::scope",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::span",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_macros::util::kw::title",
+          "n_nos": 2,
+          "arestas_agregadas": 19,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        }
+      ]
+    },
+    {
+      "nome": "typst_pdf",
+      "total_nodes": 811,
+      "total_edges": 2774,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_realize",
+      "total_nodes": 131,
+      "total_edges": 331,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_render",
+      "total_nodes": 117,
+      "total_edges": 268,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_svg",
+      "total_nodes": 216,
+      "total_edges": 625,
+      "colisoes_totais": 8,
+      "colisoes_proprias": 8,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_svg::DedupId::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 7,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['SvgDisplay']",
+          "traits": [
+            "SvgDisplay"
+          ]
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::close",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['OutlineBuilder']",
+          "traits": [
+            "OutlineBuilder"
+          ]
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::curve_to",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['OutlineBuilder']",
+          "traits": [
+            "OutlineBuilder"
+          ]
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::line_to",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['OutlineBuilder']",
+          "traits": [
+            "OutlineBuilder"
+          ]
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::move_to",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['OutlineBuilder']",
+          "traits": [
+            "OutlineBuilder"
+          ]
+        },
+        {
+          "path": "typst_svg::path::SvgPathBuilder::quad_to",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['OutlineBuilder']",
+          "traits": [
+            "OutlineBuilder"
+          ]
+        },
+        {
+          "path": "typst_svg::write::SvgFormatter::push_str",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['SvgWrite']",
+          "traits": [
+            "SvgWrite"
+          ]
+        },
+        {
+          "path": "typst_svg::write::SvgIdRef::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['SvgDisplay']",
+          "traits": [
+            "SvgDisplay"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "typst_syntax",
+      "total_nodes": 1501,
+      "total_edges": 4353,
+      "colisoes_totais": 6,
+      "colisoes_proprias": 6,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_syntax::ast::Expr::hash",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_syntax::node::Unnumberable::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 1 trait(s): ['Display']",
+          "traits": [
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_syntax::package::PackageSpec::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_syntax::package::PackageVersion::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_syntax::package::VersionBound::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_syntax::package::VersionlessPackageSpec::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "typst_timing",
+      "total_nodes": 41,
+      "total_edges": 63,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    },
+    {
+      "nome": "typst_utils",
+      "total_nodes": 262,
+      "total_edges": 555,
+      "colisoes_totais": 14,
+      "colisoes_proprias": 14,
+      "stdlib_colisoes": 0,
+      "detalhes": [
+        {
+          "path": "typst_utils::pico::ResolvedPicoStr::fmt",
+          "n_nos": 2,
+          "arestas_agregadas": 5,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Debug",
+            "Display"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::Output",
+          "n_nos": 11,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::add",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Add<Self>",
+            "Add<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::add_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::div",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Div<Self>",
+            "Div<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::div_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::eq",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "PartialEq",
+            "PartialEq<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::mul",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Mul<Self>",
+            "Mul<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::mul_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::rem",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Rem<Self>",
+            "Rem<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::rem_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::sub",
+          "n_nos": 2,
+          "arestas_agregadas": 3,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Sub<Self>",
+            "Sub<f64>"
+          ]
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::sub_assign",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "NaoDeterminado",
+          "razao": "E2 encontrou 0 trait(s): []",
+          "traits": []
+        },
+        {
+          "path": "typst_utils::scalar::Scalar::sum",
+          "n_nos": 2,
+          "arestas_agregadas": 2,
+          "veredito": "Distintos/ImplDeTraitsDiferentes",
+          "razao": "",
+          "traits": [
+            "Sum",
+            "Sum<&'a Self>"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "typst",
+      "total_nodes": 78,
+      "total_edges": 119,
+      "colisoes_totais": 0,
+      "colisoes_proprias": 0,
+      "stdlib_colisoes": 0,
+      "detalhes": []
+    }
+  ],
+  "agregados": {
+    "total_colisoes_proprias": 384,
+    "decididas_via_fontes": 55,
+    "nao_determinado": 329,
+    "padroes_traits": {
+      "Debug+Display": 9,
+      "From<HtmlElement>+From<Tag>": 1,
+      "From<&'a Item<'a>>+From<Item<'a>>": 1,
+      "From<FrameFragment>+From<GlyphFragment>": 1,
+      "From<FromUtf8Error>+From<Utf8Error>": 1,
+      "From<LineCol>+Range<usize>>": 1,
+      "From<&[Value]>+From<EcoVec<Value>>": 1,
+      "Add+Add<&'a Self>": 1,
+      "AddAssign+AddAssign<&Self>": 1,
+      "Sub+Sub<Duration>": 1,
+      "From<IndexMap<Str, Value, FxBuildHasher>>+From<PagedPosition>": 1,
+      "Div+Div<f64>": 6,
+      "PartialEq+PartialEq<&'static NativeFuncData>": 1,
+      "From<&'static NativeFuncData>+From<FuncInner>": 1,
+      "From<&str>+From<char>": 1,
+      "From<Property>+From<Recipe>": 1,
+      "From<LazyHash<Style>>+From<[LazyHash<Style>; N]>": 1,
+      "From<HtmlPosition>+From<PagedPosition>": 1,
+      "Sum+Sum<&'a Self>": 2,
+      "From<HAlignment>+From<Side>": 1,
+      "BitAnd+BitAnd<bool>": 1,
+      "BitOr+BitOr<bool>": 1,
+      "From<Smart<Rel>>+From<T>": 1,
+      "From<Abs>+From<Em>": 3,
+      "Add+Add<T>": 2,
+      "Mul+Mul<f64>": 1,
+      "From<FileError>+From<PackageError>": 1,
+      "From<Luma>+From<Oklab>": 1,
+      "From<R>+From<VectorFormat>": 1,
+      "From<RasterImage>+From<SvgImage>": 1,
+      "From<ExchangeFormat>+From<PixelFormat>": 1,
+      "From<T>+From<Tiling>": 1,
+      "Add<Self>+Add<f64>": 1,
+      "Div<Self>+Div<f64>": 1,
+      "PartialEq+PartialEq<f64>": 1,
+      "Mul<Self>+Mul<f64>": 1,
+      "Rem<Self>+Rem<f64>": 1,
+      "Sub<Self>+Sub<f64>": 1
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "nome": "egui_kittest",
+  "erro": null,
+  "tempo_fork_seg": 15.835035689,
+  "tempo_total_seg": 15.894845945,
+  "nodes_antes": 285,
+  "nodes_depois": 285,
+  "edges": 798,
+  "colisoes": 5,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 5,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 4,
+  "trait_ref_igual": 1,
+  "perfil": {
+    "isolados": 0,
+    "folhas": 178,
+    "bases": 83,
+    "intermediarios": 22,
+    "soma_uses_entrada": 593,
+    "soma_montante": 2683,
+    "n": 283
+  },
+  "top10_transitivos": [
+    [
+      "alloc::alloc::Global",
+      136
+    ],
+    [
+      "std::path::PathBuf",
+      120
+    ],
+    [
+      "alloc::vec::Vec",
+      115
+    ],
+    [
+      "core::option::Option",
+      87
+    ],
+    [
+      "egui::data::input::Modifiers",
+      87
+    ],
+    [
+      "alloc::boxed::Box",
+      86
+    ],
+    [
+      "egui::data::input::Event",
+      86
+    ],
+    [
+      "epaint::mutex::Mutex",
+      86
+    ],
+    [
+      "alloc::string::String",
+      85
+    ],
+    [
+      "egui_kittest::node::EventType",
+      85
+    ]
+  ],
+  "folhas_comportamentais": 32
+}

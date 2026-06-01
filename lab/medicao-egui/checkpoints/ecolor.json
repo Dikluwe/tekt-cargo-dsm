@@ -1,0 +1,71 @@
+{
+  "nome": "ecolor",
+  "erro": null,
+  "tempo_fork_seg": 123.125269075,
+  "tempo_total_seg": 123.141269543,
+  "nodes_antes": 169,
+  "nodes_depois": 169,
+  "edges": 377,
+  "colisoes": 8,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 8,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 8,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 3,
+    "folhas": 129,
+    "bases": 25,
+    "intermediarios": 2,
+    "soma_uses_entrada": 220,
+    "soma_montante": 226,
+    "n": 159
+  },
+  "top10_transitivos": [
+    [
+      "ecolor::color32::Color32",
+      63
+    ],
+    [
+      "ecolor::rgba::Rgba",
+      44
+    ],
+    [
+      "ecolor::hsva::Hsva",
+      28
+    ],
+    [
+      "core::result::Result",
+      18
+    ],
+    [
+      "ecolor::hex_color_runtime::HexColor",
+      11
+    ],
+    [
+      "ecolor::hsva_gamma::HsvaGamma",
+      9
+    ],
+    [
+      "core::num::error::ParseIntError",
+      8
+    ],
+    [
+      "core::fmt::Error",
+      7
+    ],
+    [
+      "core::fmt::Formatter",
+      7
+    ],
+    [
+      "ecolor::hex_color_runtime::ParseHexColorError",
+      7
+    ]
+  ],
+  "folhas_comportamentais": 30
+}

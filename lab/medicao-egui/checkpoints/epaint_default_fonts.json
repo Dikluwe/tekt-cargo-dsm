@@ -1,0 +1,35 @@
+{
+  "nome": "epaint_default_fonts",
+  "erro": null,
+  "tempo_fork_seg": 3.6534303120000002,
+  "tempo_total_seg": 3.653435913,
+  "nodes_antes": 1,
+  "nodes_depois": 1,
+  "edges": 0,
+  "colisoes": 0,
+  "vereditos": {
+    "distintos_vizinhanca_disjunta": 0,
+    "distintos_impl_traits_diferentes": 0,
+    "mesmo_item": 0,
+    "nao_determinado": 0
+  },
+  "nao_determinado_amostra": [],
+  "trait_ref_distinto": 0,
+  "trait_ref_igual": 0,
+  "perfil": {
+    "isolados": 1,
+    "folhas": 0,
+    "bases": 0,
+    "intermediarios": 0,
+    "soma_uses_entrada": 0,
+    "soma_montante": 0,
+    "n": 1
+  },
+  "top10_transitivos": [
+    [
+      "epaint_default_fonts",
+      0
+    ]
+  ],
+  "folhas_comportamentais": 0
+}
