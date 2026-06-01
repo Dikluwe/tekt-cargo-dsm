@@ -120,15 +120,15 @@ impl TryFrom<&str> for Visibility {
     }
 }
 
-/// Tipo do item (lista fechada da spec, específica de Rust).
+/// Tipo **base** do item — sem os modificadores `const`/`async`/`unsafe`,
+/// que vivem em [`Modificadores`]. A string `kind` do fork pode trazer os
+/// modificadores embutidos (`"const async unsafe fn"`); o `TryFrom` despe-os
+/// e mantém só o tipo base (`Fn`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Kind {
     Crate,
     Mod,
     Fn,
-    ConstFn,
-    AsyncFn,
-    UnsafeFn,
     Struct,
     Union,
     Enum,
@@ -136,7 +136,6 @@ pub enum Kind {
     Const,
     Static,
     Trait,
-    UnsafeTrait,
     Type,
     Builtin,
     Macro,
@@ -145,14 +144,17 @@ pub enum Kind {
 impl TryFrom<&str> for Kind {
     type Error = ValorDesconhecido;
     fn try_from(s: &str) -> Result<Self, Self::Error> {
+        // O tipo base é o ÚLTIMO token. Modificadores (`const`/`async`/
+        // `unsafe`) precedem-no e são responsabilidade de `Modificadores`
+        // (preenchido a partir dos booleanos do fork, no `lente_infra`).
+        // Pegar o último token resolve a ambiguidade `const` (item Const,
+        // sozinho) vs `const fn` (modificador + Fn).
+        let base = s.rsplit(' ').next().unwrap_or(s);
         use Kind::*;
-        let kind = match s {
+        let kind = match base {
             "crate" => Crate,
             "mod" => Mod,
             "fn" => Fn,
-            "const fn" => ConstFn,
-            "async fn" => AsyncFn,
-            "unsafe fn" => UnsafeFn,
             "struct" => Struct,
             "union" => Union,
             "enum" => Enum,
@@ -160,14 +162,13 @@ impl TryFrom<&str> for Kind {
             "const" => Const,
             "static" => Static,
             "trait" => Trait,
-            "unsafe trait" => UnsafeTrait,
             "type" => Type,
             "builtin" => Builtin,
             "macro" => Macro,
-            outro => {
+            _ => {
                 return Err(ValorDesconhecido {
                     tipo: "Kind",
-                    texto: outro.to_string(),
+                    texto: s.to_string(),
                 });
             }
         };
@@ -175,20 +176,47 @@ impl TryFrom<&str> for Kind {
     }
 }
 
-/// Nó do grafo. Identidade canônica é `path`.
+/// Modificadores de um item (separados do [`Kind`], que é só o tipo base).
+/// Fonte da verdade: os booleanos do descritor do fork (não a string `kind`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub struct Modificadores {
+    pub is_const: bool,
+    pub is_async: bool,
+    pub is_unsafe: bool,
+}
+
+/// Nó do grafo. Identidade canônica é `id` (atribuído pela fonte; o
+/// `path` **pode repetir** entre nós distintos no mesmo grafo — ex.: dois
+/// métodos `fmt` colidentes via Display+Debug).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct No {
+    pub id: usize,
     pub path: Path,
     pub name: String,
     pub kind: Kind,
+    pub modificadores: Modificadores,
     pub visibility: Visibility,
+    /// Crate de origem do nó (distingue nós do crate-alvo de nós de stdlib).
+    pub crate_name: String,
+    /// Nome do trait, quando o nó é método de impl-de-trait. `None` caso não.
+    pub trait_: Option<String>,
+    /// Referência do trait com seus argumentos (texto, sem parsing).
+    pub trait_ref: Option<String>,
+    /// Expressão `cfg` como texto (sem interpretação).
+    pub cfg: Option<String>,
+    /// Tipo de macro, quando o nó é uma macro. `None` caso não.
+    pub macro_kind: Option<String>,
+    pub is_non_exhaustive: bool,
 }
 
-/// Aresta dirigida do grafo. `from` e `to` referenciam `path` de nós.
+/// Aresta dirigida do grafo. `id_from`/`id_to` são a referência canônica
+/// (resolvem colisões); `from`/`to` permanecem para legibilidade.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Aresta {
     pub from: Path,
+    pub id_from: usize,
     pub to: Path,
+    pub id_to: usize,
     pub relation: Relation,
 }
 
@@ -231,14 +259,11 @@ mod tests {
     }
 
     #[test]
-    fn kind_cobre_lista_fechada_inteira() {
+    fn kind_cobre_os_treze_tipos_base() {
         let pares: &[(&str, Kind)] = &[
             ("crate", Kind::Crate),
             ("mod", Kind::Mod),
             ("fn", Kind::Fn),
-            ("const fn", Kind::ConstFn),
-            ("async fn", Kind::AsyncFn),
-            ("unsafe fn", Kind::UnsafeFn),
             ("struct", Kind::Struct),
             ("union", Kind::Union),
             ("enum", Kind::Enum),
@@ -246,7 +271,6 @@ mod tests {
             ("const", Kind::Const),
             ("static", Kind::Static),
             ("trait", Kind::Trait),
-            ("unsafe trait", Kind::UnsafeTrait),
             ("type", Kind::Type),
             ("builtin", Kind::Builtin),
             ("macro", Kind::Macro),
@@ -262,10 +286,28 @@ mod tests {
     }
 
     #[test]
+    fn kind_despe_modificadores_e_pega_tipo_base() {
+        assert_eq!(Kind::try_from("const fn").unwrap(), Kind::Fn);
+        assert_eq!(Kind::try_from("async fn").unwrap(), Kind::Fn);
+        assert_eq!(Kind::try_from("unsafe fn").unwrap(), Kind::Fn);
+        assert_eq!(Kind::try_from("const async unsafe fn").unwrap(), Kind::Fn);
+        assert_eq!(Kind::try_from("unsafe trait").unwrap(), Kind::Trait);
+    }
+
+    #[test]
+    fn kind_const_sozinho_e_o_tipo_const_nao_modificador() {
+        // Ambiguidade resolvida pelo último token: "const" sozinho é o item
+        // Const; "const fn" é Fn com modificador.
+        assert_eq!(Kind::try_from("const").unwrap(), Kind::Const);
+        assert_eq!(Kind::try_from("const fn").unwrap(), Kind::Fn);
+    }
+
+    #[test]
     fn kind_desconhecido_retorna_erro() {
-        let err = Kind::try_from("extern fn").unwrap_err();
+        // Último token não é tipo base conhecido.
+        let err = Kind::try_from("frobnicate").unwrap_err();
         assert_eq!(err.tipo, "Kind");
-        assert_eq!(err.texto, "extern fn");
+        assert_eq!(err.texto, "frobnicate");
     }
 
     #[test]
@@ -301,26 +343,36 @@ mod tests {
         assert_eq!(err.texto, "hidden");
     }
 
+    /// Constrói um `No` com os campos do descritor em default (None/false).
+    fn no_de(id: usize, path: &str, name: &str, kind: Kind) -> No {
+        No {
+            id,
+            path: Path::from(path),
+            name: name.to_string(),
+            kind,
+            modificadores: Modificadores::default(),
+            visibility: Visibility::Pub,
+            crate_name: "meu".to_string(),
+            trait_: None,
+            trait_ref: None,
+            cfg: None,
+            macro_kind: None,
+            is_non_exhaustive: false,
+        }
+    }
+
     #[test]
     fn grafo_construido_preserva_nos_e_arestas() {
         let mut g = Grafo::new("meu");
-        let raiz = No {
-            path: Path::from("meu"),
-            name: "meu".to_string(),
-            kind: Kind::Crate,
-            visibility: Visibility::Pub,
-        };
-        let filho = No {
-            path: Path::from("meu::foo"),
-            name: "foo".to_string(),
-            kind: Kind::Mod,
-            visibility: Visibility::Pub,
-        };
+        let raiz = no_de(1, "meu", "meu", Kind::Crate);
+        let filho = no_de(2, "meu::foo", "foo", Kind::Mod);
         g.nodes.push(raiz.clone());
         g.nodes.push(filho.clone());
         g.edges.push(Aresta {
             from: Path::from("meu"),
+            id_from: 1,
             to: Path::from("meu::foo"),
+            id_to: 2,
             relation: Relation::Owns,
         });
 
@@ -332,19 +384,44 @@ mod tests {
         assert_eq!(g.edges[0].relation, Relation::Owns);
         assert_eq!(g.edges[0].from.as_str(), "meu");
         assert_eq!(g.edges[0].to.as_str(), "meu::foo");
+        assert_eq!(g.edges[0].id_from, 1);
+        assert_eq!(g.edges[0].id_to, 2);
     }
 
     #[test]
     fn grafo_minimo_so_raiz_e_valido() {
         let mut g = Grafo::new("solo");
-        g.nodes.push(No {
-            path: Path::from("solo"),
-            name: "solo".to_string(),
-            kind: Kind::Crate,
-            visibility: Visibility::Pub,
-        });
+        g.nodes.push(no_de(1, "solo", "solo", Kind::Crate));
         assert_eq!(g.nodes.len(), 1);
         assert!(g.edges.is_empty());
+    }
+
+    #[test]
+    fn modificadores_default_tudo_false() {
+        let m = Modificadores::default();
+        assert!(!m.is_const);
+        assert!(!m.is_async);
+        assert!(!m.is_unsafe);
+    }
+
+    #[test]
+    fn no_carrega_descritor_semantico() {
+        let mut n = no_de(7, "c::T::fmt", "fmt", Kind::Fn);
+        n.trait_ = Some("Display".to_string());
+        n.trait_ref = Some("Display".to_string());
+        n.modificadores = Modificadores {
+            is_const: true,
+            is_async: false,
+            is_unsafe: true,
+        };
+        n.is_non_exhaustive = true;
+        n.cfg = Some("unix".to_string());
+        n.macro_kind = None;
+
+        assert_eq!(n.trait_.as_deref(), Some("Display"));
+        assert_eq!(n.cfg.as_deref(), Some("unix"));
+        assert!(n.modificadores.is_const && n.modificadores.is_unsafe);
+        assert!(n.is_non_exhaustive);
     }
 
     #[test]

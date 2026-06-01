@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+    "01_core",
+    "02_shell/catalogo",
+    "02_shell/cli",
+    "03_infra",
+    "04_wiring",
+    "05_investiga",
+    "06_resolve",
+]
+exclude = ["03_infra/tests/fixtures/crate-amostra"]
