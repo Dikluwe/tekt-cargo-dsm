@@ -1,0 +1,15 @@
+# [workspace] vazio: declara o fixture como projeto independente, fora do
+# workspace pai (cargo sobe e encontra .../tekt-cargo-dsm/Cargo.toml; sem este
+# marcador, o fixture seria interpretado como membro órfão).
+[workspace]
+
+[package]
+name = "crate_amostra"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
