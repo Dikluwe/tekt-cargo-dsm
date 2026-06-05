@@ -1,9 +1,32 @@
 //! Formatação do `Raio` para stdout. Quatro modos (matriz `--text` ×
 //! `--verbose`); todos os literais visíveis ao usuário vêm do
 //! `lente_catalogo` (ADR-0002).
+//!
+//! Inclui também a formatação do **modo ranking** (prompt 0027):
+//! `formatar_ranking(&[ItemRanking], Escopo, &Modo)`.
+//!
+//! Pós-prompt 0030: a saída (JSON e texto) **declara o escopo** em ambos
+//! os modos — campo `escopo` no JSON e linha/cabeçalho no texto.
 
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
+use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses};
+
+/// Mapeia `Escopo` para o texto estável publicado pela CLI (catálogo).
+fn escopo_texto(e: Escopo) -> &'static str {
+    match e {
+        Escopo::Completo => cat::ESCOPO_COMPLETO,
+        Escopo::SeuCodigo => cat::ESCOPO_SEU_CODIGO,
+    }
+}
+
+/// Mapeia `ModoUses` para o texto estável publicado pela CLI (prompt 0034).
+fn modo_uses_texto(m: ModoUses) -> &'static str {
+    match m {
+        ModoUses::Todas => cat::MODO_USES_TODAS,
+        ModoUses::SoReferencia => cat::MODO_USES_SO_REFERENCIA,
+    }
+}
 
 /// Como o alvo foi pedido pelo usuário — afeta se a saída mostra tradução
 /// id→path ou só o alvo simples.
@@ -17,11 +40,11 @@ pub struct Modo {
     pub verbose: bool,
 }
 
-pub fn formatar(raio: &Raio, alvo_pedido: &AlvoPedido, modo: &Modo) -> String {
+pub fn formatar(raio: &Raio, alvo_pedido: &AlvoPedido, escopo: Escopo, modo: &Modo) -> String {
     if modo.text {
-        formatar_texto(raio, alvo_pedido, modo.verbose)
+        formatar_texto(raio, alvo_pedido, escopo, modo.verbose)
     } else {
-        formatar_json(raio, alvo_pedido, modo.verbose)
+        formatar_json(raio, alvo_pedido, escopo, modo.verbose)
     }
 }
 
@@ -58,7 +81,7 @@ fn alvo_pedido_texto(alvo: &AlvoPedido) -> String {
     }
 }
 
-fn formatar_json(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> String {
+fn formatar_json(raio: &Raio, alvo_pedido: &AlvoPedido, escopo: Escopo, verbose: bool) -> String {
     let alvo_resolvido = raio.alvo.as_str();
     let mut obj = serde_json::Map::new();
 
@@ -77,6 +100,10 @@ fn formatar_json(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> String
             serde_json::Value::String(alvo_resolvido.to_string()),
         );
     }
+    obj.insert(
+        cat::JSON_ESCOPO.to_string(),
+        serde_json::Value::String(escopo_texto(escopo).to_string()),
+    );
     obj.insert(
         cat::JSON_CLASSIFICACAO.to_string(),
         serde_json::Value::String(classificacao_texto(raio.classificacao).to_string()),
@@ -105,7 +132,7 @@ fn formatar_json(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> String
     serde_json::Value::Object(obj).to_string()
 }
 
-fn formatar_texto(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> String {
+fn formatar_texto(raio: &Raio, alvo_pedido: &AlvoPedido, escopo: Escopo, verbose: bool) -> String {
     let mut s = String::new();
     if tem_traducao(alvo_pedido) {
         s.push_str(&format!(
@@ -121,6 +148,11 @@ fn formatar_texto(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> Strin
     } else {
         s.push_str(&format!("{}:\t{}\n", cat::ROTULO_ALVO, raio.alvo));
     }
+    s.push_str(&format!(
+        "{}:\t{}\n",
+        cat::ROTULO_ESCOPO,
+        escopo_texto(escopo)
+    ));
     s.push_str(&format!(
         "{}:\t{}\n",
         cat::ROTULO_CLASSIFICACAO,
@@ -145,6 +177,237 @@ fn formatar_texto(raio: &Raio, alvo_pedido: &AlvoPedido, verbose: bool) -> Strin
         for p in paths {
             s.push_str(&format!("  {}\n", p));
         }
+    }
+    s
+}
+
+// =============================================================================
+// Modo ranking — prompt 0027
+// =============================================================================
+
+pub fn formatar_ranking(itens: &[ItemRanking], escopo: Escopo, modo: &Modo) -> String {
+    if modo.text {
+        formatar_ranking_texto(itens, escopo)
+    } else {
+        formatar_ranking_json(itens, escopo)
+    }
+}
+
+fn formatar_ranking_json(itens: &[ItemRanking], escopo: Escopo) -> String {
+    let mut arr = Vec::with_capacity(itens.len());
+    for (i, it) in itens.iter().enumerate() {
+        let mut obj = serde_json::Map::new();
+        obj.insert(
+            cat::JSON_POSICAO.to_string(),
+            serde_json::Value::Number((i + 1).into()),
+        );
+        obj.insert(
+            cat::JSON_PATH.to_string(),
+            serde_json::Value::String(it.path.as_str().to_string()),
+        );
+        obj.insert(
+            cat::JSON_IMPACTO.to_string(),
+            serde_json::Value::Number(it.impacto.into()),
+        );
+        obj.insert(
+            cat::JSON_CLASSIFICACAO.to_string(),
+            serde_json::Value::String(classificacao_texto(it.classificacao).to_string()),
+        );
+        arr.push(serde_json::Value::Object(obj));
+    }
+    let mut root = serde_json::Map::new();
+    root.insert(
+        cat::JSON_ESCOPO.to_string(),
+        serde_json::Value::String(escopo_texto(escopo).to_string()),
+    );
+    root.insert(
+        cat::JSON_RANKING.to_string(),
+        serde_json::Value::Array(arr),
+    );
+    serde_json::Value::Object(root).to_string()
+}
+
+fn formatar_ranking_texto(itens: &[ItemRanking], escopo: Escopo) -> String {
+    let mut s = String::new();
+    s.push_str(&cat::RANKING_CABECALHO.render(&[
+        ("escopo", escopo_texto(escopo)),
+        ("n", &itens.len().to_string()),
+    ]));
+    s.push('\n');
+    s.push_str(cat::RANKING_COLUNAS);
+    s.push('\n');
+    for (i, it) in itens.iter().enumerate() {
+        s.push_str(&format!(
+            "  {:>2}  {:>7}  {:<15}  {}\n",
+            i + 1,
+            it.impacto,
+            classificacao_texto(it.classificacao),
+            it.path.as_str()
+        ));
+    }
+    s
+}
+
+// =============================================================================
+// Modo estrutura — prompt 0031
+// =============================================================================
+
+pub fn formatar_estrutura(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    modo: &Modo,
+) -> String {
+    if modo.text {
+        formatar_estrutura_texto(estrut, escopo, modo_uses)
+    } else {
+        formatar_estrutura_json(estrut, escopo, modo_uses)
+    }
+}
+
+fn formatar_estrutura_json(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> String {
+    let mut root = serde_json::Map::new();
+    root.insert(
+        cat::JSON_ESCOPO.to_string(),
+        serde_json::Value::String(escopo_texto(escopo).to_string()),
+    );
+    root.insert(
+        cat::JSON_MODO_USES.to_string(),
+        serde_json::Value::String(modo_uses_texto(modo_uses).to_string()),
+    );
+    root.insert(
+        cat::JSON_MODULOS.to_string(),
+        serde_json::Value::Array(
+            estrut
+                .modulos
+                .iter()
+                .map(|p| serde_json::Value::String(p.as_str().to_string()))
+                .collect(),
+        ),
+    );
+    let deps: Vec<serde_json::Value> = estrut
+        .dependencias
+        .iter()
+        .map(|d| {
+            let mut o = serde_json::Map::new();
+            o.insert(
+                cat::JSON_DE.to_string(),
+                serde_json::Value::String(d.de.as_str().to_string()),
+            );
+            o.insert(
+                cat::JSON_PARA.to_string(),
+                serde_json::Value::String(d.para.as_str().to_string()),
+            );
+            serde_json::Value::Object(o)
+        })
+        .collect();
+    root.insert(
+        cat::JSON_DEPENDENCIAS.to_string(),
+        serde_json::Value::Array(deps),
+    );
+    let ciclos: Vec<serde_json::Value> = estrut
+        .ciclos
+        .iter()
+        .map(|c| {
+            serde_json::Value::Array(
+                c.modulos
+                    .iter()
+                    .map(|p| serde_json::Value::String(p.as_str().to_string()))
+                    .collect(),
+            )
+        })
+        .collect();
+    root.insert(
+        cat::JSON_CICLOS.to_string(),
+        serde_json::Value::Array(ciclos),
+    );
+    // Prompt 0035: a DSM como dado — ordem topológica + blocos.
+    root.insert(
+        cat::JSON_ORDEM.to_string(),
+        serde_json::Value::Array(
+            estrut
+                .ordem
+                .iter()
+                .map(|p| serde_json::Value::String(p.as_str().to_string()))
+                .collect(),
+        ),
+    );
+    let blocos: Vec<serde_json::Value> = estrut
+        .blocos
+        .iter()
+        .map(|b| {
+            serde_json::Value::Array(
+                b.iter()
+                    .map(|p| serde_json::Value::String(p.as_str().to_string()))
+                    .collect(),
+            )
+        })
+        .collect();
+    root.insert(
+        cat::JSON_BLOCOS.to_string(),
+        serde_json::Value::Array(blocos),
+    );
+    serde_json::Value::Object(root).to_string()
+}
+
+fn formatar_estrutura_texto(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> String {
+    let mut s = String::new();
+    s.push_str(&cat::ESTRUTURA_CABECALHO.render(&[
+        ("escopo", escopo_texto(escopo)),
+        ("modo_uses", modo_uses_texto(modo_uses)),
+        ("n", &estrut.modulos.len().to_string()),
+        ("c", &estrut.ciclos.len().to_string()),
+    ]));
+    s.push_str("\n\n");
+
+    // Ciclos primeiro — o resultado-cabeçalho de uma ferramenta de
+    // arquitetura (Lattix/Structure101): "onde estão os ciclos?".
+    s.push_str(cat::ESTRUTURA_CICLOS_TITULO);
+    s.push('\n');
+    if estrut.ciclos.is_empty() {
+        s.push_str("  ");
+        s.push_str(cat::ESTRUTURA_SEM_CICLOS);
+        s.push('\n');
+    } else {
+        for c in &estrut.ciclos {
+            let nomes: Vec<&str> = c.modulos.iter().map(|p| p.as_str()).collect();
+            s.push_str(&format!("  - {{ {} }}\n", nomes.join(", ")));
+        }
+    }
+
+    s.push('\n');
+    s.push_str(cat::ESTRUTURA_DEPENDENCIAS_TITULO);
+    s.push('\n');
+    for d in &estrut.dependencias {
+        s.push_str(&format!("  {} → {}\n", d.de.as_str(), d.para.as_str()));
+    }
+
+    // Prompt 0035: ordem da DSM (módulos na ordem topológica + marcador
+    // dos que pertencem a um bloco de ciclo). A "matriz como dado" do
+    // produto — texto é a vista humana mínima; JSON tem o detalhe.
+    s.push('\n');
+    s.push_str(cat::ESTRUTURA_ORDEM_TITULO);
+    s.push('\n');
+    let em_bloco: std::collections::HashSet<&str> = estrut
+        .blocos
+        .iter()
+        .flat_map(|b| b.iter().map(|p| p.as_str()))
+        .collect();
+    for p in &estrut.ordem {
+        let prefixo = if em_bloco.contains(p.as_str()) {
+            cat::ESTRUTURA_ORDEM_LINHA_BLOCO
+        } else {
+            cat::ESTRUTURA_ORDEM_LINHA_LIVRE
+        };
+        s.push_str(&format!("{} {}\n", prefixo, p.as_str()));
     }
     s
 }
@@ -192,6 +455,7 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
+            Escopo::Completo,
             &Modo { text: false, verbose: false },
         );
         assert!(s.contains("\"alvo\":\"foo::bar\""));
@@ -207,6 +471,7 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Id(20),
+            Escopo::Completo,
             &Modo { text: false, verbose: false },
         );
         assert!(s.contains("\"alvo_pedido\":\"id=20\""));
@@ -220,6 +485,7 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Path("alvo".to_string()),
+            Escopo::Completo,
             &Modo { text: false, verbose: true },
         );
         // ordem alfabética crescente:
@@ -235,6 +501,7 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
+            Escopo::Completo,
             &Modo { text: true, verbose: false },
         );
         assert!(s.contains("Alvo:\tfoo::bar"));
@@ -250,6 +517,7 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Id(47),
+            Escopo::Completo,
             &Modo { text: true, verbose: false },
         );
         assert!(s.contains("Alvo pedido:\tid=47"));
@@ -262,10 +530,275 @@ mod tests {
         let s = formatar(
             &r,
             &AlvoPedido::Path("alvo".to_string()),
+            Escopo::Completo,
             &Modo { text: true, verbose: true },
         );
         assert!(s.contains("Impactados:"));
         assert!(s.contains("  a\n"));
         assert!(s.contains("  b\n"));
+    }
+
+    // ---- Modo ranking (prompt 0027) -----------------------------------------
+
+    fn ranking_amostra() -> Vec<ItemRanking> {
+        vec![
+            ItemRanking {
+                path: Path::from("alvo::base"),
+                impacto: 42,
+                classificacao: Classificacao::Base,
+            },
+            ItemRanking {
+                path: Path::from("alvo::meio"),
+                impacto: 7,
+                classificacao: Classificacao::Intermediario,
+            },
+        ]
+    }
+
+    #[test]
+    fn json_do_ranking_tem_array_com_posicao_path_impacto_classificacao() {
+        let s = formatar_ranking(
+            &ranking_amostra(),
+            Escopo::Completo,
+            &Modo { text: false, verbose: false },
+        );
+        // Sanidade: chave `ranking` + entradas estruturadas + escopo declarado.
+        assert!(s.contains("\"ranking\":"));
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(s.contains("\"posicao\":1"));
+        assert!(s.contains("\"path\":\"alvo::base\""));
+        assert!(s.contains("\"impacto\":42"));
+        assert!(s.contains("\"classificacao\":\"Base\""));
+        assert!(s.contains("\"posicao\":2"));
+        assert!(s.contains("\"path\":\"alvo::meio\""));
+    }
+
+    #[test]
+    fn texto_do_ranking_tem_cabecalho_colunas_e_linhas_alinhadas() {
+        let s = formatar_ranking(
+            &ranking_amostra(),
+            Escopo::SeuCodigo,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("Ranking de impacto"));
+        // Pós-0030: o escopo aparece no cabeçalho.
+        assert!(s.contains("escopo: seu-codigo"));
+        assert!(s.contains("Impacto"));
+        assert!(s.contains("alvo::base"));
+        assert!(s.contains("alvo::meio"));
+        assert!(s.contains("   1  ") || s.contains(" 1  "));
+        assert!(s.contains("   2  ") || s.contains(" 2  "));
+    }
+
+    #[test]
+    fn ranking_vazio_nao_panica() {
+        let v: Vec<ItemRanking> = vec![];
+        let _ = formatar_ranking(&v, Escopo::Completo, &Modo { text: true, verbose: false });
+        let _ = formatar_ranking(&v, Escopo::Completo, &Modo { text: false, verbose: false });
+    }
+
+    // ---- prompt 0030: saída do raio declara o escopo ------------------------
+
+    #[test]
+    fn json_do_raio_inclui_campo_escopo_completo() {
+        let r = raio_simples("foo::bar");
+        let s = formatar(
+            &r,
+            &AlvoPedido::Path("foo::bar".to_string()),
+            Escopo::Completo,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"escopo\":\"completo\""));
+    }
+
+    #[test]
+    fn json_do_raio_inclui_campo_escopo_seu_codigo() {
+        let r = raio_simples("foo::bar");
+        let s = formatar(
+            &r,
+            &AlvoPedido::Path("foo::bar".to_string()),
+            Escopo::SeuCodigo,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"escopo\":\"seu-codigo\""));
+    }
+
+    #[test]
+    fn texto_do_raio_inclui_linha_de_escopo() {
+        let r = raio_simples("foo::bar");
+        let s = formatar(
+            &r,
+            &AlvoPedido::Path("foo::bar".to_string()),
+            Escopo::SeuCodigo,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("Escopo:\tseu-codigo"));
+    }
+
+    // ---- Modo estrutura (prompt 0031) ----------------------------------------
+
+    use lente_wiring::{Ciclo, DependenciaModulo};
+
+    fn estrutura_amostra() -> EstruturaModulos {
+        EstruturaModulos {
+            modulos: vec![
+                Path::from("k"),
+                Path::from("k::a"),
+                Path::from("k::b"),
+            ],
+            dependencias: vec![
+                DependenciaModulo {
+                    de: Path::from("k::a"),
+                    para: Path::from("k::b"),
+                },
+                DependenciaModulo {
+                    de: Path::from("k::b"),
+                    para: Path::from("k::a"),
+                },
+            ],
+            ciclos: vec![Ciclo {
+                modulos: vec![Path::from("k::a"), Path::from("k::b")],
+            }],
+            // Prompt 0035: amostra de ordem + bloco para os testes de saída.
+            // Ordem da DSM: k (crate, sem deps) → {k::a, k::b} (bloco).
+            ordem: vec![
+                Path::from("k"),
+                Path::from("k::a"),
+                Path::from("k::b"),
+            ],
+            blocos: vec![vec![Path::from("k::a"), Path::from("k::b")]],
+        }
+    }
+
+    #[test]
+    fn json_estrutura_tem_escopo_modulos_dependencias_ciclos() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(s.contains("\"modo_uses\":\"todas\""));
+        assert!(s.contains("\"modulos\":[\"k\",\"k::a\",\"k::b\"]"));
+        assert!(s.contains("\"de\":\"k::a\""));
+        assert!(s.contains("\"para\":\"k::b\""));
+        assert!(s.contains("\"ciclos\":[[\"k::a\",\"k::b\"]]"));
+    }
+
+    #[test]
+    fn texto_estrutura_destaca_ciclos_e_lista_dependencias() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("Estrutura de módulos"));
+        assert!(s.contains("escopo: seu-codigo"));
+        assert!(s.contains("uses: todas"));
+        assert!(s.contains("3 módulos"));
+        assert!(s.contains("1 ciclos"));
+        assert!(s.contains("Ciclos:"));
+        assert!(s.contains("k::a, k::b"));
+        assert!(s.contains("Dependências módulo → módulo:"));
+        assert!(s.contains("k::a → k::b"));
+        assert!(s.contains("k::b → k::a"));
+    }
+
+    #[test]
+    fn texto_estrutura_sem_ciclos_diz_nenhum_ciclo() {
+        let mut e = estrutura_amostra();
+        e.ciclos.clear();
+        let s = formatar_estrutura(
+            &e,
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("nenhum ciclo"));
+    }
+
+    #[test]
+    fn json_estrutura_sem_ciclos_lista_vazia() {
+        let mut e = estrutura_amostra();
+        e.ciclos.clear();
+        let s = formatar_estrutura(
+            &e,
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"ciclos\":[]"));
+    }
+
+    // Prompt 0034 — declaração do modo de uses na saída ---------------------
+
+    #[test]
+    fn json_estrutura_so_referencia_declara_modo_uses() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"modo_uses\":\"so-referencia\""));
+    }
+
+    #[test]
+    fn texto_estrutura_so_referencia_aparece_no_cabecalho() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("uses: so-referencia"));
+    }
+
+    // ---- Prompt 0035: ordem + blocos na saída -------------------------------
+
+    #[test]
+    fn json_estrutura_inclui_ordem_e_blocos() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: false, verbose: false },
+        );
+        // Ordem: ["k", "k::a", "k::b"] — sequência exata da DSM.
+        assert!(s.contains("\"ordem\":[\"k\",\"k::a\",\"k::b\"]"));
+        // Blocos: um único, com {k::a, k::b}.
+        assert!(s.contains("\"blocos\":[[\"k::a\",\"k::b\"]]"));
+    }
+
+    #[test]
+    fn texto_estrutura_lista_ordem_com_marcador_de_bloco() {
+        let s = formatar_estrutura(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: true, verbose: false },
+        );
+        // Título da seção.
+        assert!(s.contains("Ordem da DSM"));
+        // `k` (livre) e `k::a`/`k::b` (com marcador `◆`).
+        assert!(s.contains("   k\n") || s.contains("    k\n"));
+        assert!(s.contains("◆ k::a"));
+        assert!(s.contains("◆ k::b"));
+    }
+
+    #[test]
+    fn texto_estrutura_sem_blocos_lista_ordem_sem_marcadores() {
+        let mut e = estrutura_amostra();
+        e.blocos.clear();
+        let s = formatar_estrutura(
+            &e,
+            Escopo::Completo,
+            ModoUses::Todas,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("Ordem da DSM"));
+        assert!(!s.contains("◆"));
     }
 }

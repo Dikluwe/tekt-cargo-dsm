@@ -37,6 +37,9 @@ pub fn traduzir(erro: &ErroLente, ctx: &ContextoErro) -> String {
         ErroLente::Resolucao(e) => {
             cat::ERRO_RESOLUCAO.render(&[("detalhe", &format!("{}", e))])
         }
+        ErroLente::ForkSemUsesKind => {
+            cat::ERRO_FORK_SEM_USES_KIND.render(&[("detalhe", &format!("{}", erro))])
+        }
     }
 }
 

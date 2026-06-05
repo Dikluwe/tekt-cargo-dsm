@@ -52,4 +52,9 @@ pub(crate) struct ArestaDTO {
     pub(crate) to: String,
     pub(crate) id_to: usize,
     pub(crate) relation: String,
+    /// `uses_kind` emitido pelo fork pós-commit `b44aa96` (prompt 0034). Só
+    /// para arestas `Uses`. `None` quando o JSON é antigo (campo ausente).
+    /// Texto cru aqui; a tradução para o enum acontece em `traducao.rs`.
+    #[serde(default)]
+    pub(crate) uses_kind: Option<String>,
 }

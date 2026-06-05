@@ -13,3 +13,6 @@ lente_core = { path = "../01_core" }
 lente_infra = { path = "../03_infra" }
 lente_investiga = { path = "../05_investiga" }
 lente_resolve = { path = "../06_resolve" }
+lente_filtro = { path = "../07_filtro" }
+lente_ranking = { path = "../08_ranking" }
+lente_estrutura = { path = "../09_estrutura" }

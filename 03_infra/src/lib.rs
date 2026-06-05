@@ -22,8 +22,11 @@ use lente_core::entities::grafo::{Grafo, ValorDesconhecido};
 
 mod dto;
 mod invocacao;
+mod metadata;
 mod traducao;
 pub mod fork;
+
+pub use metadata::ErroMetadata;
 
 /// Modos de falha do adaptador.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,12 +53,18 @@ pub enum ErroAdaptador {
     /// Invariante (integridade referencial) violado: aresta referencia `id`
     /// ausente em `nodes`. `contexto` indica se é o lado `id_from` ou `id_to`.
     IdReferenciado { id: usize, contexto: String },
-    /// Não foi possível ler o `Cargo.toml` no diretório-alvo.
-    /// Necessário para descobrir o nome do pacote (workspace ou não).
-    CargoTomlAusente(String),
-    /// O `Cargo.toml` existe mas não tem `[package].name` —
-    /// caminho aponta para a raiz de um workspace puro, não para um crate.
-    CargoTomlSemPackage(String),
+    /// Falha na descoberta do alvo via `cargo metadata` (prompt 0023).
+    /// Engloba: cargo ausente, metadata com status ≠ 0 (manifesto não
+    /// resolve), JSON inesperado, pacote-pedido inexistente no workspace,
+    /// pacote sem [lib] e com 0/≥2 bins. A variante embrulhada preserva
+    /// o modo de falha específico (vide [`ErroMetadata`]).
+    DeteccaoAlvo(ErroMetadata),
+}
+
+impl From<ErroMetadata> for ErroAdaptador {
+    fn from(e: ErroMetadata) -> Self {
+        ErroAdaptador::DeteccaoAlvo(e)
+    }
 }
 
 impl fmt::Display for ErroAdaptador {
@@ -91,15 +100,8 @@ impl fmt::Display for ErroAdaptador {
                     contexto, id
                 )
             }
-            ErroAdaptador::CargoTomlAusente(p) => {
-                write!(f, "Cargo.toml ausente ou ilegível: {}", p)
-            }
-            ErroAdaptador::CargoTomlSemPackage(p) => {
-                write!(
-                    f,
-                    "Cargo.toml sem [package].name (workspace puro?): {}",
-                    p
-                )
+            ErroAdaptador::DeteccaoAlvo(e) => {
+                write!(f, "detecção de alvo via cargo metadata: {}", e)
             }
         }
     }
@@ -181,8 +183,13 @@ mod tests {
                 id: 99,
                 contexto: "id_from".to_string(),
             },
-            ErroAdaptador::CargoTomlAusente("/tmp/x/Cargo.toml".to_string()),
-            ErroAdaptador::CargoTomlSemPackage("/tmp/x/Cargo.toml".to_string()),
+            ErroAdaptador::DeteccaoAlvo(ErroMetadata::PacoteNaoEncontrado(
+                "x".to_string(),
+            )),
+            ErroAdaptador::DeteccaoAlvo(ErroMetadata::AlvosAmbiguos {
+                bins: vec!["a".to_string(), "b".to_string()],
+            }),
+            ErroAdaptador::DeteccaoAlvo(ErroMetadata::AlvosAmbiguos { bins: vec![] }),
         ];
         for v in &variantes {
             assert!(!format!("{}", v).is_empty());

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>proto-dsm — lente</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font: 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+    margin: 0;
+    background: #f4f4f0;
+    color: #222;
+  }
+  header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+  header .sub { color: #888; font-size: 12px; }
+  header label { color: #666; font-size: 12px; }
+  header select { padding: 3px 6px; font-size: 13px; }
+  header .meta {
+    color: #444;
+    font-size: 12px;
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  header .meta strong { color: #222; }
+
+  main { padding: 12px; }
+
+  .matriz-wrap {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    display: inline-block;
+    overflow: auto;
+    max-width: calc(100vw - 28px);
+  }
+  svg.matriz {
+    display: block;
+    user-select: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .nota {
+    margin: 14px 0;
+    padding: 10px 12px;
+    background: #fffbe6;
+    border: 1px solid #f0e0a4;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #654;
+    max-width: 900px;
+  }
+  .nota strong { color: #432; }
+  .nota code { font-family: ui-monospace, monospace; font-size: 11px; }
+
+  .legenda {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #555;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .legenda span.swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid #999;
+  }
+
+  /* tooltip flutuante */
+  #tip {
+    position: fixed;
+    pointer-events: none;
+    background: #222;
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    line-height: 1.3;
+    display: none;
+    z-index: 10;
+    max-width: 320px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>proto-dsm — lente</h1>
+  <div class="sub">protótipo de Arena (laudo 0036) — consome <code>--estrutura --json</code></div>
+  <label for="src">Dump:</label>
+  <select id="src">
+    <option value="estrutura-egui-so-referencia.json">egui --so-referencia (bloco 42)</option>
+    <option value="estrutura-egui-todas.json">egui (default, bloco 85)</option>
+    <option value="estrutura-lente-core.json">lente_core (7 módulos, 0 ciclos)</option>
+  </select>
+  <span class="meta" id="meta">…</span>
+</header>
+
+<main>
+  <div class="nota">
+    <strong>Achado registrado.</strong> As <code>dependencias</code> chegam como
+    pares binários (<code>{de, para}</code>) — não há <em>força de
+    acoplamento</em> por par módulo→módulo (quantas arestas-de-item estão por
+    trás). O agregador <code>agregar_por_modulo</code> conhece esse peso, mas
+    descarta. Para uma DSM densidade-aware (Lattix põe números nas células), o
+    JSON precisaria emitir o peso. Esta tela mostra densidade só por
+    <strong>presença</strong> (célula marcada / não-marcada).
+  </div>
+
+  <div class="matriz-wrap">
+    <svg id="grade" class="matriz"></svg>
+  </div>
+
+  <div class="legenda">
+    <span><span class="swatch" style="background:#222"></span>célula marcada (linha depende da coluna)</span>
+    <span><span class="swatch" style="background:#fce0c5"></span>diagonal (i==j)</span>
+    <span><span class="swatch" style="background:transparent;border:2px solid #c63"></span>bloco de ciclo (SCC ≥ 2)</span>
+  </div>
+</main>
+
+<div id="tip"></div>
+
+<script>
+// =========================================================================
+// proto-dsm — laudo 0036
+// Renderiza a matriz N×N a partir do --estrutura --json.
+//   linhas/colunas = `ordem` (topológica)
+//   células marcadas = `dependencias` ({de, para})
+//   blocos = `blocos` (SCCs ≥ 2)  ← retângulos em volta dos quadrados na diagonal
+// =========================================================================
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Tamanho de célula é dinâmico para caber a maior dimensão num quadrado
+// agradável (~500px). Mínimo 4px, máximo 32px.
+function dimensaoCelula(n) {
+  if (n <= 0) return 32;
+  const meta = 540;
+  return Math.max(4, Math.min(32, Math.floor(meta / n)));
+}
+
+// Pega os 2 últimos segmentos de um path para os rótulos curtos.
+function abreviar(path) {
+  const partes = path.split("::");
+  if (partes.length <= 2) return path;
+  return partes.slice(-2).join("::");
+}
+
+function $(sel) { return document.querySelector(sel); }
+
+let estado = { dados: null, arquivo: null };
+
+async function carregar(arquivo) {
+  try {
+    const r = await fetch("dados/" + arquivo);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    estado = { dados: d, arquivo };
+    renderMeta();
+    renderMatriz();
+  } catch (e) {
+    $("#grade").innerHTML = "";
+    $("#meta").innerHTML = `<span style="color:#a55">falha: ${e}</span> — rode
+      <code>cd lab/proto-dsm && python3 -m http.server 8080</code>`;
+  }
+}
+
+function renderMeta() {
+  const d = estado.dados;
+  $("#meta").innerHTML =
+    `<strong>${d.modulos.length}</strong> módulos · ` +
+    `<strong>${d.dependencias.length}</strong> deps · ` +
+    `<strong>${d.ciclos.length}</strong> ciclos · ` +
+    `escopo=<code>${d.escopo}</code> · uses=<code>${d.modo_uses}</code>`;
+}
+
+function renderMatriz() {
+  const d = estado.dados;
+  const ordem = d.ordem;
+  const n = ordem.length;
+  const cell = dimensaoCelula(n);
+  // Espaço para rótulos: ~200px à esquerda (texto horizontal), ~200px no topo
+  // (texto rotacionado).
+  const margemEsq = 220;
+  const margemTop = 220;
+  const largura = margemEsq + n * cell + 20;
+  const altura = margemTop + n * cell + 20;
+
+  const svg = $("#grade");
+  svg.setAttribute("width", largura);
+  svg.setAttribute("height", altura);
+  svg.innerHTML = "";
+
+  // Mapa path → índice (para olhar deps).
+  const idx = new Map();
+  ordem.forEach((p, i) => idx.set(p, i));
+
+  // 0) Fundo da área da grade.
+  const fundo = el("rect", {
+    x: margemEsq, y: margemTop,
+    width: n * cell, height: n * cell,
+    fill: "#fafaf6", stroke: "#bbb", "stroke-width": 0.5,
+  });
+  svg.appendChild(fundo);
+
+  // 1) Diagonal: realça i==j com cor de "diagonal".
+  for (let i = 0; i < n; i++) {
+    svg.appendChild(el("rect", {
+      x: margemEsq + i * cell,
+      y: margemTop + i * cell,
+      width: cell, height: cell,
+      fill: "#fce0c5",
+    }));
+  }
+
+  // 2) Linhas de grid (só se a célula for grande o bastante).
+  if (cell >= 8) {
+    for (let i = 0; i <= n; i++) {
+      svg.appendChild(el("line", {
+        x1: margemEsq + i * cell, x2: margemEsq + i * cell,
+        y1: margemTop, y2: margemTop + n * cell,
+        stroke: "#eee", "stroke-width": 0.5,
+      }));
+      svg.appendChild(el("line", {
+        x1: margemEsq, x2: margemEsq + n * cell,
+        y1: margemTop + i * cell, y2: margemTop + i * cell,
+        stroke: "#eee", "stroke-width": 0.5,
+      }));
+    }
+  }
+
+  // 3) Células marcadas (uma por dep).
+  for (const dep of d.dependencias) {
+    const i = idx.get(dep.de);
+    const j = idx.get(dep.para);
+    if (i == null || j == null) continue;
+    svg.appendChild(el("rect", {
+      x: margemEsq + j * cell,
+      y: margemTop + i * cell,
+      width: cell, height: cell,
+      fill: "#222",
+      "data-i": i, "data-j": j,
+    }));
+  }
+
+  // 4) Blocos de ciclo emoldurados (retângulo na diagonal sobre os membros
+  // contíguos).
+  for (const bloco of d.blocos) {
+    // Pega o intervalo de índices que o bloco ocupa em `ordem`.
+    const ids = bloco
+      .map((p) => idx.get(p))
+      .filter((i) => i != null)
+      .sort((a, b) => a - b);
+    if (ids.length === 0) continue;
+    const ini = ids[0];
+    const fim = ids[ids.length - 1] + 1;
+    const k = fim - ini;
+    svg.appendChild(el("rect", {
+      x: margemEsq + ini * cell,
+      y: margemTop + ini * cell,
+      width: k * cell,
+      height: k * cell,
+      fill: "rgba(204,102,51,0.08)",
+      stroke: "#c63",
+      "stroke-width": 2,
+    }));
+  }
+
+  // 5) Rótulos. Para n grande, usamos abreviação + tamanho pequeno; em
+  // qualquer caso, hover de célula mostra paths completos.
+  const tamanhoFonte = Math.max(7, Math.min(12, cell - 2));
+  for (let i = 0; i < n; i++) {
+    // Linha à esquerda — text-anchor end, alinhado à coluna i.
+    svg.appendChild(el("text", {
+      x: margemEsq - 4,
+      y: margemTop + i * cell + cell / 2 + tamanhoFonte / 3,
+      "text-anchor": "end",
+      "font-size": tamanhoFonte,
+      fill: "#444",
+    }, abreviar(ordem[i])));
+    // Coluna no topo — texto rotacionado -45°.
+    const cx = margemEsq + i * cell + cell / 2;
+    const cy = margemTop - 4;
+    svg.appendChild(el("text", {
+      x: cx, y: cy,
+      "text-anchor": "start",
+      "font-size": tamanhoFonte,
+      fill: "#444",
+      transform: `rotate(-45 ${cx} ${cy})`,
+    }, abreviar(ordem[i])));
+  }
+
+  // Hover: ouvinte global sobre o SVG → calcula (i,j) e mostra tooltip.
+  svg.onmousemove = (ev) => {
+    const pt = svg.getBoundingClientRect();
+    const x = ev.clientX - pt.left - margemEsq;
+    const y = ev.clientY - pt.top - margemTop;
+    if (x < 0 || y < 0 || x >= n * cell || y >= n * cell) {
+      $("#tip").style.display = "none";
+      return;
+    }
+    const j = Math.floor(x / cell);
+    const i = Math.floor(y / cell);
+    if (i < 0 || j < 0 || i >= n || j >= n) {
+      $("#tip").style.display = "none";
+      return;
+    }
+    const dep = d.dependencias.find(
+      (d2) => idx.get(d2.de) === i && idx.get(d2.para) === j
+    );
+    const marca = dep
+      ? `<strong>${ordem[i]}</strong><br>↓ depende de<br><strong>${ordem[j]}</strong>`
+      : (i === j
+          ? `<strong>${ordem[i]}</strong><br>(diagonal)`
+          : `<span style="color:#aaa">linha ${ordem[i]}<br>coluna ${ordem[j]}<br>(sem dep)</span>`);
+    const tip = $("#tip");
+    tip.innerHTML = marca;
+    tip.style.display = "block";
+    tip.style.left = (ev.clientX + 12) + "px";
+    tip.style.top = (ev.clientY + 14) + "px";
+  };
+  svg.onmouseleave = () => { $("#tip").style.display = "none"; };
+}
+
+function el(tag, attrs, text) {
+  const n = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+$("#src").addEventListener("change", (e) => carregar(e.target.value));
+carregar($("#src").value);
+</script>
+</body>
+</html>

@@ -123,6 +123,7 @@ mod tests {
             to: Path::from(to),
             id_to: id_de(to),
             relation: r,
+            uses_kind: None,
         }
     }
 
@@ -234,6 +235,7 @@ mod tests {
                 to: Path::from("X::fmt"),
                 id_to: 100,
                 relation: Relation::Owns,
+                uses_kind: None,
             }],
             saindo: vec![],
         };
@@ -244,6 +246,7 @@ mod tests {
                 to: Path::from("X::fmt"),
                 id_to: 101,
                 relation: Relation::Owns,
+                uses_kind: None,
             }],
             saindo: vec![],
         };

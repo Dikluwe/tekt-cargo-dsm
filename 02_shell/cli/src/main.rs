@@ -15,7 +15,7 @@ use std::process::ExitCode;
 use clap::Parser;
 use lente_catalogo as cat;
 use lente_core::entities::grafo::Path as PathGrafo;
-use lente_wiring::{AlvoBusca, FonteGrafo};
+use lente_wiring::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
 
 fn main() -> ExitCode {
     let cli = args::Cli::parse();
@@ -56,22 +56,95 @@ fn err_arquivo(path: &std::path::Path, e: std::io::Error) -> SaidaErro {
     }
 }
 
+/// Mapeia a flag CLI para o enum forte do wiring (prompt 0030).
+fn escolher_escopo(cli: &args::Cli) -> Escopo {
+    if cli.filtrar_stdlib {
+        Escopo::SeuCodigo
+    } else {
+        Escopo::Completo
+    }
+}
+
+/// Mapeia a flag `--so-referencia` para o enum forte do wiring (prompt 0034).
+fn escolher_modo_uses(cli: &args::Cli) -> ModoUses {
+    if cli.so_referencia {
+        ModoUses::SoReferencia
+    } else {
+        ModoUses::Todas
+    }
+}
+
 /// Composição testável: a partir de `Cli`, decide e produz stdout ou erro.
 fn run(cli: args::Cli) -> Result<String, SaidaErro> {
     let fonte = construir_fonte(&cli)?;
-    let (alvo_busca, alvo_pedido) = construir_alvo(&cli)?;
+    let escopo = escolher_escopo(&cli);
 
+    // Roteamento entre modos (per-nó, ranking, estrutura). O `conflict_with`
+    // do clap garante mutuamente-exclusivo; aqui só desempata o ramo.
+    // O escopo (prompt 0030) é ortogonal a todos os modos.
+    if cli.estrutura {
+        return run_estrutura(fonte, escopo, &cli);
+    }
+    if cli.ranking {
+        return run_ranking(fonte, escopo, &cli);
+    }
+
+    let (alvo_busca, alvo_pedido) = construir_alvo(&cli)?;
     let contexto = erro::ContextoErro {
         alvo_informado: alvo_pedido_texto(&alvo_pedido),
     };
-
-    match lente_wiring::calcular_raio_de_alvo(fonte, alvo_busca) {
+    match lente_wiring::calcular_raio_de_alvo(fonte, alvo_busca, escopo) {
         Ok(raio) => {
             let modo = saida::Modo {
                 text: cli.text,
                 verbose: cli.verbose,
             };
-            Ok(saida::formatar(&raio, &alvo_pedido, &modo))
+            Ok(saida::formatar(&raio, &alvo_pedido, escopo, &modo))
+        }
+        Err(e) => Err(SaidaErro {
+            codigo: 1,
+            mensagem: erro::traduzir(&e, &contexto),
+        }),
+    }
+}
+
+/// Pipeline do modo estrutura (prompt 0031, ampliado pelo 0034). Sem alvo
+/// (a vista é global); erros do wiring viram `SaidaErro` pela mesma
+/// tradução do per-nó.
+fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<String, SaidaErro> {
+    let modo_uses = escolher_modo_uses(cli);
+    let contexto = erro::ContextoErro {
+        alvo_informado: String::new(),
+    };
+    match lente_wiring::analisar_estrutura(fonte, escopo, modo_uses) {
+        Ok(estrut) => {
+            let modo = saida::Modo {
+                text: cli.text,
+                verbose: cli.verbose,
+            };
+            Ok(saida::formatar_estrutura(&estrut, escopo, modo_uses, &modo))
+        }
+        Err(e) => Err(SaidaErro {
+            codigo: 1,
+            mensagem: erro::traduzir(&e, &contexto),
+        }),
+    }
+}
+
+/// Pipeline do modo ranking. Erros do wiring viram `SaidaErro` pela mesma
+/// tradução do per-nó (`erro::traduzir`), com contexto vazio para alvo
+/// (não há alvo informado no modo ranking).
+fn run_ranking(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<String, SaidaErro> {
+    let contexto = erro::ContextoErro {
+        alvo_informado: String::new(),
+    };
+    match lente_wiring::rankear_pacote(fonte, cli.top, escopo) {
+        Ok(itens) => {
+            let modo = saida::Modo {
+                text: cli.text,
+                verbose: cli.verbose,
+            };
+            Ok(saida::formatar_ranking(&itens, escopo, &modo))
         }
         Err(e) => Err(SaidaErro {
             codigo: 1,
@@ -159,6 +232,11 @@ mod tests {
             pacote: None,
             alvo: None,
             alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: false,
+            so_referencia: false,
             text: false,
             verbose: false,
         }
@@ -224,6 +302,11 @@ mod tests {
             pacote: None,
             alvo: Some("foo".to_string()),
             alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: false,
+            so_referencia: false,
             text: false,
             verbose: false,
         };
@@ -241,6 +324,11 @@ mod tests {
             pacote: None,
             alvo: Some("x".to_string()),
             alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: false,
+            so_referencia: false,
             text: false,
             verbose: false,
         };
@@ -259,6 +347,11 @@ mod tests {
             pacote: Some("lente_core".to_string()),
             alvo: Some("lente_core::domain::raio::ErroRaio".to_string()),
             alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: false,
+            so_referencia: false,
             text: true,
             verbose: false,
         };
@@ -266,5 +359,220 @@ mod tests {
         // Texto humano contém os rótulos do catálogo.
         assert!(s.contains("Alvo:") || s.contains("Alvo "));
         assert!(s.contains("Classificação:"));
+    }
+
+    // ---- Modo ranking (prompt 0027) -----------------------------------------
+
+    /// JSON sintético com sysroot misturado, igual ao do wiring — confirma
+    /// que o roteamento CLI → wiring → filtro → ranking funciona ponta a
+    /// ponta, e que o ranking sai sem sysroot.
+    fn json_com_stdlib_e_alvo() -> &'static str {
+        r#"{"crate":"t","nodes":[
+            {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+            {"id":10,"path":"t::T","name":"T","kind":"struct","visibility":"pub"},
+            {"id":20,"path":"t::T::fmt","name":"fmt","kind":"fn","visibility":"priv","trait":"Display","trait_ref":"Display"},
+            {"id":30,"path":"t::user_a","name":"user_a","kind":"fn","visibility":"pub"},
+            {"id":31,"path":"t::user_b","name":"user_b","kind":"fn","visibility":"pub"},
+            {"id":32,"path":"t::user_c","name":"user_c","kind":"fn","visibility":"pub"},
+            {"id":100,"path":"core::fmt::Display","name":"Display","kind":"trait","visibility":"pub"}
+        ],"edges":[
+            {"from":"t","id_from":1,"to":"t::T","id_to":10,"relation":"owns"},
+            {"from":"t::T","id_from":10,"to":"t::T::fmt","id_to":20,"relation":"owns"},
+            {"from":"t","id_from":1,"to":"t::user_a","id_to":30,"relation":"owns"},
+            {"from":"t","id_from":1,"to":"t::user_b","id_to":31,"relation":"owns"},
+            {"from":"t","id_from":1,"to":"t::user_c","id_to":32,"relation":"owns"},
+            {"from":"t::user_a","id_from":30,"to":"t::T::fmt","id_to":20,"relation":"uses"},
+            {"from":"t::user_b","id_from":31,"to":"t::T::fmt","id_to":20,"relation":"uses"},
+            {"from":"t::user_c","id_from":32,"to":"t::T::fmt","id_to":20,"relation":"uses"}
+        ]}"#
+    }
+
+    /// Pós-0030: `--filtrar-stdlib` no ranking esconde sysroot (cenário do laudo 0027).
+    #[test]
+    fn ranking_json_filtrado_sai_sem_sysroot() {
+        let p = escrever_json_temp(json_com_stdlib_e_alvo());
+        let mut cli = cli_padrao(p);
+        cli.ranking = true;
+        cli.filtrar_stdlib = true;
+        cli.top = 5;
+        let s = run(cli).expect("ranking deve rodar");
+        assert!(s.contains("\"ranking\":"));
+        assert!(s.contains("\"escopo\":\"seu-codigo\""));
+        assert!(!s.contains("core::fmt::Display"));
+        assert!(s.contains("\"path\":\"t::T::fmt\""));
+        assert!(s.contains("\"impacto\":3"));
+        assert!(s.contains("\"posicao\":1"));
+    }
+
+    /// Default novo (pós-0030): ranking sem `--filtrar-stdlib` traz sysroot.
+    /// Esperado, declarado — corrige o Achado 2 do laudo 0029 tornando o
+    /// escopo explícito em vez de o filtro estar embutido em silêncio.
+    #[test]
+    fn ranking_json_default_completo_traz_sysroot_e_escopo_declarado() {
+        let p = escrever_json_temp(json_com_stdlib_e_alvo());
+        let mut cli = cli_padrao(p);
+        cli.ranking = true;
+        cli.top = 10;
+        let s = run(cli).expect("ranking default deve rodar");
+        assert!(s.contains("\"ranking\":"));
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(
+            s.contains("\"path\":\"core::fmt::Display\""),
+            "default Completo deve trazer sysroot; veio: {}",
+            s
+        );
+    }
+
+    #[test]
+    fn ranking_text_tem_cabecalho_e_linhas_e_escopo() {
+        let p = escrever_json_temp(json_com_stdlib_e_alvo());
+        let mut cli = cli_padrao(p);
+        cli.ranking = true;
+        cli.text = true;
+        cli.top = 3;
+        let s = run(cli).expect("ranking texto deve rodar");
+        assert!(s.contains("Ranking de impacto"));
+        // Pós-0030: o escopo aparece no cabeçalho do ranking-texto.
+        assert!(s.contains("escopo: completo"));
+        assert!(s.contains("Impacto"));
+        assert!(s.contains("t::T::fmt"));
+    }
+
+    /// Pós-0030: o modo per-nó também declara o escopo. Verifica o caso
+    /// per-path no JSON default (Completo).
+    #[test]
+    fn raio_por_path_default_declara_escopo_completo() {
+        let p = escrever_json_temp(json_com_stdlib_e_alvo());
+        let mut cli = cli_padrao(p);
+        cli.alvo = Some("t::T::fmt".to_string());
+        let s = run(cli).expect("raio per-nó deve rodar");
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(s.contains("\"alvo\":\"t::T::fmt\""));
+    }
+
+    #[test]
+    fn raio_por_path_filtrado_declara_escopo_seu_codigo() {
+        let p = escrever_json_temp(json_com_stdlib_e_alvo());
+        let mut cli = cli_padrao(p);
+        cli.alvo = Some("t::T::fmt".to_string());
+        cli.filtrar_stdlib = true;
+        let s = run(cli).expect("raio per-nó filtrado deve rodar");
+        assert!(s.contains("\"escopo\":\"seu-codigo\""));
+    }
+
+    // ---- Modo estrutura (prompt 0031) ----------------------------------------
+
+    /// JSON sintético com ciclo `t::a ↔ t::b` (via uses entre itens nos
+    /// dois módulos).
+    fn json_estrutura_com_ciclo() -> &'static str {
+        r#"{"crate":"t","nodes":[
+            {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+            {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+            {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+            {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+            {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"}
+        ],"edges":[
+            {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+            {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+            {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+            {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+            {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses"},
+            {"from":"t::b::g","id_from":21,"to":"t::a::f","id_to":11,"relation":"uses"}
+        ]}"#
+    }
+
+    #[test]
+    fn estrutura_json_lista_modulos_e_ciclos() {
+        let p = escrever_json_temp(json_estrutura_com_ciclo());
+        let mut cli = cli_padrao(p);
+        cli.estrutura = true;
+        let s = run(cli).expect("estrutura deve rodar");
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(s.contains("\"modulos\":[\"t\",\"t::a\",\"t::b\"]"));
+        assert!(s.contains("\"de\":\"t::a\""));
+        assert!(s.contains("\"para\":\"t::b\""));
+        assert!(s.contains("\"ciclos\":[[\"t::a\",\"t::b\"]]"));
+    }
+
+    #[test]
+    fn estrutura_texto_destaca_ciclo() {
+        let p = escrever_json_temp(json_estrutura_com_ciclo());
+        let mut cli = cli_padrao(p);
+        cli.estrutura = true;
+        cli.text = true;
+        let s = run(cli).expect("estrutura texto deve rodar");
+        assert!(s.contains("Estrutura de módulos"));
+        assert!(s.contains("Ciclos:"));
+        assert!(s.contains("t::a, t::b"));
+        assert!(s.contains("Dependências módulo → módulo:"));
+        assert!(s.contains("t::a → t::b"));
+    }
+
+    /// E2E real (prompt 0031): `lente --pacote lente_core --estrutura --text`
+    /// roda ponta-a-ponta e mostra "nenhum ciclo" (lente_core é
+    /// cuidadoso — não tem ciclos entre módulos).
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_lente_core_texto() {
+        let cli = args::Cli {
+            grafo: None,
+            pacote: Some("lente_core".to_string()),
+            alvo: None,
+            alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: true,
+            so_referencia: false,
+            text: true,
+            verbose: false,
+        };
+        let s = run(cli).expect("E2E estrutura deve funcionar");
+        assert!(s.contains("Estrutura de módulos"));
+        assert!(s.contains("nenhum ciclo"));
+    }
+
+    /// E2E real: roda o ranking ponta-a-ponta contra o `lente_core` no
+    /// escopo `SeuCodigo` (pós-0030 precisa de `--filtrar-stdlib` explícito
+    /// para que sysroot saia — antes do 0030 o filtro era o default).
+    /// Confirma o caminho CLI → wiring → filtro → ranking → saída.
+    #[test]
+    #[ignore]
+    fn e2e_ranking_lente_core_texto() {
+        let cli = args::Cli {
+            grafo: None,
+            pacote: Some("lente_core".to_string()),
+            alvo: None,
+            alvo_id: None,
+            ranking: true,
+            top: 10,
+            filtrar_stdlib: true,
+            estrutura: false,
+            so_referencia: false,
+            text: true,
+            verbose: false,
+        };
+        let s = run(cli).expect("E2E ranking deve funcionar");
+        assert!(s.contains("Ranking de impacto"));
+        // Sysroot fora. Comparamos o **path** de cada linha de ranking (último
+        // campo após o alinhamento), não substring solta — `lente_core::*` tem
+        // "core::" como substring, então `s.contains("core::")` é falso
+        // positivo. Pegamos o que vem depois dos 4 espaços de indentação do
+        // formato `"  {pos:>2}  {imp:>7}  {classif:<15}  {path}"`.
+        for linha in s.lines() {
+            // Linhas de dado começam com 2 espaços + número.
+            let trim = linha.trim_start();
+            if trim.is_empty() || !trim.starts_with(|c: char| c.is_ascii_digit()) {
+                continue;
+            }
+            // O path é o último "token" da linha (após várias colunas).
+            let path = linha.split_whitespace().last().unwrap_or("");
+            let primeiro = path.split("::").next().unwrap_or("");
+            assert!(
+                !matches!(primeiro, "core" | "std" | "alloc" | "proc_macro" | "test"),
+                "sysroot vazou no ranking: linha {:?}",
+                linha
+            );
+        }
     }
 }

@@ -1,0 +1,933 @@
+//! Lineage: prompt 00_nucleo/prompt/0031-estrutura-modulo-ciclos.md
+//! Spec:    00_nucleo/specs/forma-organizada.md
+//! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
+//!
+//! Primeiro tijolo da **vista global** (estilo Lattix LDM / Structure101): a
+//! `lente_estrutura` agrega o grafo de itens ao nível de **módulo** e
+//! detecta **ciclos** (componentes fortemente conexos ≥ 2) entre módulos.
+//!
+//! Duas operações puras, ambas sobre `Grafo`:
+//!
+//! - [`agregar_por_modulo`]: grafo de itens → grafo de módulos (pelo
+//!   contenedor `Owns`); arestas `Uses` viram dependências módulo→módulo
+//!   (uses intra-módulo são absorvidos — não viram aresta).
+//! - [`detectar_ciclos`]: SCC à mão (Tarjan, sem `petgraph`) sobre as
+//!   arestas `Uses` do grafo recebido; devolve os SCCs de tamanho ≥ 2.
+//!   **Genérico**: funciona sobre qualquer `Grafo` (item, módulo, crate);
+//!   o nível em que se aplica é decisão do chamador.
+//!
+//! ## Sobre o fractal (horizonte)
+//!
+//! Em qualquer nível o grafo tem as mesmas duas relações (contém e usa); a
+//! agregação produz um `Grafo` e a detecção opera sobre qualquer `Grafo`,
+//! então a mesma peça serve **crate-a-crate** (workspace) e **item** quando
+//! a próxima trilha aparecer. Este crate não constrói navegação multi-nível
+//! agora — fica como aplicação posterior das mesmas duas funções. (Prompt
+//! 0031, "não estruturar antes do uso pedir" aplicado ao zoom.)
+
+#![forbid(unsafe_code)]
+
+use std::collections::{BTreeSet, HashMap, HashSet};
+
+use lente_core::entities::grafo::{Aresta, Grafo, Kind, No, Path, Relation};
+
+/// Um ciclo entre módulos: o conjunto de módulos (paths) que formam o SCC.
+///
+/// **Determinismo**: `modulos` é uma lista ordenada lexicograficamente. A
+/// ordem entre ciclos diferentes (no `Vec<Ciclo>` devolvido por
+/// [`detectar_ciclos`]) também é determinística — ordenada pelo primeiro
+/// membro de cada ciclo.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ciclo {
+    pub modulos: Vec<Path>,
+}
+
+/// Ordenamento dos módulos para a DSM (prompt 0035): a sequência em que os
+/// nós aparecem nas linhas/colunas da matriz, mais os **blocos** (SCCs ≥ 2)
+/// na ordem em que aparecem em `ordem`.
+///
+/// Propriedade central: na grade que um consumidor monta a partir de
+/// `ordem` + `dependencias`, **quase toda dependência aponta para o mesmo
+/// lado da diagonal** (resultado da ordem topológica da condensação dos
+/// SCCs); o que sobra do "lado errado" fica **dentro** dos blocos —
+/// densas as células dos ciclos, claras as camadas entre eles. É a
+/// "DSM como dado".
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrdemDsm {
+    /// Módulos na ordem da DSM (linhas/colunas da grade). Determinística.
+    pub ordem: Vec<Path>,
+    /// SCCs ≥ 2 (cada um uma lista de módulos), na ordem em que aparecem
+    /// dentro de `ordem`. Cada bloco corresponde a um intervalo contíguo
+    /// de `ordem` — os membros de um SCC aparecem agrupados, e a ordem
+    /// interna de cada SCC é por `path` ascendente (membros são
+    /// mutuamente cíclicos; ordenação interna é convenção).
+    pub blocos: Vec<Vec<Path>>,
+}
+
+/// Agrega o grafo de itens num grafo de **módulos**.
+///
+/// Política:
+/// - **Nós** do resultado: apenas os com `Kind::Mod` ou `Kind::Crate`. `id`
+///   e `path` preservados (idêntico ao do nó original).
+/// - **Arestas `Uses`** do resultado: para cada aresta `Uses item_x →
+///   item_y` no grafo original, achar `mod(x)` e `mod(y)` pela cadeia
+///   `Owns`. Se `mod(x) != mod(y)`, emite aresta `Uses mod(x) → mod(y)` no
+///   resultado (deduplicada). Uses intra-módulo (mod(x) == mod(y)) são
+///   **absorvidos** — não viram aresta. Itens sem módulo contenedor (raros)
+///   são ignorados.
+/// - **Arestas `Owns`** do resultado: preservadas entre módulos (crate
+///   "possui" módulos filhos diretos, módulo "possui" submódulos). Útil
+///   para a hierarquia da DSM e para a navegação fractal futura.
+///
+/// Saída determinística: nós ordenados por `path`, arestas por `(from,
+/// to, relation)`.
+pub fn agregar_por_modulo(grafo: &Grafo) -> Grafo {
+    let modulo_de = mapa_modulo_contenedor(grafo);
+
+    // Nós: só módulos e crates, na ordem original (preserva `id` e `path`).
+    let mut nodes: Vec<No> = grafo
+        .nodes
+        .iter()
+        .filter(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
+        .cloned()
+        .collect();
+    nodes.sort_by(|a, b| a.path.as_str().cmp(b.path.as_str()));
+
+    // Arestas: deduplicadas em conjunto, depois ordenadas.
+    let mut chaves: HashSet<(usize, usize, Relation)> = HashSet::new();
+    let mut arestas: Vec<Aresta> = Vec::new();
+
+    for a in &grafo.edges {
+        match a.relation {
+            Relation::Uses => {
+                let from_mod = match modulo_de.get(&a.id_from) {
+                    Some(&m) => m,
+                    None => continue,
+                };
+                let to_mod = match modulo_de.get(&a.id_to) {
+                    Some(&m) => m,
+                    None => continue,
+                };
+                if from_mod == to_mod {
+                    continue; // uses intra-módulo é absorvido
+                }
+                if chaves.insert((from_mod, to_mod, Relation::Uses)) {
+                    let from_no = grafo.nodes.iter().find(|n| n.id == from_mod);
+                    let to_no = grafo.nodes.iter().find(|n| n.id == to_mod);
+                    if let (Some(f), Some(t)) = (from_no, to_no) {
+                        // Agregado intencionalmente perde a granularidade do
+                        // subtipo (uma aresta módulo→módulo deriva de N
+                        // arestas-de-item, possivelmente de subtipos
+                        // diferentes). `uses_kind = None` no agregado.
+                        arestas.push(Aresta {
+                            from: f.path.clone(),
+                            id_from: from_mod,
+                            to: t.path.clone(),
+                            id_to: to_mod,
+                            relation: Relation::Uses,
+                            uses_kind: None,
+                        });
+                    }
+                }
+            }
+            Relation::Owns => {
+                // Hierarquia entre módulos: mantém só se ambas as pontas
+                // forem módulos/crates.
+                let from_e_mod = grafo
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == a.id_from)
+                    .map(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
+                    .unwrap_or(false);
+                let to_e_mod = grafo
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == a.id_to)
+                    .map(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
+                    .unwrap_or(false);
+                if from_e_mod
+                    && to_e_mod
+                    && chaves.insert((a.id_from, a.id_to, Relation::Owns))
+                {
+                    arestas.push(a.clone());
+                }
+            }
+        }
+    }
+
+    arestas.sort_by(|a, b| {
+        a.from
+            .as_str()
+            .cmp(b.from.as_str())
+            .then_with(|| a.to.as_str().cmp(b.to.as_str()))
+            .then_with(|| format!("{:?}", a.relation).cmp(&format!("{:?}", b.relation)))
+    });
+
+    Grafo {
+        crate_name: grafo.crate_name.clone(),
+        nodes,
+        edges: arestas,
+    }
+}
+
+/// Detecta os ciclos (SCCs de tamanho ≥ 2) no grafo, **sobre as arestas
+/// `Uses`**. Genérico: funciona em qualquer `Grafo` (item, módulo, crate).
+///
+/// Algoritmo: Tarjan iterativo (sem recursão para evitar stack overflow em
+/// grafos profundos). Saída determinística:
+/// - Cada `Ciclo.modulos` é ordenado lexicograficamente.
+/// - O `Vec<Ciclo>` é ordenado pelo primeiro path de cada ciclo.
+pub fn detectar_ciclos(grafo: &Grafo) -> Vec<Ciclo> {
+    let path_por_id: HashMap<usize, Path> =
+        grafo.nodes.iter().map(|n| (n.id, n.path.clone())).collect();
+    let sccs = tarjan_sccs(grafo, &path_por_id);
+
+    // Filtra SCCs ≥ 2 e ordena deterministicamente.
+    let mut ciclos: Vec<Ciclo> = sccs
+        .into_iter()
+        .filter(|s| s.len() >= 2)
+        .map(|s| {
+            let mut paths: Vec<Path> = s
+                .into_iter()
+                .filter_map(|id| path_por_id.get(&id).cloned())
+                .collect();
+            paths.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+            Ciclo { modulos: paths }
+        })
+        .collect();
+    ciclos.sort_by(|a, b| {
+        let pa = a.modulos.first().map(|p| p.as_str()).unwrap_or("");
+        let pb = b.modulos.first().map(|p| p.as_str()).unwrap_or("");
+        pa.cmp(pb)
+    });
+    ciclos
+}
+
+/// Ordena os módulos para a DSM: condensação dos SCCs (cada SCC vira um
+/// ponto) + ordem topológica do DAG resultante, com empate por menor
+/// `path` do SCC. Os membros de cada SCC ficam **agrupados** em `ordem`,
+/// e os SCCs ≥ 2 (os ciclos) são listados em `blocos` na ordem em que
+/// aparecem.
+///
+/// Genérico sobre qualquer `Grafo` (item, módulo, crate) — prompt 0035 usa
+/// no nível módulo, mas a peça reusa para o fractal.
+///
+/// Pureza L1: sem `petgraph`. Algoritmo:
+/// 1. `tarjan_sccs` devolve a partição completa (cada nó num SCC, possivelmente
+///    singleton).
+/// 2. Constrói o DAG da condensação: aresta de SCC(a) → SCC(b) se existe
+///    aresta `Uses` no grafo original com `from ∈ a, to ∈ b, a ≠ b`.
+/// 3. Ordem topológica via Kahn iterativo (fila ordenada por menor `path`
+///    do SCC para empate determinístico).
+/// 4. Expande os SCCs na ordem topológica; membros internos ordenados por
+///    `path` ascendente.
+pub fn ordenar_dsm(grafo: &Grafo) -> OrdemDsm {
+    let path_por_id: HashMap<usize, Path> =
+        grafo.nodes.iter().map(|n| (n.id, n.path.clone())).collect();
+    let sccs = tarjan_sccs(grafo, &path_por_id);
+
+    // Membros de cada SCC ordenados por path; e descobre o "menor path"
+    // de cada SCC para empate na topológica.
+    let mut sccs_paths: Vec<Vec<Path>> = sccs
+        .iter()
+        .map(|s| {
+            let mut paths: Vec<Path> = s
+                .iter()
+                .filter_map(|id| path_por_id.get(id).cloned())
+                .collect();
+            paths.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+            paths
+        })
+        .collect();
+
+    // Mapa id_de_no → índice de SCC.
+    let mut scc_de_no: HashMap<usize, usize> = HashMap::new();
+    for (i, s) in sccs.iter().enumerate() {
+        for &id in s {
+            scc_de_no.insert(id, i);
+        }
+    }
+
+    // Construir o DAG da condensação: arestas SCC→SCC (deduplicadas).
+    let mut adj_cond: Vec<BTreeSet<usize>> = vec![BTreeSet::new(); sccs.len()];
+    let mut grau_entrada: Vec<usize> = vec![0; sccs.len()];
+    let mut arestas_visitadas: HashSet<(usize, usize)> = HashSet::new();
+    for a in &grafo.edges {
+        if a.relation != Relation::Uses {
+            continue;
+        }
+        let Some(&ia) = scc_de_no.get(&a.id_from) else {
+            continue;
+        };
+        let Some(&ib) = scc_de_no.get(&a.id_to) else {
+            continue;
+        };
+        if ia == ib {
+            continue; // aresta interna ao SCC — não vira aresta da condensação
+        }
+        if arestas_visitadas.insert((ia, ib)) {
+            adj_cond[ia].insert(ib);
+            grau_entrada[ib] += 1;
+        }
+    }
+
+    // Kahn determinístico: a fila é uma BTreeSet de (menor_path_do_scc,
+    // índice_scc) para ordenar empates por path ascendente.
+    let chave = |i: usize| -> String {
+        sccs_paths[i]
+            .first()
+            .map(|p| p.as_str().to_string())
+            .unwrap_or_default()
+    };
+    let mut prontos: BTreeSet<(String, usize)> = BTreeSet::new();
+    for i in 0..sccs.len() {
+        if grau_entrada[i] == 0 {
+            prontos.insert((chave(i), i));
+        }
+    }
+
+    let mut ordem_sccs: Vec<usize> = Vec::with_capacity(sccs.len());
+    while let Some(entrada) = prontos.iter().next().cloned() {
+        prontos.remove(&entrada);
+        let (_, i) = entrada;
+        ordem_sccs.push(i);
+        // Para cada vizinho na condensação, decrementa o grau de entrada;
+        // adiciona à fila quando chegar a zero.
+        let vizinhos: Vec<usize> = adj_cond[i].iter().copied().collect();
+        for j in vizinhos {
+            grau_entrada[j] -= 1;
+            if grau_entrada[j] == 0 {
+                prontos.insert((chave(j), j));
+            }
+        }
+    }
+
+    // Expandir: para cada SCC na ordem topológica, emitir seus membros.
+    let mut ordem: Vec<Path> = Vec::with_capacity(grafo.nodes.len());
+    let mut blocos: Vec<Vec<Path>> = Vec::new();
+    for &i in &ordem_sccs {
+        let membros = std::mem::take(&mut sccs_paths[i]);
+        if membros.len() >= 2 {
+            blocos.push(membros.clone());
+        }
+        ordem.extend(membros);
+    }
+
+    OrdemDsm { ordem, blocos }
+}
+
+/// Tarjan iterativo: devolve **todos** os SCCs do grafo sobre as arestas
+/// `Uses`, **incluindo singletons** (nós sem ciclo formam SCC de tamanho 1).
+/// É a **partição completa** dos nós — pré-requisito da condensação
+/// (prompt 0035): cada SCC vira um ponto, e a condensação fica DAG.
+///
+/// Os SCCs vêm na ordem em que o Tarjan os **fecha** — naturalmente a
+/// inversa de uma ordem topológica da condensação. O chamador decide
+/// como aplicar essa propriedade (filtrar como [`detectar_ciclos`] faz,
+/// ou usar para ordenar como [`ordenar_dsm`] faz).
+///
+/// Determinismo: a ordem de visita das raízes do DFS é por `path`
+/// ascendente, e a adjacência é ordenada por id alcançado. Mesmo
+/// `Grafo` → mesma sequência de SCCs.
+fn tarjan_sccs(grafo: &Grafo, path_por_id: &HashMap<usize, Path>) -> Vec<Vec<usize>> {
+    // Adjacência: id → ids alcançáveis via Uses.
+    let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
+    for n in &grafo.nodes {
+        adj.entry(n.id).or_default();
+    }
+    for a in &grafo.edges {
+        if a.relation == Relation::Uses {
+            adj.entry(a.id_from).or_default().push(a.id_to);
+        }
+    }
+    // Determinismo: ordenar adjacência por id alcançado.
+    for v in adj.values_mut() {
+        v.sort_unstable();
+        v.dedup();
+    }
+
+    // Ordem dos nós-raiz da DFS: por path ascendente — saída determinística.
+    let mut ordem: Vec<usize> = grafo.nodes.iter().map(|n| n.id).collect();
+    ordem.sort_by(|a, b| {
+        path_por_id
+            .get(a)
+            .map(|p| p.as_str())
+            .unwrap_or("")
+            .cmp(path_por_id.get(b).map(|p| p.as_str()).unwrap_or(""))
+    });
+
+    let mut index: HashMap<usize, usize> = HashMap::new();
+    let mut lowlink: HashMap<usize, usize> = HashMap::new();
+    let mut on_stack: HashSet<usize> = HashSet::new();
+    let mut stack: Vec<usize> = Vec::new();
+    let mut idx: usize = 0;
+    let mut sccs: Vec<Vec<usize>> = Vec::new();
+
+    for &raiz in &ordem {
+        if index.contains_key(&raiz) {
+            continue;
+        }
+        let mut dfs: Vec<(usize, usize)> = Vec::new();
+        index.insert(raiz, idx);
+        lowlink.insert(raiz, idx);
+        idx += 1;
+        stack.push(raiz);
+        on_stack.insert(raiz);
+        dfs.push((raiz, 0));
+
+        while let Some(&(v, i)) = dfs.last() {
+            let viz = adj.get(&v).map(|v| v.as_slice()).unwrap_or(&[]);
+            if i < viz.len() {
+                let w = viz[i];
+                let last = dfs.last_mut().unwrap();
+                last.1 = i + 1;
+
+                if !index.contains_key(&w) {
+                    index.insert(w, idx);
+                    lowlink.insert(w, idx);
+                    idx += 1;
+                    stack.push(w);
+                    on_stack.insert(w);
+                    dfs.push((w, 0));
+                } else if on_stack.contains(&w) {
+                    let lv = *lowlink.get(&v).unwrap();
+                    let iw = *index.get(&w).unwrap();
+                    lowlink.insert(v, lv.min(iw));
+                }
+            } else {
+                let v_idx = *index.get(&v).unwrap();
+                let v_low = *lowlink.get(&v).unwrap();
+                dfs.pop();
+                if v_low == v_idx {
+                    let mut scc = Vec::new();
+                    while let Some(w) = stack.pop() {
+                        on_stack.remove(&w);
+                        scc.push(w);
+                        if w == v {
+                            break;
+                        }
+                    }
+                    sccs.push(scc);
+                }
+                if let Some(&(parent, _)) = dfs.last() {
+                    let lp = *lowlink.get(&parent).unwrap();
+                    lowlink.insert(parent, lp.min(v_low));
+                }
+            }
+        }
+    }
+    sccs
+}
+
+/// Para cada nó do grafo, qual é o seu **módulo contenedor** (id). Subida
+/// pela cadeia de `Owns` até o primeiro `Kind::Mod` ou `Kind::Crate`. Um
+/// nó que **é** módulo/crate aponta para si mesmo. Itens sem cadeia até
+/// um módulo (órfãos, raros) ficam **ausentes** do mapa.
+fn mapa_modulo_contenedor(grafo: &Grafo) -> HashMap<usize, usize> {
+    let pai: HashMap<usize, usize> = grafo
+        .edges
+        .iter()
+        .filter(|a| a.relation == Relation::Owns)
+        .map(|a| (a.id_to, a.id_from))
+        .collect();
+    let kind_por_id: HashMap<usize, Kind> = grafo.nodes.iter().map(|n| (n.id, n.kind)).collect();
+
+    let mut contenedor: HashMap<usize, usize> = HashMap::new();
+    for n in &grafo.nodes {
+        if matches!(n.kind, Kind::Mod | Kind::Crate) {
+            contenedor.insert(n.id, n.id);
+            continue;
+        }
+        // Subir até encontrar Mod/Crate. Protege contra ciclos teóricos em
+        // `Owns` com `BTreeSet` de visitados (não ocorrem em dado real,
+        // mas o custo é nulo).
+        let mut visitados: BTreeSet<usize> = BTreeSet::new();
+        let mut atual = n.id;
+        loop {
+            if !visitados.insert(atual) {
+                break; // ciclo em Owns — abandona
+            }
+            match pai.get(&atual) {
+                None => break, // órfão
+                Some(&p) => {
+                    if matches!(kind_por_id.get(&p), Some(Kind::Mod) | Some(Kind::Crate)) {
+                        contenedor.insert(n.id, p);
+                        break;
+                    }
+                    atual = p;
+                }
+            }
+        }
+    }
+    contenedor
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lente_core::entities::grafo::{Modificadores, Visibility};
+
+    fn no(id: usize, path: &str, kind: Kind) -> No {
+        No {
+            id,
+            path: Path::from(path),
+            name: path.rsplit("::").next().unwrap_or(path).to_string(),
+            kind,
+            modificadores: Modificadores::default(),
+            visibility: Visibility::Pub,
+            crate_name: "k".to_string(),
+            trait_: None,
+            trait_ref: None,
+            cfg: None,
+            macro_kind: None,
+            is_non_exhaustive: false,
+        }
+    }
+
+    fn aresta(id_from: usize, from: &str, id_to: usize, to: &str, rel: Relation) -> Aresta {
+        Aresta {
+            from: Path::from(from),
+            id_from,
+            to: Path::from(to),
+            id_to,
+            relation: rel,
+            uses_kind: None,
+        }
+    }
+
+    /// Grafo-padrão com 2 módulos (a, b) e 1 item dentro de cada (a::f, b::g).
+    /// Sem arestas de Uses; útil de ponto de partida.
+    fn grafo_dois_modulos() -> Grafo {
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(1, "k", Kind::Crate),
+            no(10, "k::a", Kind::Mod),
+            no(11, "k::a::f", Kind::Fn),
+            no(20, "k::b", Kind::Mod),
+            no(21, "k::b::g", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(1, "k", 10, "k::a", Relation::Owns),
+            aresta(10, "k::a", 11, "k::a::f", Relation::Owns),
+            aresta(1, "k", 20, "k::b", Relation::Owns),
+            aresta(20, "k::b", 21, "k::b::g", Relation::Owns),
+        ];
+        g
+    }
+
+    // ---- mapa_modulo_contenedor ---------------------------------------------
+
+    #[test]
+    fn modulo_contenedor_de_item_e_seu_modulo_direto() {
+        let g = grafo_dois_modulos();
+        let m = mapa_modulo_contenedor(&g);
+        assert_eq!(m.get(&11), Some(&10), "f deve estar em a");
+        assert_eq!(m.get(&21), Some(&20), "g deve estar em b");
+    }
+
+    #[test]
+    fn modulo_contenedor_de_modulo_e_ele_mesmo() {
+        let g = grafo_dois_modulos();
+        let m = mapa_modulo_contenedor(&g);
+        assert_eq!(m.get(&10), Some(&10));
+        assert_eq!(m.get(&1), Some(&1)); // crate aponta para si
+    }
+
+    #[test]
+    fn modulo_contenedor_sobe_atraves_de_struct() {
+        // método sob struct sob módulo: a subida tem que passar pela struct
+        // até alcançar o módulo. `T` é struct (não módulo), `f` é fn.
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(10, "k::a", Kind::Mod),
+            no(11, "k::a::T", Kind::Struct),
+            no(12, "k::a::T::f", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(10, "k::a", 11, "k::a::T", Relation::Owns),
+            aresta(11, "k::a::T", 12, "k::a::T::f", Relation::Owns),
+        ];
+        let m = mapa_modulo_contenedor(&g);
+        // método deve subir struct → módulo.
+        assert_eq!(m.get(&12), Some(&10));
+    }
+
+    #[test]
+    fn no_orfao_nao_tem_modulo_contenedor() {
+        let mut g = Grafo::new("k");
+        g.nodes = vec![no(99, "k::orfao", Kind::Fn)];
+        g.edges = vec![]; // sem Owns
+        let m = mapa_modulo_contenedor(&g);
+        assert!(m.get(&99).is_none());
+    }
+
+    // ---- agregar_por_modulo --------------------------------------------------
+
+    #[test]
+    fn agregacao_uses_inter_modulo_vira_aresta_uma_vez() {
+        let mut g = grafo_dois_modulos();
+        // dois itens de a dependem do mesmo item de b — vira UMA aresta a→b.
+        g.nodes.push(no(12, "k::a::f2", Kind::Fn));
+        g.edges
+            .push(aresta(10, "k::a", 12, "k::a::f2", Relation::Owns));
+        g.edges
+            .push(aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses));
+        g.edges
+            .push(aresta(12, "k::a::f2", 21, "k::b::g", Relation::Uses));
+        let r = agregar_por_modulo(&g);
+        let arestas_uses: Vec<_> = r
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Uses)
+            .collect();
+        assert_eq!(arestas_uses.len(), 1, "dois itens, uma aresta de módulo");
+        assert_eq!(arestas_uses[0].from.as_str(), "k::a");
+        assert_eq!(arestas_uses[0].to.as_str(), "k::b");
+    }
+
+    #[test]
+    fn agregacao_uses_intra_modulo_e_absorvido() {
+        let mut g = grafo_dois_modulos();
+        // dois itens do MESMO módulo se usam — nenhuma aresta no resultado.
+        g.nodes.push(no(12, "k::a::f2", Kind::Fn));
+        g.edges
+            .push(aresta(10, "k::a", 12, "k::a::f2", Relation::Owns));
+        g.edges
+            .push(aresta(11, "k::a::f", 12, "k::a::f2", Relation::Uses));
+        let r = agregar_por_modulo(&g);
+        assert!(
+            r.edges
+                .iter()
+                .all(|a| a.relation != Relation::Uses),
+            "uses intra-módulo não vira aresta"
+        );
+    }
+
+    #[test]
+    fn agregacao_so_inclui_nos_de_mod_e_crate() {
+        let g = grafo_dois_modulos();
+        let r = agregar_por_modulo(&g);
+        for n in &r.nodes {
+            assert!(matches!(n.kind, Kind::Mod | Kind::Crate));
+        }
+        // 1 crate + 2 mods = 3 nós no resultado.
+        assert_eq!(r.nodes.len(), 3);
+    }
+
+    #[test]
+    fn agregacao_preserva_id_e_path_dos_modulos() {
+        let g = grafo_dois_modulos();
+        let r = agregar_por_modulo(&g);
+        let mod_a = r.nodes.iter().find(|n| n.path.as_str() == "k::a").unwrap();
+        assert_eq!(mod_a.id, 10);
+    }
+
+    #[test]
+    fn agregacao_preserva_owns_entre_modulos() {
+        let g = grafo_dois_modulos();
+        let r = agregar_por_modulo(&g);
+        let owns: Vec<_> = r
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Owns)
+            .collect();
+        // crate possui dois módulos.
+        assert_eq!(owns.len(), 2);
+    }
+
+    #[test]
+    fn agregacao_preserva_crate_name() {
+        let g = grafo_dois_modulos();
+        let r = agregar_por_modulo(&g);
+        assert_eq!(r.crate_name, "k");
+    }
+
+    // ---- detectar_ciclos -----------------------------------------------------
+
+    #[test]
+    fn ciclo_de_dois_modulos_e_detectado() {
+        let mut g = grafo_dois_modulos();
+        // f (em a) usa g (em b); g (em b) usa f (em a) — agregação produz
+        // a→b e b→a, formando um ciclo de tamanho 2.
+        g.edges
+            .push(aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses));
+        g.edges
+            .push(aresta(21, "k::b::g", 11, "k::a::f", Relation::Uses));
+        let agg = agregar_por_modulo(&g);
+        let ciclos = detectar_ciclos(&agg);
+        assert_eq!(ciclos.len(), 1);
+        let nomes: Vec<&str> = ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b"]);
+    }
+
+    #[test]
+    fn ciclo_de_tres_modulos_e_detectado() {
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(1, "k", Kind::Crate),
+            no(10, "k::a", Kind::Mod),
+            no(11, "k::a::x", Kind::Fn),
+            no(20, "k::b", Kind::Mod),
+            no(21, "k::b::y", Kind::Fn),
+            no(30, "k::c", Kind::Mod),
+            no(31, "k::c::z", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(1, "k", 10, "k::a", Relation::Owns),
+            aresta(10, "k::a", 11, "k::a::x", Relation::Owns),
+            aresta(1, "k", 20, "k::b", Relation::Owns),
+            aresta(20, "k::b", 21, "k::b::y", Relation::Owns),
+            aresta(1, "k", 30, "k::c", Relation::Owns),
+            aresta(30, "k::c", 31, "k::c::z", Relation::Owns),
+            // A → B → C → A
+            aresta(11, "k::a::x", 21, "k::b::y", Relation::Uses),
+            aresta(21, "k::b::y", 31, "k::c::z", Relation::Uses),
+            aresta(31, "k::c::z", 11, "k::a::x", Relation::Uses),
+        ];
+        let agg = agregar_por_modulo(&g);
+        let ciclos = detectar_ciclos(&agg);
+        assert_eq!(ciclos.len(), 1);
+        let nomes: Vec<&str> = ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b", "k::c"]);
+    }
+
+    #[test]
+    fn grafo_aciclico_nao_tem_ciclos() {
+        let mut g = grafo_dois_modulos();
+        // a → b, sem volta — DAG.
+        g.edges
+            .push(aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses));
+        let agg = agregar_por_modulo(&g);
+        let ciclos = detectar_ciclos(&agg);
+        assert!(ciclos.is_empty());
+    }
+
+    #[test]
+    fn ciclo_de_um_nodo_uses_de_si_mesmo_nao_conta_como_ciclo() {
+        // SCC só conta como ciclo se tiver ≥ 2 elementos. Um auto-loop
+        // (módulo que usa a si mesmo) não dispara — combina com a
+        // política "ciclos de tamanho ≥ 2" do prompt 0031.
+        let mut g = grafo_dois_modulos();
+        // Tecnicamente impossível depois de agregar (uses intra-módulo é
+        // absorvido), mas para garantir, exercito direto: detectar_ciclos
+        // sobre um grafo com auto-loop em a→a.
+        let mut g_loop = Grafo::new("k");
+        g_loop.nodes = vec![no(10, "k::a", Kind::Mod)];
+        g_loop.edges = vec![aresta(10, "k::a", 10, "k::a", Relation::Uses)];
+        let ciclos = detectar_ciclos(&g_loop);
+        assert!(ciclos.is_empty());
+
+        // sanity: o caso normal de duas direções continua detectando.
+        g.edges
+            .push(aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses));
+        g.edges
+            .push(aresta(21, "k::b::g", 11, "k::a::f", Relation::Uses));
+        let agg = agregar_por_modulo(&g);
+        let ciclos = detectar_ciclos(&agg);
+        assert_eq!(ciclos.len(), 1);
+    }
+
+    #[test]
+    fn dois_ciclos_disjuntos_aparecem_em_ordem_deterministica() {
+        // Dois ciclos: {a, b} e {c, d}; ordenados pelo primeiro path.
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(1, "k", Kind::Crate),
+            no(10, "k::a", Kind::Mod),
+            no(11, "k::a::x", Kind::Fn),
+            no(20, "k::b", Kind::Mod),
+            no(21, "k::b::y", Kind::Fn),
+            no(30, "k::c", Kind::Mod),
+            no(31, "k::c::z", Kind::Fn),
+            no(40, "k::d", Kind::Mod),
+            no(41, "k::d::w", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(1, "k", 10, "k::a", Relation::Owns),
+            aresta(10, "k::a", 11, "k::a::x", Relation::Owns),
+            aresta(1, "k", 20, "k::b", Relation::Owns),
+            aresta(20, "k::b", 21, "k::b::y", Relation::Owns),
+            aresta(1, "k", 30, "k::c", Relation::Owns),
+            aresta(30, "k::c", 31, "k::c::z", Relation::Owns),
+            aresta(1, "k", 40, "k::d", Relation::Owns),
+            aresta(40, "k::d", 41, "k::d::w", Relation::Owns),
+            // ciclo 1: a ↔ b
+            aresta(11, "k::a::x", 21, "k::b::y", Relation::Uses),
+            aresta(21, "k::b::y", 11, "k::a::x", Relation::Uses),
+            // ciclo 2: c ↔ d
+            aresta(31, "k::c::z", 41, "k::d::w", Relation::Uses),
+            aresta(41, "k::d::w", 31, "k::c::z", Relation::Uses),
+        ];
+        let agg = agregar_por_modulo(&g);
+        let ciclos = detectar_ciclos(&agg);
+        assert_eq!(ciclos.len(), 2);
+        assert_eq!(ciclos[0].modulos[0].as_str(), "k::a");
+        assert_eq!(ciclos[1].modulos[0].as_str(), "k::c");
+    }
+
+    /// Genericidade: `detectar_ciclos` opera sobre qualquer Grafo,
+    /// inclusive um de itens (sem agregação prévia). A "estrutura
+    /// fractal" do prompt 0031 — mesma peça noutra escala — vive aqui.
+    #[test]
+    fn detectar_ciclos_funciona_sobre_grafo_de_itens_tambem() {
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(11, "k::a::x", Kind::Fn),
+            no(21, "k::b::y", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(11, "k::a::x", 21, "k::b::y", Relation::Uses),
+            aresta(21, "k::b::y", 11, "k::a::x", Relation::Uses),
+        ];
+        let ciclos = detectar_ciclos(&g);
+        assert_eq!(ciclos.len(), 1);
+        assert_eq!(ciclos[0].modulos.len(), 2);
+    }
+
+    // ---- ordenar_dsm (prompt 0035) ------------------------------------------
+
+    /// Helper que monta um grafo módulo→módulo já no formato que o
+    /// `ordenar_dsm` espera. Não é o agregador (que sobe `Owns`); é direto.
+    fn grafo_modulos(
+        ms: &[(usize, &str)],
+        deps: &[(usize, usize)],
+    ) -> Grafo {
+        let mut g = Grafo::new("k");
+        g.nodes = ms.iter().map(|&(id, p)| no(id, p, Kind::Mod)).collect();
+        let path_de = |id: usize| -> &str {
+            ms.iter().find(|&&(i, _)| i == id).map(|&(_, p)| p).unwrap_or("")
+        };
+        g.edges = deps
+            .iter()
+            .map(|&(a, b)| aresta(a, path_de(a), b, path_de(b), Relation::Uses))
+            .collect();
+        g
+    }
+
+    #[test]
+    fn ordenar_dag_linear_devolve_ordem_topologica_estavel() {
+        // A→B→C. Sem ciclos. Ordem topológica: A, B, C. Blocos: vazio.
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
+            &[(1, 2), (2, 3)],
+        );
+        let o = ordenar_dsm(&g);
+        let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b", "k::c"]);
+        assert!(o.blocos.is_empty());
+    }
+
+    #[test]
+    fn ordenar_um_ciclo_de_dois_modulos_vira_bloco_unico() {
+        // A↔B. Bloco {A,B}; só esse SCC. Ordem: A, B (membros internos
+        // alfabéticos).
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b")],
+            &[(1, 2), (2, 1)],
+        );
+        let o = ordenar_dsm(&g);
+        let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b"]);
+        assert_eq!(o.blocos.len(), 1);
+        assert_eq!(o.blocos[0].len(), 2);
+    }
+
+    #[test]
+    fn ordenar_ciclo_mais_depende_dele_e_bloco_vem_depois() {
+        // A↔B (bloco), e C→A. C deve vir ANTES do bloco {A,B} na ordem
+        // topológica — porque C depende do bloco.
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
+            &[(1, 2), (2, 1), (3, 1)],
+        );
+        let o = ordenar_dsm(&g);
+        let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
+        // c → {a,b}: c vem primeiro (fonte), depois o bloco.
+        assert_eq!(nomes, vec!["k::c", "k::a", "k::b"]);
+        assert_eq!(o.blocos.len(), 1);
+    }
+
+    #[test]
+    fn ordenar_dois_ciclos_disjuntos_aparecem_em_ordem_estavel() {
+        // {a,b} (bloco 1) e {c,d} (bloco 2). Sem deps entre eles → empate
+        // por path: bloco {a,b} vem primeiro.
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c"), (4, "k::d")],
+            &[(1, 2), (2, 1), (3, 4), (4, 3)],
+        );
+        let o = ordenar_dsm(&g);
+        let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b", "k::c", "k::d"]);
+        assert_eq!(o.blocos.len(), 2);
+    }
+
+    #[test]
+    fn ordenar_no_isolado_aparece_em_ordem_topologica_valida() {
+        // c isolado; a→b. Sem ciclo. Kahn pop'a "k::a" (menor) → libera
+        // b. Próximo pop pela chave "k::b" < "k::c". Resultado: a, b, c.
+        // (Qualquer ordem topológica é DSM-correta; o algoritmo escolhe
+        // a determinística via fila ordenada por path.)
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
+            &[(1, 2)],
+        );
+        let o = ordenar_dsm(&g);
+        let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["k::a", "k::b", "k::c"]);
+        // Propriedade topológica: o índice de "k::a" < índice de "k::b"
+        // (a→b é satisfeita).
+        let idx_a = nomes.iter().position(|p| *p == "k::a").unwrap();
+        let idx_b = nomes.iter().position(|p| *p == "k::b").unwrap();
+        assert!(idx_a < idx_b, "a→b deve apontar 'para frente' na DSM");
+        assert!(o.blocos.is_empty());
+    }
+
+    #[test]
+    fn ordenar_e_deterministico_entre_extracoes() {
+        // Duas extrações do mesmo grafo → mesma ordem (sem aleatoriedade).
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
+            &[(1, 2), (2, 3)],
+        );
+        let o1 = ordenar_dsm(&g);
+        let o2 = ordenar_dsm(&g);
+        assert_eq!(o1, o2);
+    }
+
+    /// Teste-consumidor (prompt 0035): a partir de `ordem` + as deps do
+    /// grafo, reconstrói a grade N×N e confere que reflete as
+    /// dependências originais. Prova que a "matriz como dado" é
+    /// suficiente.
+    #[test]
+    fn consumidor_reconstroi_grade_a_partir_de_ordem_e_deps() {
+        let g = grafo_modulos(
+            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
+            &[(1, 2), (2, 3), (3, 1)], // a→b→c→a (ciclo de 3)
+        );
+        let o = ordenar_dsm(&g);
+
+        // Reconstrução: índice de cada path em `ordem`; grade N×N booleana.
+        let n = o.ordem.len();
+        let mut idx: HashMap<&str, usize> = HashMap::new();
+        for (i, p) in o.ordem.iter().enumerate() {
+            idx.insert(p.as_str(), i);
+        }
+        let mut grade = vec![vec![false; n]; n];
+        for a in &g.edges {
+            if a.relation == Relation::Uses {
+                if let (Some(&i), Some(&j)) = (
+                    idx.get(a.from.as_str()),
+                    idx.get(a.to.as_str()),
+                ) {
+                    grade[i][j] = true;
+                }
+            }
+        }
+        // Cada dependência original corresponde a uma célula `true`.
+        let total_marcadas: usize = grade.iter().flatten().filter(|c| **c).count();
+        assert_eq!(total_marcadas, 3);
+        // E o bloco do ciclo cobre os 3 módulos.
+        assert_eq!(o.blocos.len(), 1);
+        assert_eq!(o.blocos[0].len(), 3);
+    }
+}
