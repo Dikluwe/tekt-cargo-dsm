@@ -1,12 +1,25 @@
 //! Lineage: prompt 00_nucleo/prompt/0019-l4-wiring.md
+//!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
+//!          escopo do usuário por prompt 00_nucleo/prompt/0030-escopo-usuario.md
 //! Camada:  L4 — Fiação (composição pura, sem lógica de negócio).
 //!
-//! Compõe o pipeline da lente ponta a ponta:
+//! Compõe os pipelines da lente ponta a ponta:
 //!
-//!   FonteGrafo → [JSON cru] → desserializa → grafo → [detecta colisões]
-//!     → para cada colisão: investigar (lente_investiga) + aplicar
-//!       (lente_resolve) → grafo resolvido (paths únicos)
-//!     → resolver alvo (path direto ou via id) → calcular_raio → Raio.
+//!   modo per-nó:
+//!     FonteGrafo → [JSON cru] → desserializa → grafo → [detecta colisões]
+//!       → resolver colisões (investiga+resolve) → grafo resolvido
+//!       → aplicar Escopo (filtrar_stdlib se SeuCodigo)
+//!       → resolver alvo (path direto ou via id) → calcular_raio → Raio.
+//!
+//!   modo ranking (prompt 0027):
+//!     FonteGrafo → grafo resolvido (reuso da etapa acima)
+//!       → aplicar Escopo (mesmo helper)
+//!       → rankear (lente_ranking) → Vec<ItemRanking>.
+//!
+//! O **Escopo** (prompt 0030) é parâmetro dos dois pipelines, com **mesmo
+//! default** (`Completo`): conserta o Achado 2 do laudo 0029 (classificação
+//! divergente em silêncio entre ranking e raio). O filtro do `lente_filtro`
+//! intacto — só passa a ser aplicado condicionalmente, num único ponto.
 //!
 //! Não formata, não escreve em stdout, não lida com argumentos — isso é L2.
 
@@ -17,11 +30,20 @@ use core::fmt;
 use std::collections::HashMap;
 
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
-use lente_core::entities::grafo::{Aresta, Grafo, Path};
+use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
+use lente_estrutura::{agregar_por_modulo, detectar_ciclos, ordenar_dsm};
+use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::fork::ErroFork;
 use lente_investiga::{ArestasNo, ParColidente, Vizinhanca};
+use lente_ranking::rankear;
 use lente_resolve::ErroResolve;
+
+// Re-export para consumidores L2 não precisarem depender de `lente_ranking`/
+// `lente_estrutura` diretamente — a fronteira de API do wiring carrega os
+// tipos de resultado.
+pub use lente_estrutura::{Ciclo, OrdemDsm};
+pub use lente_ranking::ItemRanking;
 
 /// De onde vem o grafo: JSON pronto ou nome de pacote (invoca o fork).
 pub enum FonteGrafo {
@@ -29,6 +51,63 @@ pub enum FonteGrafo {
     Json(String),
     /// Nome de pacote — o wiring invoca o fork via `lente_infra::fork`.
     Pacote(String),
+}
+
+/// Escopo do grafo sobre o qual a lente responde — escolha do usuário
+/// (prompt 0030).
+///
+/// **`Completo`** (default): forma resolvida inclui sysroot (`core::*`,
+/// `std::*`, `alloc::*`, …). É o grafo cru-mas-resolvido como o fork
+/// `cargo-modules` o entrega. Classificações refletem o que o nó usa,
+/// inclusive stdlib.
+///
+/// **`SeuCodigo`**: forma resolvida com `lente_filtro::filtrar_stdlib`
+/// aplicado — sysroot escondido (laudo 0025). Classificações refletem
+/// só o que o nó usa **dentro do código do usuário** (mais
+/// dependências não-stdlib).
+///
+/// **Invariante do montante** (prompt 0030 Fase 1, confirmado): para um
+/// nó do código do usuário, o `montante` (quem-depende-de-mim) é o
+/// **mesmo** nos dois escopos — stdlib não depende de código do
+/// usuário. O escopo só muda `uses_saida` e, por consequência, a
+/// classificação. Os campos `uses_entrada` (= "diretos") e
+/// `montante.len()` (= "transitivos") permanecem.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Escopo {
+    Completo,
+    SeuCodigo,
+}
+
+impl Default for Escopo {
+    fn default() -> Self {
+        Escopo::Completo
+    }
+}
+
+/// Modo de inclusão das arestas `Uses` no modo `--estrutura` — escolha
+/// do usuário (prompt 0034).
+///
+/// **`Todas`** (default): inclui todas as `Uses` (a vista do laudo 0031;
+/// SCC de 85 módulos no egui).
+///
+/// **`SoReferencia`**: inclui apenas `Uses` cujo `uses_kind == Reference`
+/// (uso de tipo direto). Descarta `Import` (Limite 4) — o acoplamento
+/// de tipo "real" (laudo 0033: SCC cai para 42).
+///
+/// **Caso `None`** (fork antigo, sem `uses_kind` no JSON): se o usuário
+/// pediu `SoReferencia` e nenhuma aresta `Uses` do grafo tem `uses_kind`,
+/// `analisar_estrutura` retorna `ErroLente::ForkSemUsesKind` — não
+/// silencia produzindo `Todas` disfarçado.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ModoUses {
+    Todas,
+    SoReferencia,
+}
+
+impl Default for ModoUses {
+    fn default() -> Self {
+        ModoUses::Todas
+    }
 }
 
 /// Como o alvo do raio é apontado: por path canônico ou por id.
@@ -51,6 +130,11 @@ pub enum ErroLente {
     Raio(ErroRaio),
     /// Alvo apontado por id que não existe no grafo resolvido.
     IdInexistente(usize),
+    /// Prompt 0034: usuário pediu `ModoUses::SoReferencia` mas o grafo
+    /// não tem `uses_kind` em nenhuma aresta `Uses` — o fork instalado é
+    /// pré-`b44aa96` (não emite o subtipo). Diagnóstico claro, em vez de
+    /// silenciar produzindo `Todas` por engano.
+    ForkSemUsesKind,
 }
 
 impl From<ErroFork> for ErroLente {
@@ -84,38 +168,31 @@ impl fmt::Display for ErroLente {
             ErroLente::IdInexistente(id) => {
                 write!(f, "id {} não existe no grafo resolvido", id)
             }
+            ErroLente::ForkSemUsesKind => f.write_str(
+                "o fork `cargo-modules` instalado não emite `uses_kind` por aresta \
+                 — atualize o fork para usar `--so-referencia`",
+            ),
         }
     }
 }
 
 impl Error for ErroLente {}
 
-/// Pipeline completo: extrai (ou recebe) o grafo, resolve colisões, e calcula
-/// o raio do alvo.
+/// Pipeline completo: extrai (ou recebe) o grafo, resolve colisões, aplica
+/// o escopo, e calcula o raio do alvo.
+///
+/// `escopo` (prompt 0030): `Completo` (default) preserva o comportamento
+/// pré-0030 — grafo cru-mas-resolvido, com stdlib. `SeuCodigo` aplica
+/// `filtrar_stdlib` antes de resolver o alvo e calcular o raio; um alvo
+/// que é nó de stdlib vira `AlvoInexistente` (consistente: pediu para
+/// filtrar a stdlib e consultou um nó dela).
 pub fn calcular_raio_de_alvo(
     fonte: FonteGrafo,
     alvo: AlvoBusca,
+    escopo: Escopo,
 ) -> Result<Raio, ErroLente> {
-    // 1. Obter o JSON cru.
-    let json = match fonte {
-        FonteGrafo::Json(s) => s,
-        FonteGrafo::Pacote(p) => lente_infra::fork::invocar_fork(&p)?,
-    };
+    let grafo = obter_grafo(fonte, escopo)?;
 
-    // 2. Desserializar.
-    let mut grafo = lente_infra::desserializar_grafo(&json)?;
-
-    // 3. Detectar paths colidentes (uma vez, no grafo de entrada).
-    //    Os `aplicar`s só tocam o path da colisão sendo resolvida, então a
-    //    lista capturada agora permanece consistente durante a iteração.
-    let colisoes = detectar_colisoes(&grafo);
-
-    // 4. Investigar + resolver cada colisão. O grafo evolui a cada passo.
-    for path_colidente in colisoes {
-        grafo = resolver_uma_colisao(grafo, &path_colidente)?;
-    }
-
-    // 5. Resolver o alvo no grafo resolvido.
     let path_alvo = match alvo {
         AlvoBusca::PorPath(p) => p,
         AlvoBusca::PorId(id) => grafo
@@ -126,9 +203,170 @@ pub fn calcular_raio_de_alvo(
             .ok_or(ErroLente::IdInexistente(id))?,
     };
 
-    // 6. Calcular o raio.
     let raio = calcular_raio(&grafo, &path_alvo)?;
     Ok(raio)
+}
+
+/// Pipeline do ranking: extrai+resolve, aplica o escopo, rankeia top-N.
+///
+/// `escopo` (prompt 0030): `Completo` (default novo, pós-0030) — o ranking
+/// sai com sysroot no topo, situação do laudo 0021. `SeuCodigo` recupera
+/// o ranking do laudo 0027 (Vec2/Color32/… sem sysroot). O default mudou
+/// **deliberadamente** para casar com o per-nó — ver `Escopo` e o laudo
+/// 0030 para a razão (Achado 2 do laudo 0029).
+pub fn rankear_pacote(
+    fonte: FonteGrafo,
+    n: usize,
+    escopo: Escopo,
+) -> Result<Vec<ItemRanking>, ErroLente> {
+    let grafo = obter_grafo(fonte, escopo)?;
+    Ok(rankear(&grafo, n))
+}
+
+/// Dependência módulo→módulo no resultado do modo estrutura.
+///
+/// Formato pensado para o JSON DSM-friendly (prompt 0031): pares
+/// `{de, para}` deduplicados, ordenados deterministicamente. A
+/// representação em si é apenas dois paths — a forma que uma DSM
+/// futura consome (linhas e colunas).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DependenciaModulo {
+    pub de: Path,
+    pub para: Path,
+}
+
+/// Resultado do modo estrutura (prompt 0031, ampliado pelo 0035): a lista
+/// de **módulos** do crate, as **dependências** módulo→módulo agregadas,
+/// os **ciclos** detectados (SCCs ≥ 2), e o **ordenamento** da DSM
+/// (`ordem` + `blocos` — prompt 0035). Todos os campos determinísticos.
+///
+/// `modulos` mantém a ordem **alfabética** (compatibilidade com clientes
+/// pré-0035); `ordem` traz a **ordem topológica da condensação dos SCCs**
+/// — é a sequência em que linhas/colunas da DSM aparecem. Ambas são
+/// emitidas em paralelo.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EstruturaModulos {
+    pub modulos: Vec<Path>,
+    pub dependencias: Vec<DependenciaModulo>,
+    pub ciclos: Vec<Ciclo>,
+    /// Módulos na ordem da DSM (prompt 0035). Ordem topológica da
+    /// condensação; SCCs ≥ 2 expandidos com membros agrupados.
+    pub ordem: Vec<Path>,
+    /// SCCs ≥ 2 na ordem em que aparecem em `ordem` (prompt 0035). Cada
+    /// bloco é um intervalo contíguo de `ordem`.
+    pub blocos: Vec<Vec<Path>>,
+}
+
+/// Pipeline do modo estrutura (prompt 0031, ampliado pelo 0034): obtém o
+/// grafo no escopo, opcionalmente filtra arestas `Uses` pelo `modo_uses`,
+/// agrega ao nível de módulo, detecta ciclos. Reusa `obter_grafo` (laudo
+/// 0030) — o escopo flui aqui igual aos outros pipelines.
+///
+/// **Invariância ao escopo** dos ciclos (confirmada por E2E no laudo
+/// 0031): stdlib é sorvedouro, nunca fecha ciclo de volta. O escopo só
+/// muda quais módulos aparecem em `modulos`/`dependencias`, não os
+/// `ciclos`.
+///
+/// **`modo_uses`** (prompt 0034): `Todas` (default) preserva a vista do
+/// laudo 0031; `SoReferencia` aplica `filtrar_so_referencia` antes do
+/// agregado — descarta arestas `Uses` de tipo `Import` (Limite 4 da spec).
+///
+/// **Diagnóstico de fork antigo**: se `modo_uses == SoReferencia` e o
+/// grafo tem arestas `Uses` mas **nenhuma** com `uses_kind` definido (o
+/// fork instalado não emite o campo), retorna [`ErroLente::ForkSemUsesKind`]
+/// em vez de silenciar produzindo um grafo todo descartado.
+pub fn analisar_estrutura(
+    fonte: FonteGrafo,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> Result<EstruturaModulos, ErroLente> {
+    let grafo = obter_grafo(fonte, escopo)?;
+    let grafo = match modo_uses {
+        ModoUses::Todas => grafo,
+        ModoUses::SoReferencia => {
+            // Defesa: se nenhuma aresta `Uses` tem `uses_kind`, o fork
+            // instalado não emite o campo — `filtrar_so_referencia`
+            // descartaria *todas* silenciosamente. Diagnóstico explícito.
+            let total_uses = grafo
+                .edges
+                .iter()
+                .filter(|a| a.relation == Relation::Uses)
+                .count();
+            let com_kind = grafo
+                .edges
+                .iter()
+                .filter(|a| a.relation == Relation::Uses && a.uses_kind.is_some())
+                .count();
+            if total_uses > 0 && com_kind == 0 {
+                return Err(ErroLente::ForkSemUsesKind);
+            }
+            filtrar_so_referencia(&grafo)
+        }
+    };
+    let agg = agregar_por_modulo(&grafo);
+    let ciclos = detectar_ciclos(&agg);
+    // Prompt 0035: ordem da DSM (módulos + blocos) sobre o agregado.
+    let dsm = ordenar_dsm(&agg);
+
+    let mut modulos: Vec<Path> = agg.nodes.iter().map(|n| n.path.clone()).collect();
+    modulos.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+
+    let mut dependencias: Vec<DependenciaModulo> = agg
+        .edges
+        .iter()
+        .filter(|a| a.relation == Relation::Uses)
+        .map(|a| DependenciaModulo {
+            de: a.from.clone(),
+            para: a.to.clone(),
+        })
+        .collect();
+    dependencias.sort_by(|a, b| {
+        a.de
+            .as_str()
+            .cmp(b.de.as_str())
+            .then_with(|| a.para.as_str().cmp(b.para.as_str()))
+    });
+
+    Ok(EstruturaModulos {
+        modulos,
+        dependencias,
+        ciclos,
+        ordem: dsm.ordem,
+        blocos: dsm.blocos,
+    })
+}
+
+/// Helper único da aplicação do escopo (prompt 0030): obtém o grafo
+/// resolvido e aplica `filtrar_stdlib` se `escopo == SeuCodigo`. Ponto
+/// **único** onde a decisão de filtrar mora — coerência entre os dois
+/// pipelines sai daqui, não de duplicação.
+fn obter_grafo(fonte: FonteGrafo, escopo: Escopo) -> Result<Grafo, ErroLente> {
+    let grafo = obter_grafo_resolvido(fonte)?;
+    Ok(match escopo {
+        Escopo::SeuCodigo => filtrar_stdlib(&grafo),
+        Escopo::Completo => grafo,
+    })
+}
+
+/// Etapa compartilhada pelos modos per-nó e ranking: extrair (ou receber)
+/// o JSON, desserializar, e resolver colisões. Devolve o **grafo resolvido**
+/// (paths únicos), ponto comum a partir do qual os modos divergem.
+///
+/// Fatoração feita pelo prompt 0027; o prompt 0030 acrescentou
+/// `obter_grafo` por cima, para encaixar o Escopo num ponto único.
+/// Função interna; a fronteira de API do crate continua sendo os dois
+/// pipelines completos.
+fn obter_grafo_resolvido(fonte: FonteGrafo) -> Result<Grafo, ErroLente> {
+    let json = match fonte {
+        FonteGrafo::Json(s) => s,
+        FonteGrafo::Pacote(p) => lente_infra::fork::invocar_fork(&p)?,
+    };
+    let mut grafo = lente_infra::desserializar_grafo(&json)?;
+    let colisoes = detectar_colisoes(&grafo);
+    for path_colidente in colisoes {
+        grafo = resolver_uma_colisao(grafo, &path_colidente)?;
+    }
+    Ok(grafo)
 }
 
 /// Devolve os paths que aparecem em 2+ nós do grafo.
@@ -238,6 +476,7 @@ mod tests {
             FonteGrafo::Json(json_sintetico_com_colisao().to_string()),
             // Pelo id do Display::fmt — resolvido para o novo path automaticamente.
             AlvoBusca::PorId(20),
+            Escopo::Completo,
         )
         .expect("pipeline ponta a ponta deve funcionar");
 
@@ -251,6 +490,7 @@ mod tests {
         let raio = calcular_raio_de_alvo(
             FonteGrafo::Json(json_sintetico_com_colisao().to_string()),
             AlvoBusca::PorPath(Path::from("t::T::<Debug>::fmt")),
+            Escopo::Completo,
         )
         .expect("alvo por path deve funcionar");
         assert_eq!(raio.alvo.as_str(), "t::T::<Debug>::fmt");
@@ -261,6 +501,7 @@ mod tests {
         match calcular_raio_de_alvo(
             FonteGrafo::Json(json_sintetico_com_colisao().to_string()),
             AlvoBusca::PorId(9999),
+            Escopo::Completo,
         ) {
             Err(ErroLente::IdInexistente(9999)) => {}
             outro => panic!("esperava IdInexistente(9999), veio {:?}", outro),
@@ -272,6 +513,7 @@ mod tests {
         match calcular_raio_de_alvo(
             FonteGrafo::Json("{ não é JSON".to_string()),
             AlvoBusca::PorPath(Path::from("x")),
+            Escopo::Completo,
         ) {
             Err(ErroLente::Adaptador(ErroAdaptador::JsonInvalido(_))) => {}
             outro => panic!("esperava Adaptador/JsonInvalido, veio {:?}", outro),
@@ -296,6 +538,7 @@ mod tests {
         let raio = calcular_raio_de_alvo(
             FonteGrafo::Pacote("lente_core".to_string()),
             AlvoBusca::PorPath(Path::from("lente_core::domain::raio::Raio")),
+            Escopo::Completo,
         )
         .expect("pipeline contra lente_core real");
         // Sanidade: o raio se refere ao alvo pedido (que NÃO é colidente).
@@ -339,6 +582,610 @@ mod tests {
         assert!(
             grafo.nodes.iter().any(|n| n.path.as_str() == "t::T::<Debug>::fmt"),
             "deve existir t::T::<Debug>::fmt"
+        );
+    }
+
+    // ---- Modo ranking (prompt 0027) -----------------------------------------
+
+    /// JSON com mix de stdlib + alvo. O ranking sem filtro traria
+    /// `core::fmt::Display` (3 usuários no alvo). Depois do `filtrar_stdlib`
+    /// (no pipeline `rankear_pacote`), sysroot some — top-N tem só nós do alvo.
+    fn json_com_stdlib_e_alvo() -> &'static str {
+        r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::T","name":"T","kind":"struct","visibility":"pub"},
+                {"id":20,"path":"t::T::fmt","name":"fmt","kind":"fn","visibility":"priv","trait":"Display","trait_ref":"Display"},
+                {"id":30,"path":"t::user_a","name":"user_a","kind":"fn","visibility":"pub"},
+                {"id":31,"path":"t::user_b","name":"user_b","kind":"fn","visibility":"pub"},
+                {"id":32,"path":"t::user_c","name":"user_c","kind":"fn","visibility":"pub"},
+                {"id":100,"path":"core::fmt::Display","name":"Display","kind":"trait","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::T","id_to":10,"relation":"owns"},
+                {"from":"t::T","id_from":10,"to":"t::T::fmt","id_to":20,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::user_a","id_to":30,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::user_b","id_to":31,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::user_c","id_to":32,"relation":"owns"},
+                {"from":"t::user_a","id_from":30,"to":"t::T::fmt","id_to":20,"relation":"uses"},
+                {"from":"t::user_b","id_from":31,"to":"t::T::fmt","id_to":20,"relation":"uses"},
+                {"from":"t::user_c","id_from":32,"to":"t::T::fmt","id_to":20,"relation":"uses"},
+                {"from":"t::T::fmt","id_from":20,"to":"core::fmt::Display","id_to":100,"relation":"uses"},
+                {"from":"t::user_a","id_from":30,"to":"core::fmt::Display","id_to":100,"relation":"uses"},
+                {"from":"t::user_b","id_from":31,"to":"core::fmt::Display","id_to":100,"relation":"uses"}
+            ]
+        }"#
+    }
+
+    #[test]
+    fn rankear_seu_codigo_remove_sysroot_e_top_e_do_alvo() {
+        // Cenário-base do laudo 0027: ranking filtrado → sem sysroot, top do alvo.
+        // Pós-0030 isso é o escopo `SeuCodigo`.
+        let r = rankear_pacote(
+            FonteGrafo::Json(json_com_stdlib_e_alvo().to_string()),
+            10,
+            Escopo::SeuCodigo,
+        )
+        .expect("rankear SeuCodigo deve funcionar");
+
+        for item in &r {
+            let first = item.path.as_str().split("::").next().unwrap_or("");
+            assert!(
+                !matches!(first, "core" | "std" | "alloc" | "proc_macro" | "test"),
+                "sysroot vazou no ranking SeuCodigo: {}",
+                item.path.as_str()
+            );
+        }
+        assert_eq!(r[0].path.as_str(), "t::T::fmt");
+        assert_eq!(r[0].impacto, 3);
+    }
+
+    /// Default novo pós-0030: `Completo` mantém sysroot — o ranking inclui
+    /// nós como `core::fmt::Display`. É a situação do laudo 0021, agora
+    /// **declarada** como escolha do default, não regressão.
+    #[test]
+    fn rankear_completo_traz_sysroot() {
+        let r = rankear_pacote(
+            FonteGrafo::Json(json_com_stdlib_e_alvo().to_string()),
+            10,
+            Escopo::Completo,
+        )
+        .expect("rankear Completo deve funcionar");
+
+        assert!(
+            r.iter().any(|it| it.path.as_str() == "core::fmt::Display"),
+            "esperava sysroot no ranking Completo, veio: {:?}",
+            r.iter().map(|it| it.path.as_str()).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn rankear_pacote_propaga_erro_de_json_invalido() {
+        match rankear_pacote(
+            FonteGrafo::Json("{ não é JSON".to_string()),
+            10,
+            Escopo::Completo,
+        ) {
+            Err(ErroLente::Adaptador(_)) => {}
+            outro => panic!("esperava Adaptador (JsonInvalido), veio {:?}", outro),
+        }
+    }
+
+    /// Modo per-nó intacto: a fatoração de `obter_grafo_resolvido` não pode
+    /// regredir `calcular_raio_de_alvo`. Guarda a propriedade que a
+    /// refatoração (e o prompt 0030) não pode quebrar.
+    #[test]
+    fn modo_per_no_continua_funcionando_apos_fatoracao() {
+        let raio = calcular_raio_de_alvo(
+            FonteGrafo::Json(json_com_stdlib_e_alvo().to_string()),
+            AlvoBusca::PorPath(Path::from("t::T::fmt")),
+            Escopo::Completo,
+        )
+        .expect("modo per-nó preservado");
+        assert_eq!(raio.alvo.as_str(), "t::T::fmt");
+        assert_eq!(raio.uses_entrada, 3);
+    }
+
+    /// Prompt 0030 — invariante central: para um nó do código do usuário, os
+    /// "diretos" e "transitivos" são **iguais** nos dois escopos. Filtrar
+    /// stdlib só mexe em `uses_saida` (e por consequência, possivelmente,
+    /// na classificação). Aqui `t::T::fmt` tem 3 usuários do alvo, e usa
+    /// `core::fmt::Display`.
+    #[test]
+    fn invariante_do_montante_diretos_e_transitivos_sao_iguais_entre_escopos() {
+        let json = json_com_stdlib_e_alvo().to_string();
+        let r_completo = calcular_raio_de_alvo(
+            FonteGrafo::Json(json.clone()),
+            AlvoBusca::PorPath(Path::from("t::T::fmt")),
+            Escopo::Completo,
+        )
+        .unwrap();
+        let r_seu = calcular_raio_de_alvo(
+            FonteGrafo::Json(json),
+            AlvoBusca::PorPath(Path::from("t::T::fmt")),
+            Escopo::SeuCodigo,
+        )
+        .unwrap();
+        assert_eq!(r_completo.uses_entrada, r_seu.uses_entrada);
+        assert_eq!(r_completo.montante.len(), r_seu.montante.len());
+        // O que muda entre escopos: uses_saida. No Completo, t::T::fmt usa
+        // core::fmt::Display (1 saída); no SeuCodigo, esse nó some.
+        assert_eq!(r_completo.uses_saida, 1);
+        assert_eq!(r_seu.uses_saida, 0);
+        // E a classificação acompanha: Intermediário → Folha (sem usuários é
+        // Folha; mas aqui t::T::fmt tem 3 entrando, então Base no SeuCodigo).
+        use lente_core::domain::raio::Classificacao;
+        assert_eq!(r_completo.classificacao, Classificacao::Intermediario);
+        assert_eq!(r_seu.classificacao, Classificacao::Base);
+    }
+
+    /// Prompt 0030 — alvo que é nó de stdlib + escopo `SeuCodigo`:
+    /// o nó é filtrado antes do cálculo do raio → `AlvoInexistente`.
+    /// Consistente: pediu para filtrar a stdlib e consultou um nó dela.
+    #[test]
+    fn alvo_de_stdlib_no_escopo_seu_codigo_da_alvo_inexistente() {
+        let r = calcular_raio_de_alvo(
+            FonteGrafo::Json(json_com_stdlib_e_alvo().to_string()),
+            AlvoBusca::PorPath(Path::from("core::fmt::Display")),
+            Escopo::SeuCodigo,
+        );
+        match r {
+            Err(ErroLente::Raio(_)) => {}
+            outro => panic!("esperava ErroLente::Raio (AlvoInexistente), veio {:?}", outro),
+        }
+    }
+
+    /// E2E real (prompt 0027 ancorado, pós-0030): rankear o `lente_core`
+    /// em `SeuCodigo`. Confirma ponta-a-ponta: extração via fork →
+    /// resolução → filtragem → ranking.
+    #[test]
+    #[ignore]
+    fn e2e_ranking_do_lente_core_seu_codigo_nao_traz_sysroot() {
+        let r = rankear_pacote(
+            FonteGrafo::Pacote("lente_core".to_string()),
+            10,
+            Escopo::SeuCodigo,
+        )
+        .expect("ranking E2E do lente_core (SeuCodigo) deve funcionar");
+
+        assert_eq!(r.len(), 10);
+        for item in &r {
+            let first = item.path.as_str().split("::").next().unwrap_or("");
+            assert!(
+                !matches!(first, "core" | "std" | "alloc" | "proc_macro" | "test"),
+                "sysroot vazou: {}",
+                item.path.as_str()
+            );
+        }
+        for item in &r {
+            assert!(
+                item.path.as_str().starts_with("lente_core"),
+                "item fora do alvo: {}",
+                item.path.as_str()
+            );
+        }
+    }
+
+    // ---- Modo estrutura (prompt 0031) ---------------------------------------
+
+    /// Grafo sintético com **ciclo de módulos**: `t::a → t::b → t::a` via
+    /// itens de cada módulo. Útil para verificar a fiação ponta a ponta.
+    fn json_com_ciclo_de_modulos() -> &'static str {
+        r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+                {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+                {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+                {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+                {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+                {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+                {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses"},
+                {"from":"t::b::g","id_from":21,"to":"t::a::f","id_to":11,"relation":"uses"}
+            ]
+        }"#
+    }
+
+    #[test]
+    fn analisar_estrutura_lista_modulos_e_detecta_ciclo() {
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_com_ciclo_de_modulos().to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .expect("estrutura deve funcionar");
+
+        // 1 crate + 2 mods = 3 paths em `modulos`.
+        let nomes: Vec<&str> = r.modulos.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["t", "t::a", "t::b"]);
+
+        // Dependências: a→b e b→a.
+        let deps: Vec<(&str, &str)> = r
+            .dependencias
+            .iter()
+            .map(|d| (d.de.as_str(), d.para.as_str()))
+            .collect();
+        assert_eq!(deps, vec![("t::a", "t::b"), ("t::b", "t::a")]);
+
+        // O ciclo {t::a, t::b}.
+        assert_eq!(r.ciclos.len(), 1);
+        let modulos_ciclo: Vec<&str> =
+            r.ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
+        assert_eq!(modulos_ciclo, vec!["t::a", "t::b"]);
+    }
+
+    /// Prompt 0031, "invariância dos ciclos ao escopo": módulos de stdlib
+    /// são sorvedouros (não dependem do seu código), então o **conjunto
+    /// de ciclos** é o mesmo nos dois escopos. O escopo só muda a
+    /// listagem `modulos`/`dependencias`.
+    #[test]
+    fn ciclos_sao_invariantes_ao_escopo() {
+        // Mesmo grafo do teste anterior, com um nó de stdlib pendurado
+        // como "sorvedouro" (apenas é usado).
+        let json_com_sysroot = r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+                {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+                {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+                {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"},
+                {"id":100,"path":"core::fmt","name":"fmt","kind":"mod","visibility":"pub"},
+                {"id":101,"path":"core::fmt::Display","name":"Display","kind":"trait","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+                {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+                {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+                {"from":"core::fmt","id_from":100,"to":"core::fmt::Display","id_to":101,"relation":"owns"},
+                {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses"},
+                {"from":"t::b::g","id_from":21,"to":"t::a::f","id_to":11,"relation":"uses"},
+                {"from":"t::a::f","id_from":11,"to":"core::fmt::Display","id_to":101,"relation":"uses"}
+            ]
+        }"#;
+        let r_completo = analisar_estrutura(
+            FonteGrafo::Json(json_com_sysroot.to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .unwrap();
+        let r_seu = analisar_estrutura(
+            FonteGrafo::Json(json_com_sysroot.to_string()),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+        )
+        .unwrap();
+
+        // O CICLO é o mesmo: {t::a, t::b} nos dois escopos.
+        assert_eq!(r_completo.ciclos, r_seu.ciclos);
+
+        // O escopo MUDA quais módulos aparecem na listagem.
+        let mods_completo: Vec<&str> =
+            r_completo.modulos.iter().map(|p| p.as_str()).collect();
+        let mods_seu: Vec<&str> = r_seu.modulos.iter().map(|p| p.as_str()).collect();
+        assert!(mods_completo.contains(&"core::fmt"));
+        assert!(!mods_seu.contains(&"core::fmt"));
+    }
+
+    /// E2E real (prompt 0031): analisar `lente_core`. Reporta a contagem
+    /// de módulos e ciclos contra dado real.
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_lente_core_reporta_modulos_e_ciclos() {
+        let r = analisar_estrutura(
+            FonteGrafo::Pacote("lente_core".to_string()),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+        )
+        .expect("estrutura E2E do lente_core deve funcionar");
+
+        // Sanidade: o crate e seus módulos aparecem.
+        assert!(r.modulos.iter().any(|p| p.as_str() == "lente_core"));
+        // `lente_core` é cuidadoso — não esperamos ciclos entre seus módulos.
+        assert!(
+            r.ciclos.is_empty(),
+            "lente_core não deve ter ciclos entre módulos; veio: {:?}",
+            r.ciclos
+        );
+    }
+
+    /// E2E real (prompt 0031): analisar o `egui` core. Mede o número de
+    /// módulos e ciclos; ancora os achados no laudo. Não afirma número
+    /// exato (varia com versão do fork/egui); afirma o **formato** e
+    /// a presença de algum módulo conhecido.
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_egui_seu_codigo() {
+        // Pacote do workspace egui; precisa ser rodado de dentro de
+        // `<egui>/crates/egui` ou com `--pacote egui` num workspace que o
+        // contenha. Este E2E roda só se ambiente estiver configurado.
+        let r = analisar_estrutura(
+            FonteGrafo::Pacote("egui".to_string()),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+        );
+        let Ok(estrut) = r else {
+            // Ambiente sem workspace egui — pula em silêncio.
+            return;
+        };
+        assert!(estrut.modulos.len() > 1);
+        // Ancoragem do laudo: número de módulos, ciclos, etc. Não-trivial,
+        // registrado no laudo 0031.
+    }
+
+    // ---- Modo SoReferencia (prompt 0034) -----------------------------------
+
+    /// JSON sintético do prompt 0034: tem um ciclo de módulos via duas
+    /// arestas, uma `reference` (estrutural) e outra `import` (declaração
+    /// `use` no topo do módulo). Sem o filtro, o ciclo aparece. Com
+    /// `SoReferencia`, a aresta `import` some — e o ciclo desaparece.
+    fn json_ciclo_misto_reference_e_import() -> &'static str {
+        r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+                {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+                {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+                {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+                {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+                {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+                {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses","uses_kind":"reference"},
+                {"from":"t::b","id_from":20,"to":"t::a::f","id_to":11,"relation":"uses","uses_kind":"import"}
+            ]
+        }"#
+    }
+
+    #[test]
+    fn estrutura_todas_uses_detecta_ciclo_misto() {
+        // Com `Todas`, o import conta — t::a → t::b → t::a fecha o anel.
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_ciclo_misto_reference_e_import().to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .unwrap();
+        assert_eq!(r.ciclos.len(), 1);
+        let nomes: Vec<&str> = r.ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
+        assert_eq!(nomes, vec!["t::a", "t::b"]);
+    }
+
+    #[test]
+    fn estrutura_so_referencia_descarta_import_e_desfaz_ciclo() {
+        // Com `SoReferencia`, a aresta `import` (t::b → t::a) some, e o
+        // ciclo desaparece. Resta uma DAG: t::a → t::b.
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_ciclo_misto_reference_e_import().to_string()),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+        )
+        .unwrap();
+        assert!(r.ciclos.is_empty(), "ciclo deve sumir; veio: {:?}", r.ciclos);
+        let deps: Vec<(&str, &str)> = r
+            .dependencias
+            .iter()
+            .map(|d| (d.de.as_str(), d.para.as_str()))
+            .collect();
+        assert_eq!(deps, vec![("t::a", "t::b")]);
+    }
+
+    /// Prompt 0034: diagnóstico de fork antigo. Quando o JSON tem
+    /// arestas `Uses` mas **nenhuma** carrega `uses_kind`, pedir
+    /// `SoReferencia` retorna `ErroLente::ForkSemUsesKind` — em vez de
+    /// descartar tudo silenciosamente.
+    #[test]
+    fn estrutura_so_referencia_com_fork_antigo_da_erro_proprio() {
+        // JSON do laudo 0031: arestas `uses` sem `uses_kind`.
+        let json_antigo = r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+                {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+                {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+                {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+                {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+                {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+                {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses"}
+            ]
+        }"#;
+        match analisar_estrutura(
+            FonteGrafo::Json(json_antigo.to_string()),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+        ) {
+            Err(ErroLente::ForkSemUsesKind) => {}
+            outro => panic!("esperava ForkSemUsesKind, veio {:?}", outro),
+        }
+    }
+
+    /// Não-regressão: o mesmo JSON antigo no modo `Todas` funciona normal.
+    #[test]
+    fn estrutura_todas_uses_com_fork_antigo_funciona() {
+        let json_antigo = r#"{
+            "crate": "t",
+            "nodes": [
+                {"id":1,"path":"t","name":"t","kind":"crate","visibility":"pub"},
+                {"id":10,"path":"t::a","name":"a","kind":"mod","visibility":"pub"},
+                {"id":11,"path":"t::a::f","name":"f","kind":"fn","visibility":"pub"},
+                {"id":20,"path":"t::b","name":"b","kind":"mod","visibility":"pub"},
+                {"id":21,"path":"t::b::g","name":"g","kind":"fn","visibility":"pub"}
+            ],
+            "edges": [
+                {"from":"t","id_from":1,"to":"t::a","id_to":10,"relation":"owns"},
+                {"from":"t::a","id_from":10,"to":"t::a::f","id_to":11,"relation":"owns"},
+                {"from":"t","id_from":1,"to":"t::b","id_to":20,"relation":"owns"},
+                {"from":"t::b","id_from":20,"to":"t::b::g","id_to":21,"relation":"owns"},
+                {"from":"t::a::f","id_from":11,"to":"t::b::g","id_to":21,"relation":"uses"}
+            ]
+        }"#;
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_antigo.to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .expect("Todas com fork antigo deve funcionar");
+        // DAG: t::a depende de t::b; sem ciclo.
+        assert!(r.ciclos.is_empty());
+    }
+
+    /// E2E real (prompt 0034): com o fork atualizado (commit `b44aa96`+),
+    /// reproduz o número do laudo 0033 — SCC cai de 85 para 42 ao
+    /// contar só `reference`.
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_egui_so_referencia_reproduz_42() {
+        let r = analisar_estrutura(
+            FonteGrafo::Pacote("egui".to_string()),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+        );
+        let Ok(estrut) = r else { return };
+        // Ancorado no laudo 0033: SCC de 42 módulos.
+        let maior = estrut.ciclos.iter().map(|c| c.modulos.len()).max().unwrap_or(0);
+        assert_eq!(
+            maior, 42,
+            "esperava o SCC de 42 do laudo 0033; veio {}",
+            maior
+        );
+    }
+
+    // ---- Modo estrutura — ordenamento da DSM (prompt 0035) -----------------
+
+    #[test]
+    fn estrutura_emite_ordem_e_blocos_do_dsm() {
+        // Mesmo JSON do `analisar_estrutura_lista_modulos_e_detecta_ciclo`:
+        // t::a ↔ t::b (ciclo). O agregado tem 3 módulos (t, t::a, t::b);
+        // ordem = ordem topológica da condensação; bloco = {t::a, t::b}.
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_com_ciclo_de_modulos().to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .unwrap();
+
+        assert_eq!(r.ordem.len(), r.modulos.len(), "ordem tem mesmo tamanho que modulos");
+        let nomes_ordem: Vec<&str> = r.ordem.iter().map(|p| p.as_str()).collect();
+        // `t` é a raiz (crate); não tem deps de saída → fica no início ou
+        // fim conforme topológica do agregado. O bloco {t::a, t::b}
+        // aparece contíguo.
+        let idx_a = nomes_ordem.iter().position(|p| *p == "t::a").unwrap();
+        let idx_b = nomes_ordem.iter().position(|p| *p == "t::b").unwrap();
+        assert!(
+            (idx_a as isize - idx_b as isize).abs() == 1,
+            "membros do bloco devem ser contíguos; ordem={:?}",
+            nomes_ordem
+        );
+
+        // Bloco do SCC: {t::a, t::b}.
+        assert_eq!(r.blocos.len(), 1);
+        let bloco_nomes: Vec<&str> =
+            r.blocos[0].iter().map(|p| p.as_str()).collect();
+        assert_eq!(bloco_nomes, vec!["t::a", "t::b"]);
+    }
+
+    /// Teste-consumidor (prompt 0035): a partir de `ordem` + `dependencias`,
+    /// reconstrói a grade N×N e confere que ela bate com `dependencias`.
+    /// Prova ponta-a-ponta que a "matriz como dado" é suficiente para a
+    /// tela futura ou um agente.
+    #[test]
+    fn consumidor_reconstroi_grade_n_x_n_a_partir_da_saida() {
+        let r = analisar_estrutura(
+            FonteGrafo::Json(json_com_ciclo_de_modulos().to_string()),
+            Escopo::Completo,
+            ModoUses::Todas,
+        )
+        .unwrap();
+        let n = r.ordem.len();
+        let idx: std::collections::HashMap<&str, usize> = r
+            .ordem
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.as_str(), i))
+            .collect();
+        let mut grade = vec![vec![false; n]; n];
+        for d in &r.dependencias {
+            let i = idx[d.de.as_str()];
+            let j = idx[d.para.as_str()];
+            grade[i][j] = true;
+        }
+        // Total de células = total de deps (1 por aresta deduplicada).
+        let total: usize = grade.iter().flatten().filter(|c| **c).count();
+        assert_eq!(total, r.dependencias.len());
+    }
+
+    /// E2E real (prompt 0035): ordem da DSM do egui no modo SoReferencia.
+    /// O bloco de 42 (laudo 0033) é também um bloco da DSM, com seus
+    /// membros contíguos em `ordem`.
+    #[test]
+    #[ignore]
+    fn e2e_dsm_egui_bloco_de_42_e_contiguo() {
+        let r = analisar_estrutura(
+            FonteGrafo::Pacote("egui".to_string()),
+            Escopo::Completo,
+            ModoUses::SoReferencia,
+        );
+        let Ok(estrut) = r else { return };
+
+        // Há exatamente um bloco com 42 membros (mesmo número do ciclo).
+        let n_blocos_42 = estrut.blocos.iter().filter(|b| b.len() == 42).count();
+        assert_eq!(n_blocos_42, 1);
+
+        // Os 42 membros são contíguos em `ordem`.
+        let bloco_42 = estrut.blocos.iter().find(|b| b.len() == 42).unwrap();
+        let primeiro = bloco_42.first().unwrap().as_str();
+        let idx_primeiro = estrut
+            .ordem
+            .iter()
+            .position(|p| p.as_str() == primeiro)
+            .expect("primeiro membro do bloco está em ordem");
+        let fatia: Vec<&str> = estrut
+            .ordem
+            .iter()
+            .skip(idx_primeiro)
+            .take(42)
+            .map(|p| p.as_str())
+            .collect();
+        let bloco_strs: Vec<&str> = bloco_42.iter().map(|p| p.as_str()).collect();
+        assert_eq!(fatia, bloco_strs, "membros do bloco devem ser contíguos");
+    }
+
+    /// E2E real (prompt 0030): rankear o `lente_core` em `Completo`. Deve
+    /// trazer ao menos um nó de sysroot no top — esperado, declarado, não
+    /// regressão.
+    #[test]
+    #[ignore]
+    fn e2e_ranking_do_lente_core_completo_traz_sysroot() {
+        let r = rankear_pacote(
+            FonteGrafo::Pacote("lente_core".to_string()),
+            20,
+            Escopo::Completo,
+        )
+        .expect("ranking E2E do lente_core (Completo) deve funcionar");
+
+        let teve_sysroot = r.iter().any(|it| {
+            let first = it.path.as_str().split("::").next().unwrap_or("");
+            matches!(first, "core" | "std" | "alloc")
+        });
+        assert!(
+            teve_sysroot,
+            "esperava sysroot no top-20 Completo, veio: {:?}",
+            r.iter().map(|it| it.path.as_str()).collect::<Vec<_>>()
         );
     }
 }

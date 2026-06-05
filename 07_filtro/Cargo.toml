@@ -1,0 +1,19 @@
+[package]
+name = "lente_filtro"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+lente_core = { path = "../01_core" }
+
+# `dev-dependencies` só atinge o test/example/bench target — não vaza para a
+# build do crate (a pureza do `lib` continua sendo lente_core stdlib-only).
+# Necessário para o E2E `#[ignore]` que extrai o grafo real do `lente_core`
+# (laudo 0025, Fase 2).
+[dev-dependencies]
+lente_infra = { path = "../03_infra" }

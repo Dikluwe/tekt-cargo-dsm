@@ -1,13 +1,18 @@
 //! Lineage: prompt 00_nucleo/prompt/0003-adaptador_l3.md
 //!           consolidado por prompt 00_nucleo/prompt/0018-consolidar-invocador.md
+//!           ampliado por prompt 00_nucleo/prompt/0022-l3-invocador-bin-lib.md
+//!           detecção migrada para metadata por prompt 0023-l3-deteccao-alvo-metadata.md
 //!
 //! Invocação do fork como subprocesso a partir do **diretório do crate-alvo**.
-//! Descobre o nome do pacote lendo o `Cargo.toml` (workspace → `--package`
-//! obrigatório, laudo 0003 D3) e delega o subprocess para
-//! [`crate::fork::invocar_em`] — a primitiva única do crate.
+//! Descobre nome do pacote E alvo (`--lib`/`--bin <nome>`) consultando
+//! `cargo metadata` (fonte autoritativa) via [`crate::metadata`], e delega o
+//! subprocess de `export-json` para [`crate::fork::invocar_em`] — a primitiva
+//! única do crate para o fork.
 //!
 //! O `--sysroot` é política da lente (ADR-0001, Limite 1 da spec) e vive
-//! dentro do `fork::invocar_em`, não aqui.
+//! dentro do `fork::invocar_em`, não aqui. A heurística do laudo 0022
+//! (parser TOML + layout `src/`) foi removida — a fragilidade da D4
+//! daquele laudo está coberta pela fonte autoritativa do Cargo.
 
 use std::io::ErrorKind;
 use std::path::Path;
@@ -15,51 +20,11 @@ use std::path::Path;
 use crate::ErroAdaptador;
 use crate::fork::ErroFork;
 
-/// Lê o `Cargo.toml` em `diretorio` e devolve o `name` da seção `[package]`.
-///
-/// Necessário porque, em workspace, `cargo modules` exige `--package <nome>`
-/// para desambiguar — e este projeto-lente, depois do ADR-0003, é workspace.
-/// O parsing é linha-a-linha (suficiente para o subset comum de TOML; evita
-/// adicionar `toml` como dependência).
-fn descobrir_pacote(diretorio: &Path) -> Result<String, ErroAdaptador> {
-    let caminho_toml = diretorio.join("Cargo.toml");
-    let conteudo = std::fs::read_to_string(&caminho_toml).map_err(|_| {
-        ErroAdaptador::CargoTomlAusente(caminho_toml.to_string_lossy().into_owned())
-    })?;
-
-    let mut em_package = false;
-    for linha in conteudo.lines() {
-        let l = linha.trim();
-        if l.is_empty() || l.starts_with('#') {
-            continue;
-        }
-        if let Some(secao) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
-            em_package = secao.trim() == "package";
-            continue;
-        }
-        if em_package {
-            if let Some(resto) = l.strip_prefix("name") {
-                let resto = resto.trim_start().trim_start_matches('=').trim();
-                if let Some(s) = resto.strip_prefix('"') {
-                    if let Some(nome) = s.split('"').next() {
-                        if !nome.is_empty() {
-                            return Ok(nome.to_string());
-                        }
-                    }
-                }
-            }
-        }
-    }
-    Err(ErroAdaptador::CargoTomlSemPackage(
-        caminho_toml.to_string_lossy().into_owned(),
-    ))
-}
-
-/// Descobre o pacote pelo `Cargo.toml` em `diretorio` e delega ao
-/// `fork::invocar_em` (a primitiva única de subprocess).
+/// Descobre pacote e alvo pelo `cargo metadata` em `diretorio` e delega ao
+/// `fork::invocar_em` (a primitiva única de subprocess do fork).
 pub(crate) fn invocar(diretorio: &Path) -> Result<String, ErroAdaptador> {
-    let pacote = descobrir_pacote(diretorio)?;
-    crate::fork::invocar_em(&pacote, Some(diretorio)).map_err(mapear_erro_fork)
+    let (pacote, alvo) = crate::metadata::detectar_pacote_e_alvo_por_diretorio(diretorio)?;
+    crate::fork::invocar_em(&pacote, Some(diretorio), Some(&alvo)).map_err(mapear_erro_fork)
 }
 
 /// Mapeia `ErroFork` para `ErroAdaptador` preservando as variantes existentes.
@@ -79,6 +44,7 @@ fn mapear_erro_fork(e: ErroFork) -> ErroAdaptador {
         ErroFork::StdoutInvalido(utf8_err) => {
             ErroAdaptador::SaidaNaoUtf8(utf8_err.to_string())
         }
+        ErroFork::DeteccaoAlvo(e) => ErroAdaptador::DeteccaoAlvo(e),
     }
 }
 
@@ -86,56 +52,65 @@ fn mapear_erro_fork(e: ErroFork) -> ErroAdaptador {
 mod tests {
     use super::*;
 
+    /// Diretório inexistente: a porta de detecção curto-circuita com
+    /// `DiretorioInexistente` ANTES do spawn (prompt 0024, fecha D5 do
+    /// 0023). Não depende de cargo no PATH — vira teste de unidade
+    /// determinístico (sem `#[ignore]`).
     #[test]
-    fn diretorio_inexistente_da_cargo_toml_ausente() {
-        // Sem Cargo.toml legível -> falha na descoberta do pacote, antes do
-        // subprocesso. Diagnostico claro.
-        let inexistente = Path::new("/tmp/__lente_diretorio_inexistente__xyz");
+    fn diretorio_inexistente_da_diretorio_inexistente() {
+        let inexistente = Path::new("/tmp/__lente_diretorio_inexistente_0024__xyz");
         match invocar(inexistente).unwrap_err() {
-            ErroAdaptador::CargoTomlAusente(_) => {}
+            ErroAdaptador::DeteccaoAlvo(crate::metadata::ErroMetadata::DiretorioInexistente(
+                p,
+            )) => {
+                assert_eq!(p, inexistente);
+            }
             outro => panic!("erro inesperado: {:?}", outro),
         }
     }
 
+    /// E2E migrado do laudo 0022: bin+lib via `extrair_grafo`
+    /// (porta `invocacao::invocar`) deve funcionar. Antes do 0022, falhava
+    /// por falta de flag; depois do 0022, funcionava pela heurística;
+    /// agora (0023), funciona pela fonte autoritativa do `cargo metadata`.
     #[test]
-    fn descobre_pacote_de_cargo_toml_simples() {
-        let dir = std::env::temp_dir().join("__lente_dp_simples__");
+    #[ignore]
+    fn e2e_bin_mais_lib_via_extrair_grafo() {
+        let dir = std::env::temp_dir().join("__lente_e2e_binlib_0023__");
         let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(
-            dir.join("Cargo.toml"),
-            r#"
-[package]
-name = "exemplo"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-"#,
-        )
-        .unwrap();
-        assert_eq!(descobrir_pacote(&dir).unwrap(), "exemplo");
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn workspace_puro_sem_package_devolve_erro_claro() {
-        let dir = std::env::temp_dir().join("__lente_dp_workspace__");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::create_dir_all(dir.join("src")).unwrap();
         std::fs::write(
             dir.join("Cargo.toml"),
             r#"
 [workspace]
-resolver = "2"
-members = ["a", "b"]
+
+[package]
+name = "binlib_e2e_0023"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "binlib_e2e_0023"
+path = "src/main.rs"
 "#,
         )
         .unwrap();
-        match descobrir_pacote(&dir).unwrap_err() {
-            ErroAdaptador::CargoTomlSemPackage(_) => {}
-            outro => panic!("erro inesperado: {:?}", outro),
-        }
+        std::fs::write(dir.join("src/lib.rs"), "pub fn hello() -> &'static str { \"hi\" }").unwrap();
+        std::fs::write(
+            dir.join("src/main.rs"),
+            "fn main() { println!(\"{}\", binlib_e2e_0023::hello()); }",
+        )
+        .unwrap();
+        let json = invocar(&dir).expect("bin+lib via metadata deve produzir JSON");
+        assert!(
+            json.contains("\"crate\":\"binlib_e2e_0023\""),
+            "JSON deve ter o crate-raiz; veio: {}",
+            &json[..json.len().min(120)]
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

@@ -240,6 +240,7 @@ mod tests {
             to: Path::from(to),
             id_to,
             relation: r,
+            uses_kind: None,
         }
     }
 

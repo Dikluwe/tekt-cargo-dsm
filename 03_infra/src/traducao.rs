@@ -15,7 +15,7 @@
 use std::collections::HashSet;
 
 use lente_core::entities::grafo::{
-    Aresta, Grafo, Kind, Modificadores, No, Path, Relation, Visibility,
+    Aresta, Grafo, Kind, Modificadores, No, Path, Relation, UsesKind, Visibility,
 };
 
 use crate::ErroAdaptador;
@@ -88,12 +88,28 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
             });
         }
 
+        // `uses_kind` (prompt 0034): só preenche para arestas `Uses`. Para
+        // `Owns` é sempre `None`. Para `Uses` sem o campo no JSON (fork
+        // antigo, pré-`b44aa96`), também `None` — a flag `--so-referencia`
+        // detecta isso e emite diagnóstico (não silencia). Valor
+        // desconhecido é mapeado para `Import` (fork funde `reexport` ali
+        // hoje — laudo 0033 D6); se um dia o fork distinguir, vira variante
+        // nova no `UsesKind`.
+        let uses_kind = match relation {
+            Relation::Uses => aresta_dto
+                .uses_kind
+                .as_deref()
+                .map(|s| UsesKind::try_from(s).unwrap_or(UsesKind::Import)),
+            Relation::Owns => None,
+        };
+
         edges.push(Aresta {
             from,
             id_from: aresta_dto.id_from,
             to,
             id_to: aresta_dto.id_to,
             relation,
+            uses_kind,
         });
     }
 
@@ -140,6 +156,7 @@ mod tests {
             to: to.to_string(),
             id_to,
             relation: relation.to_string(),
+            uses_kind: None,
         }
     }
 
@@ -174,6 +191,91 @@ mod tests {
         assert_eq!(g.edges[0].relation, Relation::Owns);
         assert_eq!(g.edges[0].id_from, 1);
         assert_eq!(g.edges[0].id_to, 2);
+        // Prompt 0034: aresta `Owns` nunca carrega `uses_kind`.
+        assert_eq!(g.edges[0].uses_kind, None);
+    }
+
+    // ---- Prompt 0034: leitura de `uses_kind` --------------------------------
+
+    use lente_core::entities::grafo::UsesKind;
+
+    fn aresta_uses_dto(kind: Option<&str>) -> ArestaDTO {
+        ArestaDTO {
+            from: "t::a".to_string(),
+            id_from: 1,
+            to: "t::b".to_string(),
+            id_to: 2,
+            relation: "uses".to_string(),
+            uses_kind: kind.map(|s| s.to_string()),
+        }
+    }
+
+    fn grafo_dto_com_uses(kind: Option<&str>) -> GrafoDTO {
+        GrafoDTO {
+            crate_name: "t".to_string(),
+            nodes: vec![
+                no_dto(1, "t::a", "fn", "pub"),
+                no_dto(2, "t::b", "fn", "pub"),
+            ],
+            edges: vec![aresta_uses_dto(kind)],
+        }
+    }
+
+    #[test]
+    fn uses_kind_reference_e_lido_como_reference() {
+        let g = traduzir(grafo_dto_com_uses(Some("reference"))).unwrap();
+        assert_eq!(g.edges[0].uses_kind, Some(UsesKind::Reference));
+    }
+
+    #[test]
+    fn uses_kind_import_e_lido_como_import() {
+        let g = traduzir(grafo_dto_com_uses(Some("import"))).unwrap();
+        assert_eq!(g.edges[0].uses_kind, Some(UsesKind::Import));
+    }
+
+    #[test]
+    fn uses_sem_kind_no_json_antigo_vira_none() {
+        // Fork pré-`b44aa96`: arestas `uses` não trazem o campo. Após o
+        // prompt 0034, o tradutor preserva isso como `None`. A flag
+        // `--so-referencia` (L2) detecta e emite diagnóstico claro.
+        let g = traduzir(grafo_dto_com_uses(None)).unwrap();
+        assert_eq!(g.edges[0].uses_kind, None);
+    }
+
+    #[test]
+    fn uses_kind_desconhecido_e_fundido_em_import() {
+        // Política do prompt: "valor presente mas desconhecido → Import".
+        // Conservador: o fork hoje funde `reexport` em `import`; quando
+        // distinguir, vira variante nova.
+        let g = traduzir(grafo_dto_com_uses(Some("reexport"))).unwrap();
+        assert_eq!(g.edges[0].uses_kind, Some(UsesKind::Import));
+    }
+
+    #[test]
+    fn owns_nunca_carrega_uses_kind_mesmo_se_dto_emitisse() {
+        // Defesa em profundidade: se o fork um dia emitisse `uses_kind`
+        // em aresta `Owns` (improvável), o tradutor ignora.
+        let mut dto = ArestaDTO {
+            from: "t".to_string(),
+            id_from: 1,
+            to: "t::a".to_string(),
+            id_to: 2,
+            relation: "owns".to_string(),
+            uses_kind: Some("reference".to_string()),
+        };
+        // emparelhar com nós válidos
+        let _ = &mut dto;
+        let g = traduzir(GrafoDTO {
+            crate_name: "t".to_string(),
+            nodes: vec![
+                no_dto(1, "t", "crate", "pub"),
+                no_dto(2, "t::a", "mod", "pub"),
+            ],
+            edges: vec![dto],
+        })
+        .unwrap();
+        assert_eq!(g.edges[0].relation, Relation::Owns);
+        assert_eq!(g.edges[0].uses_kind, None);
     }
 
     #[test]

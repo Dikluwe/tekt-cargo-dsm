@@ -1,0 +1,12 @@
+[package]
+name = "lente_ranking"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+lente_core = { path = "../01_core" }

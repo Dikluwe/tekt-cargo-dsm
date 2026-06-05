@@ -143,6 +143,7 @@ mod tests {
             to: Path::from(to),
             id_to: id_de(to),
             relation: r,
+            uses_kind: None,
         }
     }
 

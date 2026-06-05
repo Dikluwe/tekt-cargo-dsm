@@ -131,6 +131,95 @@ pub const HELP_ALVO: &str = "Path do alvo no grafo (ex.: 'ErroRaio::<Display>::f
 pub const HELP_ALVO_ID: &str = "Id do alvo no grafo (alternativa ao --alvo)";
 pub const HELP_TEXT: &str = "Saída em texto humano-legível (default é JSON)";
 pub const HELP_VERBOSE: &str = "Inclui lista completa de itens impactados";
+pub const HELP_RANKING: &str =
+    "Top-N por impacto no pacote. Conflita com --alvo/--alvo-id.";
+pub const HELP_TOP: &str = "Quantos itens no top-N do ranking (default 10)";
+pub const HELP_FILTRAR_STDLIB: &str =
+    "Filtra stdlib (core/std/alloc/proc_macro/test). Default: escopo completo (com stdlib).";
+pub const HELP_ESTRUTURA: &str =
+    "Estrutura do pacote: módulos, dependências e ciclos (vista global tipo DSM). \
+     Conflita com --ranking/--alvo/--alvo-id.";
+pub const HELP_SO_REFERENCIA: &str =
+    "Conta só arestas `Uses` de referência (uso de tipo direto). Descarta \
+     declarações `use` no nível do módulo (Limite 4). Só efeito com \
+     --estrutura. Default: todas as `Uses`.";
+
+pub const ERRO_FORK_SEM_USES_KIND: Template = Template(
+    "O fork `cargo-modules` instalado não emite `uses_kind` por aresta. \
+     Atualize o fork (pós-commit `b44aa96`) para usar --so-referencia. \
+     Detalhe técnico: {detalhe}",
+);
+
+// =============================================================================
+// RANKING — prompt 0027 (cabeçalho ampliado pelo 0030 para incluir escopo)
+// =============================================================================
+
+/// Cabeçalho da saída-texto do ranking. Formato (pós-0030):
+///   "Ranking de impacto (escopo: {escopo}) — top {n}:\n"
+///   "  #  Impacto  Classificação    Path"
+pub const RANKING_CABECALHO: Template =
+    Template("Ranking de impacto (escopo: {escopo}) — top {n}:");
+pub const RANKING_COLUNAS: &str = "  #  Impacto  Classificação    Path";
+
+/// Chaves do JSON do ranking.
+pub const JSON_RANKING: &str = "ranking";
+pub const JSON_POSICAO: &str = "posicao";
+pub const JSON_IMPACTO: &str = "impacto";
+pub const JSON_PATH: &str = "path";
+
+/// Erro de validação de CLI: --ranking não combina com --alvo/--alvo-id.
+pub const ERRO_RANKING_COM_ALVO: Template = Template(
+    "Use --ranking OU --alvo/--alvo-id, não os dois",
+);
+
+// =============================================================================
+// ESCOPO — prompt 0030 (rótulos comuns às duas saídas)
+// =============================================================================
+
+/// Rótulo legível para a linha "Escopo:" no texto humano (modo per-nó).
+pub const ROTULO_ESCOPO: &str = "Escopo";
+
+/// Chave JSON do escopo, presente nos dois modos (raio e ranking).
+pub const JSON_ESCOPO: &str = "escopo";
+
+/// Valores do escopo na saída (JSON e texto). Mantidos curtos e estáveis
+/// para serem amigáveis a parsing e mostrarem bem na CLI/UI.
+pub const ESCOPO_COMPLETO: &str = "completo";
+pub const ESCOPO_SEU_CODIGO: &str = "seu-codigo";
+
+// =============================================================================
+// ESTRUTURA — prompt 0031 (vista global: módulos, dependências, ciclos)
+// =============================================================================
+
+/// Cabeçalho do texto humano do modo estrutura. Placeholders:
+/// `{escopo}`, `{modo_uses}`, `{n}` (módulos), `{c}` (ciclos).
+/// (Pós-prompt 0034: declara o `modo_uses` ao lado do escopo.)
+pub const ESTRUTURA_CABECALHO: Template = Template(
+    "Estrutura de módulos (escopo: {escopo}, uses: {modo_uses}) — {n} módulos, {c} ciclos:",
+);
+
+/// Subseções do texto.
+pub const ESTRUTURA_CICLOS_TITULO: &str = "Ciclos:";
+pub const ESTRUTURA_DEPENDENCIAS_TITULO: &str = "Dependências módulo → módulo:";
+pub const ESTRUTURA_SEM_CICLOS: &str = "(nenhum ciclo entre módulos)";
+
+/// Chaves do JSON do modo estrutura — formato DSM-friendly.
+/// `{ escopo, modulos: [path], dependencias: [{de, para}], ciclos: [[path]] }`
+pub const JSON_MODULOS: &str = "modulos";
+pub const JSON_DEPENDENCIAS: &str = "dependencias";
+pub const JSON_CICLOS: &str = "ciclos";
+pub const JSON_DE: &str = "de";
+pub const JSON_PARA: &str = "para";
+pub const JSON_MODO_USES: &str = "modo_uses";
+pub const MODO_USES_TODAS: &str = "todas";
+pub const MODO_USES_SO_REFERENCIA: &str = "so-referencia";
+
+// Prompt 0035 — ordenamento da DSM (matriz como dado).
+pub const JSON_ORDEM: &str = "ordem";
+pub const JSON_BLOCOS: &str = "blocos";
+pub const ESTRUTURA_ORDEM_TITULO: &str = "Ordem da DSM (topológica + blocos):";
+pub const ESTRUTURA_ORDEM_LINHA_LIVRE: &str = "  ";
+pub const ESTRUTURA_ORDEM_LINHA_BLOCO: &str = "  ◆";
 
 #[cfg(test)]
 mod tests {

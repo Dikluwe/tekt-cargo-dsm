@@ -137,6 +137,21 @@ name = "lente_core"
 version = "0.0.0"
 
 [[package]]
+name = "lente_estrutura"
+version = "0.0.0"
+dependencies = [
+ "lente_core",
+]
+
+[[package]]
+name = "lente_filtro"
+version = "0.0.0"
+dependencies = [
+ "lente_core",
+ "lente_infra",
+]
+
+[[package]]
 name = "lente_infra"
 version = "0.0.0"
 dependencies = [
@@ -147,6 +162,13 @@ dependencies = [
 
 [[package]]
 name = "lente_investiga"
+version = "0.0.0"
+dependencies = [
+ "lente_core",
+]
+
+[[package]]
+name = "lente_ranking"
 version = "0.0.0"
 dependencies = [
  "lente_core",
@@ -164,8 +186,11 @@ name = "lente_wiring"
 version = "0.0.0"
 dependencies = [
  "lente_core",
+ "lente_estrutura",
+ "lente_filtro",
  "lente_infra",
  "lente_investiga",
+ "lente_ranking",
  "lente_resolve",
 ]
 

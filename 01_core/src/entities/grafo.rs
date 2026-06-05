@@ -81,6 +81,36 @@ impl TryFrom<&str> for Relation {
     }
 }
 
+/// Subtipo da relação `Uses` — emitido pelo fork `cargo-modules` no campo
+/// `uses_kind` da aresta (laudo 0033). Distingue uso de tipo direto
+/// (`Reference` — assinatura/campo) de declaração de import no nível do
+/// módulo (`Import` — Limite 4 da spec). Aresta `Owns` não tem subtipo
+/// (`uses_kind = None`).
+///
+/// O fork **funde** reexports em `Import` no momento (laudo 0033 D6);
+/// se um dia distinguir `Reexport`, fica a evolução natural (variante
+/// nova). Por isso `TryFrom` mapeia valores desconhecidos para `Import`
+/// — comportamento conservador, coerente com o que o fork faz hoje.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UsesKind {
+    Reference,
+    Import,
+}
+
+impl TryFrom<&str> for UsesKind {
+    type Error = ValorDesconhecido;
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "reference" => Ok(UsesKind::Reference),
+            "import" => Ok(UsesKind::Import),
+            outro => Err(ValorDesconhecido {
+                tipo: "UsesKind",
+                texto: outro.to_string(),
+            }),
+        }
+    }
+}
+
 /// Visibilidade de um item (lista fechada da spec).
 ///
 /// `PubIn` preserva o caminho declarado em `pub(in <caminho>)`.
@@ -196,7 +226,16 @@ pub struct No {
     pub kind: Kind,
     pub modificadores: Modificadores,
     pub visibility: Visibility,
-    /// Crate de origem do nó (distingue nós do crate-alvo de nós de stdlib).
+    /// Crate-raiz do **grafo**, copiado para cada nó pelo L3.
+    ///
+    /// O fork `cargo-modules` 0.27.0 **não** emite `crate` por nó (laudo
+    /// 0013 D1); o L3 (`lente_infra::traducao`) preenche este campo com o
+    /// `Grafo.crate_name` para todos os nós — inclusive os de sysroot
+    /// (`core::*`, `alloc::*`, `std::*`).
+    ///
+    /// **Não distingue stdlib** do crate-alvo: o valor é igual para todos
+    /// os nós do mesmo grafo. A marca de stdlib é por **prefixo do path**
+    /// (ADR-0002 D3), aplicada no `lente_filtro` (laudo 0025).
     pub crate_name: String,
     /// Nome do trait, quando o nó é método de impl-de-trait. `None` caso não.
     pub trait_: Option<String>,
@@ -211,6 +250,13 @@ pub struct No {
 
 /// Aresta dirigida do grafo. `id_from`/`id_to` são a referência canônica
 /// (resolvem colisões); `from`/`to` permanecem para legibilidade.
+///
+/// `uses_kind` (prompt 0034) é `Some` apenas para arestas `Uses` quando o
+/// fork emite o campo (`cargo-modules` pós-commit `b44aa96`). É `None`
+/// para arestas `Owns` e para arestas `Uses` desserializadas de JSON
+/// antigo (sem o campo). Consumidores que filtram por subtipo (ex.:
+/// `lente_filtro::filtrar_so_referencia`) precisam tratar o caso `None`
+/// explicitamente — ver a documentação dessa função.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Aresta {
     pub from: Path,
@@ -218,6 +264,7 @@ pub struct Aresta {
     pub to: Path,
     pub id_to: usize,
     pub relation: Relation,
+    pub uses_kind: Option<UsesKind>,
 }
 
 /// Grafo de dependências de um sistema. Fiel à forma organizada.
@@ -256,6 +303,22 @@ mod tests {
         let err = Relation::try_from("borrows").unwrap_err();
         assert_eq!(err.tipo, "Relation");
         assert_eq!(err.texto, "borrows");
+    }
+
+    #[test]
+    fn uses_kind_reference_e_import_traduzem() {
+        assert_eq!(UsesKind::try_from("reference").unwrap(), UsesKind::Reference);
+        assert_eq!(UsesKind::try_from("import").unwrap(), UsesKind::Import);
+    }
+
+    #[test]
+    fn uses_kind_desconhecido_retorna_erro() {
+        // O fork não distingue `reexport` hoje (laudo 0033 D6) — mas se um
+        // dia distinguir, o `try_from` falhará aqui, sinalizando que cabe
+        // adicionar variante. Por enquanto, a borda detecta valor estranho.
+        let err = UsesKind::try_from("reexport").unwrap_err();
+        assert_eq!(err.tipo, "UsesKind");
+        assert_eq!(err.texto, "reexport");
     }
 
     #[test]
@@ -374,6 +437,7 @@ mod tests {
             to: Path::from("meu::foo"),
             id_to: 2,
             relation: Relation::Owns,
+            uses_kind: None,
         });
 
         assert_eq!(g.crate_name, "meu");

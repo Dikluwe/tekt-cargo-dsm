@@ -8,5 +8,8 @@ members = [
     "04_wiring",
     "05_investiga",
     "06_resolve",
+    "07_filtro",
+    "08_ranking",
+    "09_estrutura",
 ]
 exclude = ["03_infra/tests/fixtures/crate-amostra"]
