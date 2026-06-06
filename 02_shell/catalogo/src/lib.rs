@@ -255,6 +255,37 @@ pub const JSON_NAO_FONTE: &str = "nao_fonte";
 pub const JSON_FANTASMAS: &str = "fantasmas";
 pub const JSON_REFERENCIADO_POR: &str = "referenciado_por";
 
+// =============================================================================
+// DIFF — vistas de texto (prompt 0048): --vista resumo | item | camadas
+// Ausente = JSON (0047, intocado). Renderizadores sobre o ResultadoDiff.
+// =============================================================================
+
+pub const HELP_VISTA: &str =
+    "Vista de texto do --diff: resumo | item | camadas. Ausente: JSON (default).";
+
+/// Rodapé comum às três vistas: o censo do untracked e o solto listado.
+pub const DIFF_UNTRACKED: Template =
+    Template("untracked: {lig} compilados {sep} {solto} sem mod {sep} {nf} não-fonte");
+pub const DIFF_SEM_MOD: &str = "sem mod (não compilado):";
+pub const DIFF_FANTASMAS: Template = Template("fantasmas: {n}");
+pub const DIFF_SEM_TOCADOS: &str = "(nenhum nó tocado)";
+pub const DIFF_VAZIO: &str = "—";
+pub const DIFF_SEP: &str = "·";
+
+/// Vista `resumo`.
+pub const DIFF_RESUMO_CABECALHO: Template = Template("diff: {n} tocados em {c} crate(s)");
+pub const DIFF_ROTULO_MONTANTE: &str = "pode quebrar (montante)";
+pub const DIFF_ROTULO_JUSANTE: &str = "depende de (jusante)";
+
+/// Vista `item`.
+pub const DIFF_ITEM_CABECALHO: Template = Template("{n} tocados:");
+pub const DIFF_ITEM_PODE_QUEBRAR: &str = "pode quebrar";
+pub const DIFF_ITEM_DEPENDE_DE: &str = "depende de";
+
+/// Vista `camadas`.
+pub const DIFF_CAMADAS_TOCADOS_POR_CRATE: &str = "tocados por crate:";
+pub const DIFF_CAMADAS_POR_CRATE: &str = "pode quebrar, por crate:";
+
 #[cfg(test)]
 mod tests {
     use super::*;

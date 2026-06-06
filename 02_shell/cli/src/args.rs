@@ -1,7 +1,19 @@
 //! Argumentos da CLI. Todos os textos `help`/`about` vêm do
 //! `lente_catalogo` (ADR-0002).
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+
+/// Vista de texto do modo `--diff` (prompt 0048). Renderizadores sobre o
+/// `ResultadoDiff`; ausência da flag = JSON (padrão do 0047).
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Vista {
+    /// Curto, foco no impacto (montante/jusante por crate).
+    Resumo,
+    /// Um bloco por item tocado (path + classificação + contagens).
+    Item,
+    /// Tocados agrupados por crate + impacto cross-crate por crate.
+    Camadas,
+}
 
 /// Definição clap. Note que **todos** os textos de ajuda são lidos do
 /// catálogo (constantes resolvidas em tempo de compilação) — nenhum literal
@@ -67,6 +79,11 @@ pub struct Cli {
     /// Raiz do repositório no modo `--diff` (default: diretório atual).
     #[arg(long, help = lente_catalogo::HELP_REPO)]
     pub repo: Option<std::path::PathBuf>,
+
+    /// Vista de texto do `--diff` (prompt 0048). Ausente: JSON (default do
+    /// 0047). Só vale com `--diff`.
+    #[arg(long, value_enum, requires = "diff", help = lente_catalogo::HELP_VISTA)]
+    pub vista: Option<Vista>,
 
     /// Modo de inclusão das arestas `Uses` no `--estrutura` (prompt 0034):
     /// presente = só `Uses` de referência (uso de tipo direto). Ausente =

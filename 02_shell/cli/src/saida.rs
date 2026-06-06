@@ -8,10 +8,14 @@
 //! Pós-prompt 0030: a saída (JSON e texto) **declara o escopo** em ambos
 //! os modos — campo `escopo` no JSON e linha/cabeçalho no texto.
 
+use std::collections::{BTreeMap, BTreeSet};
+
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
 use lente_core::entities::grafo::Path as PathGrafo;
-use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses, ResultadoDiff};
+use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses, ResultadoDiff, TocadoComRaio};
+
+use crate::args::Vista;
 
 /// Mapeia `Escopo` para o texto estável publicado pela CLI (catálogo).
 fn escopo_texto(e: Escopo) -> &'static str {
@@ -534,6 +538,211 @@ fn lista_de_paths(paths: &[std::path::PathBuf]) -> serde_json::Value {
     )
 }
 
+// =============================================================================
+// Modo diff — vistas de texto (prompt 0048)
+// =============================================================================
+//
+// Três renderizadores sobre o `ResultadoDiff` (0047), selecionados por
+// `--vista`. Formatação **pura**: não recomputam nada; o crate de um nó é o 1º
+// segmento do path. Todo texto vem do catálogo (ADR-0002). Determinísticas
+// (ordenam o que iteram).
+
+/// Roteia a vista escolhida. Sem `--vista`, o `run_diff` emite o JSON (0047).
+pub fn formatar_diff_vista(resultado: &ResultadoDiff, vista: Vista) -> String {
+    match vista {
+        Vista::Resumo => formatar_diff_resumo(resultado),
+        Vista::Item => formatar_diff_item(resultado),
+        Vista::Camadas => formatar_diff_camadas(resultado),
+    }
+}
+
+/// O crate de um path = o 1º segmento (antes do primeiro `::`).
+fn crate_de(path: &str) -> &str {
+    path.split("::").next().unwrap_or(path)
+}
+
+/// Nome de arquivo (último componente) de um caminho — para listar os soltos.
+fn nome_arquivo(p: &std::path::Path) -> String {
+    p.file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| p.to_string_lossy().into_owned())
+}
+
+/// Conta os pares (path, _) por crate, ordenado por contagem desc, nome asc —
+/// o mais impactante primeiro, determinístico.
+fn contar_por_crate(pares: &[(PathGrafo, usize)]) -> Vec<(String, usize)> {
+    let mut por_crate: BTreeMap<String, usize> = BTreeMap::new();
+    for (p, _) in pares {
+        *por_crate
+            .entry(crate_de(p.as_str()).to_string())
+            .or_insert(0) += 1;
+    }
+    let mut v: Vec<(String, usize)> = por_crate.into_iter().collect();
+    v.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    v
+}
+
+/// `crate1 N1 · crate2 N2 · …` (ou `—` se vazio).
+fn juntar_por_crate(contagens: &[(String, usize)]) -> String {
+    if contagens.is_empty() {
+        return cat::DIFF_VAZIO.to_string();
+    }
+    let sep = format!(" {} ", cat::DIFF_SEP);
+    contagens
+        .iter()
+        .map(|(c, n)| format!("{} {}", c, n))
+        .collect::<Vec<_>>()
+        .join(&sep)
+}
+
+fn conta_ou_vazio(n: usize) -> String {
+    if n == 0 {
+        cat::DIFF_VAZIO.to_string()
+    } else {
+        n.to_string()
+    }
+}
+
+/// Linha de impacto: `  {rótulo}: {total} — crate1 N1 · …` (sem o `—` se vazio).
+fn linha_impacto(rotulo: &str, pares: &[(PathGrafo, usize)]) -> String {
+    if pares.is_empty() {
+        return format!("  {}: 0\n", rotulo);
+    }
+    format!(
+        "  {}: {} — {}\n",
+        rotulo,
+        pares.len(),
+        juntar_por_crate(&contar_por_crate(pares))
+    )
+}
+
+/// Rodapé comum às três vistas: censo do untracked, solto listado (sinal
+/// acionável, 0043), fantasmas só se > 0 (esperado 0, 0041).
+fn rodape_diff(r: &ResultadoDiff) -> String {
+    let mut s = String::new();
+    s.push_str(&cat::DIFF_UNTRACKED.render(&[
+        ("lig", &r.ligados.len().to_string()),
+        ("solto", &r.soltos.len().to_string()),
+        ("nf", &r.nao_fonte.len().to_string()),
+        ("sep", cat::DIFF_SEP),
+    ]));
+    s.push('\n');
+    if !r.soltos.is_empty() {
+        let mut nomes: Vec<String> = r.soltos.iter().map(|p| nome_arquivo(p)).collect();
+        nomes.sort();
+        s.push_str(&format!("  {} {}\n", cat::DIFF_SEM_MOD, nomes.join(", ")));
+    }
+    if !r.fantasmas.is_empty() {
+        s.push_str(&cat::DIFF_FANTASMAS.render(&[("n", &r.fantasmas.len().to_string())]));
+        s.push('\n');
+    }
+    s
+}
+
+fn formatar_diff_resumo(r: &ResultadoDiff) -> String {
+    let crates: BTreeSet<&str> = r
+        .tocados
+        .iter()
+        .map(|t| crate_de(t.tocado.path.as_str()))
+        .collect();
+    let mut s = cat::DIFF_RESUMO_CABECALHO.render(&[
+        ("n", &r.tocados.len().to_string()),
+        ("c", &crates.len().to_string()),
+    ]);
+    s.push('\n');
+
+    let montante = linha_impacto(cat::DIFF_ROTULO_MONTANTE, &r.combinado.montante);
+    let jusante = linha_impacto(cat::DIFF_ROTULO_JUSANTE, &r.combinado.jusante);
+    // Ênfase adaptativa (0043): diff só-arquivo-novo (montante vazio + ligados)
+    // lidera com o jusante (o que o código novo passa a usar); senão, montante.
+    if r.combinado.montante.is_empty() && !r.ligados.is_empty() {
+        s.push_str(&jusante);
+        s.push_str(&montante);
+    } else {
+        s.push_str(&montante);
+        s.push_str(&jusante);
+    }
+    s.push_str(&rodape_diff(r));
+    s
+}
+
+fn formatar_diff_item(r: &ResultadoDiff) -> String {
+    let mut s = String::new();
+    if r.tocados.is_empty() {
+        s.push_str(cat::DIFF_SEM_TOCADOS);
+        s.push('\n');
+    } else {
+        s.push_str(&cat::DIFF_ITEM_CABECALHO.render(&[("n", &r.tocados.len().to_string())]));
+        s.push('\n');
+        let mut tocados: Vec<&TocadoComRaio> = r.tocados.iter().collect();
+        tocados.sort_by(|a, b| a.tocado.path.as_str().cmp(b.tocado.path.as_str()));
+        for t in tocados {
+            s.push_str(&format!(
+                "  {}  [{}]\n",
+                t.tocado.path.as_str(),
+                classificacao_texto(t.raio.classificacao)
+            ));
+            s.push_str(&format!(
+                "    {}: {}   {}: {}\n",
+                cat::DIFF_ITEM_PODE_QUEBRAR,
+                conta_ou_vazio(t.raio.montante.len()),
+                cat::DIFF_ITEM_DEPENDE_DE,
+                conta_ou_vazio(t.raio.jusante.len()),
+            ));
+        }
+    }
+    s.push_str(&rodape_diff(r));
+    s
+}
+
+fn formatar_diff_camadas(r: &ResultadoDiff) -> String {
+    let mut s = String::new();
+    s.push_str(cat::DIFF_CAMADAS_TOCADOS_POR_CRATE);
+    s.push('\n');
+
+    // Agrupa os tocados por crate (BTreeMap → ordem alfabética determinística).
+    let mut por_crate: BTreeMap<&str, Vec<&TocadoComRaio>> = BTreeMap::new();
+    for t in &r.tocados {
+        por_crate
+            .entry(crate_de(t.tocado.path.as_str()))
+            .or_default()
+            .push(t);
+    }
+    for (crate_nome, tocados) in &por_crate {
+        s.push_str(&format!("  {}\n", crate_nome));
+        let mut itens: Vec<String> = tocados
+            .iter()
+            .map(|t| {
+                format!(
+                    "{} [{}]",
+                    nome_curto(t.tocado.path.as_str(), crate_nome),
+                    classificacao_texto(t.raio.classificacao)
+                )
+            })
+            .collect();
+        itens.sort();
+        s.push_str(&format!("    {}\n", itens.join(", ")));
+    }
+
+    // Impacto cross-crate: o combinado.montante agrupado por crate.
+    s.push_str(&format!(
+        "{}: {}\n",
+        cat::DIFF_CAMADAS_POR_CRATE,
+        juntar_por_crate(&contar_por_crate(&r.combinado.montante))
+    ));
+    s.push_str(&rodape_diff(r));
+    s
+}
+
+/// Remove o prefixo `crate::` de um path (para a vista camadas). Se o path é o
+/// próprio crate-raiz, devolve-o inteiro.
+fn nome_curto(path: &str, crate_nome: &str) -> String {
+    path.strip_prefix(crate_nome)
+        .and_then(|r| r.strip_prefix("::"))
+        .unwrap_or(path)
+        .to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -987,5 +1196,168 @@ mod tests {
         // fantasmas
         assert_eq!(v["fantasmas"][0]["path"], "t::Some");
         assert_eq!(v["fantasmas"][0]["referenciado_por"][0], "x");
+    }
+
+    // ---- Vistas de texto do --diff (prompt 0048) ----------------------------
+
+    fn no_tocado(id: usize, path: &str) -> lente_core::domain::mapeamento::NoTocado {
+        lente_core::domain::mapeamento::NoTocado {
+            id,
+            path: PathGrafo::from(path),
+        }
+    }
+
+    fn raio_v(c: Classificacao, mont: &[(&str, usize)], jus: &[(&str, usize)]) -> Raio {
+        Raio {
+            alvo: PathGrafo::from("x"),
+            classificacao: c,
+            uses_entrada: mont.len(),
+            uses_saida: jus.len(),
+            montante: mont.iter().map(|(p, d)| (PathGrafo::from(*p), *d)).collect(),
+            jusante: jus.iter().map(|(p, d)| (PathGrafo::from(*p), *d)).collect(),
+            owns_pai: None,
+            owns_filhos: Vec::new(),
+        }
+    }
+
+    /// `ResultadoDiff` forjado: 2 tocados em `lente_core` (No [Base], jusante 0;
+    /// entities::grafo [Intermediario], jusante 1), combinado cruzando
+    /// lente_infra/lente_wiring, 1 solto, 0 fantasmas.
+    fn resultado_amostra() -> ResultadoDiff {
+        use lente_wiring::{RaioCombinado, TocadoComRaio};
+        ResultadoDiff {
+            tocados: vec![
+                TocadoComRaio {
+                    tocado: no_tocado(1, "lente_core::No"),
+                    raio: raio_v(
+                        Classificacao::Base,
+                        &[("lente_infra::a", 1), ("lente_infra::b", 1)],
+                        &[],
+                    ),
+                },
+                TocadoComRaio {
+                    tocado: no_tocado(2, "lente_core::entities::grafo"),
+                    raio: raio_v(
+                        Classificacao::Intermediario,
+                        &[("lente_infra::a", 1), ("lente_wiring::c", 1)],
+                        &[("lente_core::d", 1)],
+                    ),
+                },
+            ],
+            combinado: RaioCombinado {
+                montante: vec![
+                    (PathGrafo::from("lente_infra::a"), 1),
+                    (PathGrafo::from("lente_infra::b"), 1),
+                    (PathGrafo::from("lente_wiring::c"), 1),
+                ],
+                jusante: vec![(PathGrafo::from("lente_core::d"), 1)],
+            },
+            ligados: vec![std::path::PathBuf::from("/r/01_core/src/lig.rs")],
+            soltos: vec![std::path::PathBuf::from("/r/02_shell/cli/src/cli_novo.rs")],
+            nao_fonte: vec![
+                std::path::PathBuf::from("/r/README.md"),
+                std::path::PathBuf::from("/r/X.md"),
+            ],
+            fantasmas: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn vista_resumo_traz_contagens_por_crate_censo_e_solto() {
+        let s = formatar_diff_resumo(&resultado_amostra());
+        assert!(s.contains("diff: 2 tocados em 1 crate"));
+        assert!(s.contains("pode quebrar (montante): 3"));
+        assert!(s.contains("lente_infra 2"));
+        assert!(s.contains("lente_wiring 1"));
+        assert!(s.contains("depende de (jusante): 1"));
+        assert!(s.contains("untracked: 1 compilados"));
+        assert!(s.contains("sem mod"));
+        assert!(s.contains("cli_novo.rs"));
+        assert!(!s.contains("fantasmas"), "0 fantasmas → linha ausente");
+    }
+
+    #[test]
+    fn vista_item_um_bloco_por_tocado_com_classificacao_e_contagens() {
+        let s = formatar_diff_item(&resultado_amostra());
+        assert!(s.contains("2 tocados:"));
+        assert!(s.contains("lente_core::No"));
+        assert!(s.contains(classificacao_texto(Classificacao::Base)));
+        assert!(s.contains("lente_core::entities::grafo"));
+        // No: montante 2, jusante 0 → "—".
+        assert!(s.contains("pode quebrar: 2"));
+        assert!(s.contains("depende de: —"));
+        assert!(s.contains("cli_novo.rs"));
+    }
+
+    #[test]
+    fn vista_camadas_agrupa_por_crate_e_mostra_cross_crate() {
+        let s = formatar_diff_camadas(&resultado_amostra());
+        assert!(s.contains("tocados por crate:"));
+        assert!(s.contains("lente_core"));
+        // nomes curtos (sem o prefixo do crate).
+        assert!(s.contains("No ["));
+        assert!(s.contains("entities::grafo ["));
+        assert!(s.contains("pode quebrar, por crate:"));
+        assert!(s.contains("lente_infra 2"));
+    }
+
+    #[test]
+    fn vista_resumo_enfase_adaptativa_arquivo_novo_lidera_jusante() {
+        use lente_wiring::RaioCombinado;
+        let mut r = resultado_amostra();
+        // Diff só-arquivo-novo: montante combinado vazio, ligados presentes.
+        r.combinado = RaioCombinado {
+            montante: Vec::new(),
+            jusante: vec![(PathGrafo::from("lente_core::d"), 1)],
+        };
+        let s = formatar_diff_resumo(&r);
+        let pos_jus = s.find("depende de (jusante)").unwrap();
+        let pos_mont = s.find("pode quebrar (montante)").unwrap();
+        assert!(pos_jus < pos_mont, "arquivo novo deve liderar com o jusante");
+    }
+
+    #[test]
+    fn fantasma_aparece_so_se_maior_que_zero() {
+        use lente_wiring::Fantasma;
+        let mut r = resultado_amostra();
+        assert!(!formatar_diff_resumo(&r).contains("fantasmas"));
+        r.fantasmas = vec![Fantasma {
+            path: PathGrafo::from("t::Some"),
+            referenciado_por: vec!["a".to_string()],
+        }];
+        assert!(formatar_diff_resumo(&r).contains("fantasmas: 1"));
+        assert!(formatar_diff_item(&r).contains("fantasmas: 1"));
+        assert!(formatar_diff_camadas(&r).contains("fantasmas: 1"));
+    }
+
+    #[test]
+    fn solto_listado_em_todas_as_vistas() {
+        let r = resultado_amostra();
+        for s in [
+            formatar_diff_resumo(&r),
+            formatar_diff_item(&r),
+            formatar_diff_camadas(&r),
+        ] {
+            assert!(s.contains("cli_novo.rs"), "solto deve aparecer em: {}", s);
+        }
+    }
+
+    #[test]
+    fn vistas_sao_deterministicas() {
+        let r = resultado_amostra();
+        assert_eq!(formatar_diff_resumo(&r), formatar_diff_resumo(&r));
+        assert_eq!(formatar_diff_item(&r), formatar_diff_item(&r));
+        assert_eq!(formatar_diff_camadas(&r), formatar_diff_camadas(&r));
+    }
+
+    #[test]
+    fn roteamento_vista_chama_o_renderizador_certo() {
+        let r = resultado_amostra();
+        assert_eq!(formatar_diff_vista(&r, Vista::Resumo), formatar_diff_resumo(&r));
+        assert_eq!(formatar_diff_vista(&r, Vista::Item), formatar_diff_item(&r));
+        assert_eq!(
+            formatar_diff_vista(&r, Vista::Camadas),
+            formatar_diff_camadas(&r)
+        );
     }
 }
