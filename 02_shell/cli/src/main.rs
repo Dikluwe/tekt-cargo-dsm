@@ -172,7 +172,12 @@ fn run_diff(cli: &args::Cli) -> Result<String, SaidaErro> {
         alvo_informado: String::new(),
     };
     match lente_wiring::analisar_diff(&raiz) {
-        Ok(resultado) => Ok(saida::formatar_diff(&resultado)),
+        // Sem `--vista` → JSON (padrão do 0047, intocado). Com `--vista` → a
+        // vista de texto correspondente (prompt 0048).
+        Ok(resultado) => Ok(match cli.vista {
+            None => saida::formatar_diff(&resultado),
+            Some(vista) => saida::formatar_diff_vista(&resultado, vista),
+        }),
         Err(e) => Err(SaidaErro {
             codigo: 1,
             mensagem: erro::traduzir(&e, &contexto),
@@ -266,6 +271,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: false,
             verbose: false,
         }
@@ -338,6 +344,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: false,
             verbose: false,
         };
@@ -362,6 +369,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: false,
             verbose: false,
         };
@@ -387,6 +395,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: true,
             verbose: false,
         };
@@ -561,6 +570,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: true,
             verbose: false,
         };
@@ -588,6 +598,7 @@ mod tests {
             so_referencia: false,
             diff: false,
             repo: None,
+            vista: None,
             text: true,
             verbose: false,
         };
