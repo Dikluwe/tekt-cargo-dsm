@@ -12,3 +12,10 @@ path = "src/lib.rs"
 lente_core = { path = "../01_core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Parse direto dos `Cargo.toml` (enumeração de membros) — sem `cargo metadata`,
+# preservando o invariante de subprocessos do cargo (prompt 0044).
+toml = "0.8"
+# Hash ESTÁVEL entre execuções para a chave de cache (a `DefaultHasher` da
+# stdlib usa seed aleatório por processo — imprópria para chave persistida).
+# Mesma escolha validada na Arena (laudo 0040).
+sha2 = "0.10"
