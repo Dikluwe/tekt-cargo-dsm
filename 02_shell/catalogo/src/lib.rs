@@ -75,6 +75,9 @@ pub const ERRO_RESOLUCAO: Template = Template(
 pub const ERRO_GENERICO_PIPELINE: Template = Template(
     "Falha no pipeline: {detalhe}",
 );
+pub const ERRO_WORKSPACE: Template = Template(
+    "Falha ao montar o grafo de workspace: {detalhe}",
+);
 
 // Validações da CLI (não vêm do `ErroLente`).
 pub const ERRO_FONTE_NAO_INFORMADA: Template = Template(

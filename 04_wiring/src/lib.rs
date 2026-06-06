@@ -30,10 +30,12 @@ use core::fmt;
 use std::collections::HashMap;
 
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
+use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
 use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
 use lente_estrutura::{agregar_por_modulo, detectar_ciclos, ordenar_dsm};
 use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
+use lente_infra::ErroWorkspace;
 use lente_infra::fork::ErroFork;
 use lente_investiga::{ArestasNo, ParColidente, Vizinhanca};
 use lente_ranking::rankear;
@@ -42,6 +44,7 @@ use lente_resolve::ErroResolve;
 // Re-export para consumidores L2 não precisarem depender de `lente_ranking`/
 // `lente_estrutura` diretamente — a fronteira de API do wiring carrega os
 // tipos de resultado.
+pub use lente_core::domain::uniao::Fantasma;
 pub use lente_estrutura::{Ciclo, OrdemDsm};
 pub use lente_ranking::ItemRanking;
 
@@ -135,6 +138,9 @@ pub enum ErroLente {
     /// pré-`b44aa96` (não emite o subtipo). Diagnóstico claro, em vez de
     /// silenciar produzindo `Todas` por engano.
     ForkSemUsesKind,
+    /// Prompt 0045: falha na montagem do grafo de workspace — enumeração de
+    /// membros, extração cacheada ou versão do toolchain (camada L3, 0044).
+    Workspace(ErroWorkspace),
 }
 
 impl From<ErroFork> for ErroLente {
@@ -157,6 +163,11 @@ impl From<ErroRaio> for ErroLente {
         ErroLente::Raio(e)
     }
 }
+impl From<ErroWorkspace> for ErroLente {
+    fn from(e: ErroWorkspace) -> Self {
+        ErroLente::Workspace(e)
+    }
+}
 
 impl fmt::Display for ErroLente {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -172,6 +183,7 @@ impl fmt::Display for ErroLente {
                 "o fork `cargo-modules` instalado não emite `uses_kind` por aresta \
                  — atualize o fork para usar `--so-referencia`",
             ),
+            ErroLente::Workspace(e) => write!(f, "grafo de workspace: {}", e),
         }
     }
 }
@@ -205,6 +217,44 @@ pub fn calcular_raio_de_alvo(
 
     let raio = calcular_raio(&grafo, &path_alvo)?;
     Ok(raio)
+}
+
+/// O grafo de workspace montado: o grafo unificado de todos os membros e os
+/// fantasmas detectados na união (esperado vazio neste repo — laudo 0041).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GrafoWorkspace {
+    pub grafo: Grafo,
+    pub fantasmas: Vec<Fantasma>,
+}
+
+/// Monta o grafo de workspace (prompt 0045): a fundação do motor da trilha
+/// local, pronta para o modo `--diff` (L2).
+///
+/// Passos (composição pura — sem lógica nova):
+/// 1. `lente_infra::enumerar_membros` (L3, 0044) → membros.
+/// 2. `lente_infra::versao_toolchain` (L3) → versão, **uma vez**.
+/// 3. Para cada membro: `lente_infra::extrair_grafo_cacheado` (L3) → `Grafo`.
+/// 4. Para cada `Grafo`: [`resolver_colisoes`] → grafo resolvido do crate
+///    (resolver **por crate antes de unir** — laudo 0041).
+/// 5. `lente_core::domain::uniao::unir_grafos` (L1) → grafo unificado +
+///    fantasmas.
+///
+/// A primeira chamada num workspace frio paga a extração de todos os crates
+/// (~33s, laudo 0040); o cache de chave completa (0044) aquece as seguintes.
+pub fn montar_grafo_workspace(raiz: &std::path::Path) -> Result<GrafoWorkspace, ErroLente> {
+    let membros = lente_infra::enumerar_membros(raiz)?;
+    let versao = lente_infra::versao_toolchain()?;
+    let mut grafos: Vec<GrafoCrate> = Vec::with_capacity(membros.len());
+    for membro in &membros {
+        let grafo = lente_infra::extrair_grafo_cacheado(membro, raiz, &versao)?;
+        let grafo = resolver_colisoes(grafo)?;
+        grafos.push(GrafoCrate {
+            crate_name: membro.nome.clone(),
+            grafo,
+        });
+    }
+    let ResultadoUniao { grafo, fantasmas } = unir_grafos(grafos);
+    Ok(GrafoWorkspace { grafo, fantasmas })
 }
 
 /// Pipeline do ranking: extrai+resolve, aplica o escopo, rankeia top-N.
@@ -361,7 +411,18 @@ fn obter_grafo_resolvido(fonte: FonteGrafo) -> Result<Grafo, ErroLente> {
         FonteGrafo::Json(s) => s,
         FonteGrafo::Pacote(p) => lente_infra::fork::invocar_fork(&p)?,
     };
-    let mut grafo = lente_infra::desserializar_grafo(&json)?;
+    let grafo = lente_infra::desserializar_grafo(&json)?;
+    resolver_colisoes(grafo)
+}
+
+/// Resolve **todas** as colisões de path de um grafo: para cada path
+/// colidente, investiga o primeiro par e aplica o veredito (laudo 0019, E2 em
+/// quarentena — `fontes` sempre `None`, laudo 0014). Extraído do
+/// `obter_grafo_resolvido` (prompt 0045) para ser reusado pela montagem do
+/// grafo de workspace (resolver **por crate**, antes de unir — laudo 0041).
+/// Refator que **preserva o comportamento**: `obter_grafo_resolvido` apenas
+/// passa a chamá-lo; os testes do pipeline são a guarda.
+fn resolver_colisoes(mut grafo: Grafo) -> Result<Grafo, ErroLente> {
     let colisoes = detectar_colisoes(&grafo);
     for path_colidente in colisoes {
         grafo = resolver_uma_colisao(grafo, &path_colidente)?;
@@ -524,9 +585,98 @@ mod tests {
     fn display_de_erro_lente_cobre_variantes() {
         let v1 = ErroLente::IdInexistente(42);
         let v2 = ErroLente::Adaptador(ErroAdaptador::JsonInvalido("eof".to_string()));
-        for v in [v1, v2].iter() {
+        let v3 = ErroLente::Workspace(ErroWorkspace::Toolchain("rustc ausente".to_string()));
+        for v in [v1, v2, v3].iter() {
             assert!(!format!("{}", v).is_empty());
         }
+    }
+
+    // ---- Grafo de workspace (prompt 0045) -----------------------------------
+
+    /// E2E real (requer fork): monta o grafo de workspace do projeto-lente.
+    /// Confirma a ordem de grandeza da Arena (~363 nós, laudo 0043), fantasmas
+    /// **vazio** (laudo 0041 — colisões são folhas de raio 0), paths únicos
+    /// (colisões resolvidas por crate antes de unir, nomes do 0042) e uma
+    /// aresta cross-crate conhecida (`lente_infra` → `lente_core`).
+    /// Primeira chamada fria (~33s); o cache (0044) aquece as seguintes.
+    #[test]
+    #[ignore]
+    fn e2e_montar_grafo_workspace_unifica_todos() {
+        let raiz = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("raiz do workspace")
+            .to_path_buf();
+        let gw = montar_grafo_workspace(&raiz).expect("montar grafo de workspace");
+
+        eprintln!(
+            "grafo de workspace: {} nós, {} arestas, {} fantasmas",
+            gw.grafo.nodes.len(),
+            gw.grafo.edges.len(),
+            gw.fantasmas.len()
+        );
+
+        // Ordem de grandeza da Arena (~363).
+        assert!(
+            gw.grafo.nodes.len() > 300,
+            "esperava ~363 nós, veio {}",
+            gw.grafo.nodes.len()
+        );
+
+        // Fantasmas: 0 neste repo (se >0, é achado — não esconder).
+        assert!(
+            gw.fantasmas.is_empty(),
+            "esperava 0 fantasmas, veio {:?}",
+            gw.fantasmas
+        );
+
+        // Paths únicos no grafo unido (colisões resolvidas por crate).
+        let mut ps: Vec<&str> = gw.grafo.nodes.iter().map(|n| n.path.as_str()).collect();
+        let total = ps.len();
+        ps.sort();
+        ps.dedup();
+        assert_eq!(ps.len(), total, "paths únicos no grafo unificado");
+
+        // Colisão conhecida do 0042 resolvida: `Path::from` cru não aparece 2x.
+        let path_from_cru = gw
+            .grafo
+            .nodes
+            .iter()
+            .filter(|n| n.path.as_str() == "lente_core::entities::grafo::Path::from")
+            .count();
+        assert!(
+            path_from_cru <= 1,
+            "Path::from cru não deve colidir após resolução, veio {}",
+            path_from_cru
+        );
+
+        // Aresta cross-crate conhecida: lente_infra → lente_core.
+        let cross = gw.grafo.edges.iter().any(|e| {
+            e.relation == Relation::Uses
+                && e.from.as_str().starts_with("lente_infra")
+                && e.to.as_str().starts_with("lente_core")
+        });
+        assert!(cross, "esperava aresta cross-crate lente_infra → lente_core");
+    }
+
+    /// E2E (requer fork): a segunda montagem (cache morno) é rápida — sem
+    /// rodar o fork. Limiar generoso (quente ~70ms no laudo 0040).
+    #[test]
+    #[ignore]
+    fn e2e_montar_grafo_workspace_cache_morno_e_rapido() {
+        let raiz = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let _ = montar_grafo_workspace(&raiz).expect("primeira (aquece o cache)");
+        let t = std::time::Instant::now();
+        let gw = montar_grafo_workspace(&raiz).expect("segunda (cache morno)");
+        let dt = t.elapsed();
+        assert!(gw.grafo.nodes.len() > 300);
+        assert!(
+            dt.as_secs() < 5,
+            "cache morno deveria ser rápido, veio {:?}",
+            dt
+        );
     }
 
     /// E2E real contra o crate `lente_core`. Requer fork 0.27.0 instalado.
