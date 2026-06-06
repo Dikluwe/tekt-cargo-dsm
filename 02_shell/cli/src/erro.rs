@@ -43,6 +43,9 @@ pub fn traduzir(erro: &ErroLente, ctx: &ContextoErro) -> String {
         ErroLente::Workspace(e) => {
             cat::ERRO_WORKSPACE.render(&[("detalhe", &format!("{}", e))])
         }
+        ErroLente::Diff(e) => {
+            cat::ERRO_DIFF.render(&[("detalhe", &format!("{}", e))])
+        }
     }
 }
 

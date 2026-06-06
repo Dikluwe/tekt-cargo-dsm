@@ -29,6 +29,7 @@ use core::error::Error;
 use core::fmt;
 use std::collections::HashMap;
 
+use lente_core::domain::mapeamento::{MapeamentoDiff, mapear_diff};
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
 use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
 use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
@@ -37,6 +38,7 @@ use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
 use lente_infra::fork::ErroFork;
+use lente_infra::{ErroDiff, ler_diff};
 use lente_investiga::{ArestasNo, ParColidente, Vizinhanca};
 use lente_ranking::rankear;
 use lente_resolve::ErroResolve;
@@ -44,6 +46,9 @@ use lente_resolve::ErroResolve;
 // Re-export para consumidores L2 não precisarem depender de `lente_ranking`/
 // `lente_estrutura` diretamente — a fronteira de API do wiring carrega os
 // tipos de resultado.
+pub use lente_core::domain::resultado_diff::{
+    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,
+};
 pub use lente_core::domain::uniao::Fantasma;
 pub use lente_estrutura::{Ciclo, OrdemDsm};
 pub use lente_ranking::ItemRanking;
@@ -141,6 +146,9 @@ pub enum ErroLente {
     /// Prompt 0045: falha na montagem do grafo de workspace — enumeração de
     /// membros, extração cacheada ou versão do toolchain (camada L3, 0044).
     Workspace(ErroWorkspace),
+    /// Prompt 0047: falha ao ler o diff do repositório (subprocesso `git`) —
+    /// de `lente_infra::ler_diff` (0046).
+    Diff(ErroDiff),
 }
 
 impl From<ErroFork> for ErroLente {
@@ -168,6 +176,11 @@ impl From<ErroWorkspace> for ErroLente {
         ErroLente::Workspace(e)
     }
 }
+impl From<ErroDiff> for ErroLente {
+    fn from(e: ErroDiff) -> Self {
+        ErroLente::Diff(e)
+    }
+}
 
 impl fmt::Display for ErroLente {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -184,6 +197,7 @@ impl fmt::Display for ErroLente {
                  — atualize o fork para usar `--so-referencia`",
             ),
             ErroLente::Workspace(e) => write!(f, "grafo de workspace: {}", e),
+            ErroLente::Diff(e) => write!(f, "leitura do diff: {}", e),
         }
     }
 }
@@ -255,6 +269,81 @@ pub fn montar_grafo_workspace(raiz: &std::path::Path) -> Result<GrafoWorkspace, 
     }
     let ResultadoUniao { grafo, fantasmas } = unir_grafos(grafos);
     Ok(GrafoWorkspace { grafo, fantasmas })
+}
+
+/// Analisa um diff contra o grafo de workspace (prompt 0047): o pipeline
+/// completo do modo `--diff`, devolvendo o [`ResultadoDiff`] view-agnóstico.
+///
+/// Passos (composição):
+/// 1. `lente_infra::ler_diff` (L3, 0046) → `DiffEstruturado`.
+/// 2. [`montar_grafo_workspace`] (L4, 0045) → grafo unificado + fantasmas.
+/// 3. `lente_infra::enumerar_membros` (L3, 0044) → os `membros_dirs` (para o
+///    censo solto-vs-não-fonte do mapeamento).
+/// 4. `lente_core::mapear_diff` (L1, 0046) → `MapeamentoDiff`.
+/// 5. [`montar_resultado_diff`] (parte pura) → raio por tocado + combinado +
+///    censo + fantasmas.
+///
+/// A primeira chamada num workspace frio paga a extração de todos os crates
+/// (~33s, laudo 0040); o cache (0044) aquece as seguintes.
+pub fn analisar_diff(raiz: &std::path::Path) -> Result<ResultadoDiff, ErroLente> {
+    // Canonicalizar a raiz é o que faz a reconciliação de caminho funcionar: os
+    // `caminho` do diff são `raiz.join(relativo)`, e precisam casar com as
+    // `position.file` (absolutas/canônicas do fork, laudo 0037). Com `raiz`
+    // relativa (ex.: a CLI passa `.`), `join` manteria o `./` e nada casaria —
+    // 0 tocados e ligados virando soltos. Canonicalizar resolve isso para todos
+    // os consumidores (ler_diff, enumerar_membros, mapear_diff) de uma vez.
+    let raiz = raiz
+        .canonicalize()
+        .map_err(|e| ErroLente::Diff(ErroDiff::Io(e)))?;
+    let raiz = raiz.as_path();
+
+    let diff = ler_diff(raiz)?;
+    let GrafoWorkspace { grafo, fantasmas } = montar_grafo_workspace(raiz)?;
+    let membros_dirs: Vec<std::path::PathBuf> = lente_infra::enumerar_membros(raiz)?
+        .into_iter()
+        .map(|m| m.dir)
+        .collect();
+    let mapa = mapear_diff(&diff, &grafo, &membros_dirs);
+    Ok(montar_resultado_diff(&grafo, mapa, fantasmas))
+}
+
+/// A **parte pura** da análise de diff (sem git/fork): dado o grafo, o
+/// mapeamento e os fantasmas, calcula o raio de cada tocado, combina os raios
+/// e monta o [`ResultadoDiff`]. Separada para ser testável sem I/O (o
+/// `analisar_diff` completo é `#[ignore]`).
+fn montar_resultado_diff(
+    grafo: &Grafo,
+    mapa: MapeamentoDiff,
+    fantasmas: Vec<Fantasma>,
+) -> ResultadoDiff {
+    let MapeamentoDiff {
+        tocados,
+        ligados,
+        soltos,
+        nao_fonte,
+    } = mapa;
+
+    let mut tocados_com_raio: Vec<TocadoComRaio> = Vec::with_capacity(tocados.len());
+    for tocado in tocados {
+        // O path do tocado vem de um nó do `grafo` (mapear_diff só marca nós
+        // presentes), então `calcular_raio` não falha; se falhasse, pular é a
+        // defesa segura (não inventa raio).
+        if let Ok(raio) = calcular_raio(grafo, &tocado.path) {
+            tocados_com_raio.push(TocadoComRaio { tocado, raio });
+        }
+    }
+
+    let raios: Vec<Raio> = tocados_com_raio.iter().map(|t| t.raio.clone()).collect();
+    let combinado = combinar_raios(&raios);
+
+    ResultadoDiff {
+        tocados: tocados_com_raio,
+        combinado,
+        ligados,
+        soltos,
+        nao_fonte,
+        fantasmas,
+    }
 }
 
 /// Pipeline do ranking: extrai+resolve, aplica o escopo, rankeia top-N.
@@ -677,6 +766,86 @@ mod tests {
             "cache morno deveria ser rápido, veio {:?}",
             dt
         );
+    }
+
+    // ---- Análise de diff (prompt 0047) --------------------------------------
+
+    /// A parte pura da análise (sem git/fork): dado um grafo e um mapeamento
+    /// forjados, `montar_resultado_diff` calcula o raio de cada tocado, combina
+    /// os raios e passa o censo + fantasmas adiante.
+    #[test]
+    fn montar_resultado_diff_calcula_raio_por_tocado_e_combina() {
+        // t::B usa t::A → o montante de t::A tem t::B.
+        let json = r#"{"crate":"t","nodes":[
+            {"id":1,"path":"t::A","name":"A","kind":"fn","visibility":"pub"},
+            {"id":2,"path":"t::B","name":"B","kind":"fn","visibility":"pub"}
+        ],"edges":[
+            {"from":"t::B","id_from":2,"to":"t::A","id_to":1,"relation":"uses"}
+        ]}"#;
+        let grafo = lente_infra::desserializar_grafo(json).unwrap();
+        let mapa = MapeamentoDiff {
+            tocados: vec![lente_core::domain::mapeamento::NoTocado {
+                id: 1,
+                path: Path::from("t::A"),
+            }],
+            ligados: vec![std::path::PathBuf::from("/r/a/src/lig.rs")],
+            soltos: vec![std::path::PathBuf::from("/r/a/src/solto.rs")],
+            nao_fonte: vec![std::path::PathBuf::from("/r/README.md")],
+        };
+        let r = montar_resultado_diff(&grafo, mapa, Vec::new());
+
+        // O tocado t::A traz seu raio (t::B no montante).
+        assert_eq!(r.tocados.len(), 1);
+        assert_eq!(r.tocados[0].tocado.path.as_str(), "t::A");
+        assert!(r.tocados[0].raio.montante.contains_key(&Path::from("t::B")));
+        // O combinado é a união (aqui, só t::B a profundidade 1).
+        assert_eq!(r.combinado.montante, vec![(Path::from("t::B"), 1)]);
+        assert!(r.combinado.jusante.is_empty());
+        // Censo e fantasmas passam adiante intactos.
+        assert_eq!(r.ligados, vec![std::path::PathBuf::from("/r/a/src/lig.rs")]);
+        assert_eq!(r.soltos, vec![std::path::PathBuf::from("/r/a/src/solto.rs")]);
+        assert_eq!(r.nao_fonte, vec![std::path::PathBuf::from("/r/README.md")]);
+        assert!(r.fantasmas.is_empty());
+    }
+
+    /// `ErroLente::Diff` traduz via `Display` (cobre a variante nova).
+    #[test]
+    fn display_de_erro_lente_cobre_diff() {
+        let e = ErroLente::Diff(ErroDiff::Git {
+            codigo: Some(128),
+            stderr: "not a git repository".to_string(),
+        });
+        assert!(format!("{}", e).contains("diff"));
+    }
+
+    /// E2E real (requer git + fork): analisa o diff do próprio repo. Confirma
+    /// que roda, que os fantasmas são 0 (0045/0041) e que cada tocado tem o
+    /// raio resolvido no seu próprio path. Não afirma tocados específicos (o
+    /// working tree varia). Primeira chamada fria (~33s); cache aquece.
+    #[test]
+    #[ignore]
+    fn e2e_analisar_diff_no_repo_real() {
+        let raiz = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("raiz do workspace")
+            .to_path_buf();
+        let r = analisar_diff(&raiz).expect("analisar_diff no repo real");
+        eprintln!(
+            "diff: {} tocados, {} ligados, {} soltos, {} não-fonte, {} fantasmas",
+            r.tocados.len(),
+            r.ligados.len(),
+            r.soltos.len(),
+            r.nao_fonte.len(),
+            r.fantasmas.len()
+        );
+        assert!(
+            r.fantasmas.is_empty(),
+            "esperava 0 fantasmas, veio {:?}",
+            r.fantasmas
+        );
+        for t in &r.tocados {
+            assert_eq!(t.raio.alvo.as_str(), t.tocado.path.as_str());
+        }
     }
 
     /// E2E real contra o crate `lente_core`. Requer fork 0.27.0 instalado.

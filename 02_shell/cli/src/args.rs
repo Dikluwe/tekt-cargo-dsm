@@ -49,10 +49,24 @@ pub struct Cli {
     /// dependências e ciclos. Mutuamente exclusivo com os outros modos.
     #[arg(
         long,
-        conflicts_with_all = ["alvo", "alvo_id", "ranking"],
+        conflicts_with_all = ["alvo", "alvo_id", "ranking", "diff"],
         help = lente_catalogo::HELP_ESTRUTURA,
     )]
     pub estrutura: bool,
+
+    /// Modo diff (prompt 0047): mapeia o diff do repositório aos nós tocados
+    /// e emite o impacto em JSON. Opera na raiz do repo (não usa
+    /// `--grafo`/`--pacote`). Mutuamente exclusivo com os outros modos.
+    #[arg(
+        long,
+        conflicts_with_all = ["alvo", "alvo_id", "ranking", "estrutura", "grafo", "pacote"],
+        help = lente_catalogo::HELP_DIFF,
+    )]
+    pub diff: bool,
+
+    /// Raiz do repositório no modo `--diff` (default: diretório atual).
+    #[arg(long, help = lente_catalogo::HELP_REPO)]
+    pub repo: Option<std::path::PathBuf>,
 
     /// Modo de inclusão das arestas `Uses` no `--estrutura` (prompt 0034):
     /// presente = só `Uses` de referência (uso de tipo direto). Ausente =
