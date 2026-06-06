@@ -1,0 +1,367 @@
+{
+  "crate_alvo": "lente_core",
+  "raiz_repo": "/home/dikluwe/Documentos/Antigravity/tekt-cargo-dsm",
+  "crate_path": "/home/dikluwe/Documentos/Antigravity/tekt-cargo-dsm/01_core",
+  "fork_antigo_sem_position": false,
+  "nodes_total": 119,
+  "nodes_com_position": 119,
+  "colisoes_path": 4,
+  "stdin": null,
+  "git": {
+    "fonte": "git",
+    "arquivos": [
+      {
+        "caminho": "01_core/src/domain/raio.rs",
+        "faixas": [
+          {
+            "inicio": 260,
+            "fim": 260
+          }
+        ]
+      },
+      {
+        "caminho": "01_core/src/entities/grafo.rs",
+        "faixas": [
+          {
+            "inicio": 218,
+            "fim": 235
+          },
+          {
+            "inicio": 267,
+            "fim": 271
+          },
+          {
+            "inicio": 347,
+            "fim": 411
+          },
+          {
+            "inicio": 512,
+            "fim": 512
+          }
+        ]
+      },
+      {
+        "caminho": "03_infra/src/dto.rs",
+        "faixas": [
+          {
+            "inicio": 46,
+            "fim": 59
+          }
+        ]
+      },
+      {
+        "caminho": "03_infra/src/traducao.rs",
+        "faixas": [
+          {
+            "inicio": 18,
+            "fim": 18
+          },
+          {
+            "inicio": 52,
+            "fim": 59
+          },
+          {
+            "inicio": 76,
+            "fim": 76
+          },
+          {
+            "inicio": 152,
+            "fim": 152
+          },
+          {
+            "inicio": 291,
+            "fim": 425
+          }
+        ]
+      },
+      {
+        "caminho": "05_investiga/src/fontes.rs",
+        "faixas": [
+          {
+            "inicio": 419,
+            "fim": 419
+          }
+        ]
+      },
+      {
+        "caminho": "05_investiga/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 136,
+            "fim": 136
+          }
+        ]
+      },
+      {
+        "caminho": "06_resolve/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 227,
+            "fim": 227
+          }
+        ]
+      },
+      {
+        "caminho": "07_filtro/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 134,
+            "fim": 134
+          }
+        ]
+      },
+      {
+        "caminho": "08_ranking/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 100,
+            "fim": 100
+          }
+        ]
+      },
+      {
+        "caminho": "09_estrutura/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 484,
+            "fim": 484
+          }
+        ]
+      }
+    ],
+    "impacto": [
+      {
+        "arquivo": "01_core/src/domain/raio.rs",
+        "faixas": [
+          {
+            "inicio": 260,
+            "fim": 260
+          }
+        ],
+        "nos_tocados": [
+          {
+            "id": 2,
+            "path": "lente_core::domain::raio",
+            "kind": "Mod",
+            "cadeia": [
+              "lente_core",
+              "lente_core::domain",
+              "lente_core::domain::raio"
+            ],
+            "file_relativo": "01_core/src/domain/raio.rs",
+            "start_line": 1,
+            "end_line": 456,
+            "raio": {
+              "classificacao": "Folha",
+              "diretos": 0,
+              "transitivos": 0,
+              "amostra_montante": []
+            }
+          }
+        ]
+      },
+      {
+        "arquivo": "01_core/src/entities/grafo.rs",
+        "faixas": [
+          {
+            "inicio": 218,
+            "fim": 235
+          },
+          {
+            "inicio": 267,
+            "fim": 271
+          },
+          {
+            "inicio": 347,
+            "fim": 411
+          },
+          {
+            "inicio": 512,
+            "fim": 512
+          }
+        ],
+        "nos_tocados": [
+          {
+            "id": 23,
+            "path": "lente_core::entities::grafo",
+            "kind": "Mod",
+            "cadeia": [
+              "lente_core",
+              "lente_core::entities",
+              "lente_core::entities::grafo"
+            ],
+            "file_relativo": "01_core/src/entities/grafo.rs",
+            "start_line": 1,
+            "end_line": 588,
+            "raio": {
+              "classificacao": "Folha",
+              "diretos": 0,
+              "transitivos": 0,
+              "amostra_montante": []
+            }
+          },
+          {
+            "id": 30,
+            "path": "lente_core::entities::grafo::Posicao",
+            "kind": "Struct",
+            "cadeia": [
+              "lente_core",
+              "lente_core::entities",
+              "lente_core::entities::grafo",
+              "lente_core::entities::grafo::Posicao"
+            ],
+            "file_relativo": "01_core/src/entities/grafo.rs",
+            "start_line": 218,
+            "end_line": 234,
+            "raio": {
+              "classificacao": "Intermediário",
+              "diretos": 4,
+              "transitivos": 15,
+              "amostra_montante": [
+                "lente_core::domain::raio",
+                "lente_core::domain::raio::Indices::construir",
+                "lente_core::domain::raio::calcular_raio",
+                "lente_core::entities::grafo::Grafo",
+                "lente_core::entities::grafo::Grafo::clone",
+                "lente_core::entities::grafo::Grafo::eq",
+                "lente_core::entities::grafo::Grafo::fmt",
+                "lente_core::entities::grafo::Grafo::new",
+                "lente_core::entities::grafo::No",
+                "lente_core::entities::grafo::No::clone"
+              ]
+            }
+          },
+          {
+            "id": 31,
+            "path": "lente_core::entities::grafo::No",
+            "kind": "Struct",
+            "cadeia": [
+              "lente_core",
+              "lente_core::entities",
+              "lente_core::entities::grafo",
+              "lente_core::entities::grafo::No"
+            ],
+            "file_relativo": "01_core/src/entities/grafo.rs",
+            "start_line": 236,
+            "end_line": 272,
+            "raio": {
+              "classificacao": "Intermediário",
+              "diretos": 4,
+              "transitivos": 11,
+              "amostra_montante": [
+                "lente_core::domain::raio",
+                "lente_core::domain::raio::Indices::construir",
+                "lente_core::domain::raio::calcular_raio",
+                "lente_core::entities::grafo::Grafo",
+                "lente_core::entities::grafo::Grafo::clone",
+                "lente_core::entities::grafo::Grafo::eq",
+                "lente_core::entities::grafo::Grafo::fmt",
+                "lente_core::entities::grafo::Grafo::new",
+                "lente_core::entities::grafo::No::clone",
+                "lente_core::entities::grafo::No::eq"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "arquivo": "03_infra/src/dto.rs",
+        "faixas": [
+          {
+            "inicio": 46,
+            "fim": 59
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "03_infra/src/traducao.rs",
+        "faixas": [
+          {
+            "inicio": 18,
+            "fim": 18
+          },
+          {
+            "inicio": 52,
+            "fim": 59
+          },
+          {
+            "inicio": 76,
+            "fim": 76
+          },
+          {
+            "inicio": 152,
+            "fim": 152
+          },
+          {
+            "inicio": 291,
+            "fim": 425
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "05_investiga/src/fontes.rs",
+        "faixas": [
+          {
+            "inicio": 419,
+            "fim": 419
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "05_investiga/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 136,
+            "fim": 136
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "06_resolve/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 227,
+            "fim": 227
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "07_filtro/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 134,
+            "fim": 134
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "08_ranking/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 100,
+            "fim": 100
+          }
+        ],
+        "nos_tocados": []
+      },
+      {
+        "arquivo": "09_estrutura/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 484,
+            "fim": 484
+          }
+        ],
+        "nos_tocados": []
+      }
+    ]
+  },
+  "comparacao": null,
+  "nota_honestidade": "Impacto ESTRUTURAL (quem depende via `Uses`), não comportamental — não diz o que quebra em runtime; diz quem está no raio."
+}

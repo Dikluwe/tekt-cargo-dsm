@@ -1,0 +1,969 @@
+{
+  "raiz_repo": "/home/dikluwe/Documentos/Antigravity/tekt-cargo-dsm",
+  "crates_workspace": [
+    "lente_core",
+    "lente_catalogo",
+    "lente_cli",
+    "lente_wiring",
+    "lente_estrutura",
+    "lente_filtro",
+    "lente_infra",
+    "lente_investiga",
+    "lente_ranking",
+    "lente_resolve"
+  ],
+  "crates_tocados": [
+    "lente_core",
+    "lente_estrutura",
+    "lente_filtro",
+    "lente_infra",
+    "lente_investiga",
+    "lente_ranking",
+    "lente_resolve"
+  ],
+  "extracoes": {
+    "lente_catalogo": {
+      "nodes": 9,
+      "com_position": 9,
+      "edges": 11,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.01
+    },
+    "lente_cli": {
+      "nodes": 79,
+      "com_position": 79,
+      "edges": 200,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.51
+    },
+    "lente_core": {
+      "nodes": 119,
+      "com_position": 119,
+      "edges": 310,
+      "colisoes": 4,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.04
+    },
+    "lente_estrutura": {
+      "nodes": 29,
+      "com_position": 29,
+      "edges": 56,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 2.94
+    },
+    "lente_filtro": {
+      "nodes": 9,
+      "com_position": 9,
+      "edges": 11,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.42
+    },
+    "lente_infra": {
+      "nodes": 88,
+      "com_position": 88,
+      "edges": 261,
+      "colisoes": 3,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.42
+    },
+    "lente_investiga": {
+      "nodes": 55,
+      "com_position": 55,
+      "edges": 133,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 2.95
+    },
+    "lente_ranking": {
+      "nodes": 15,
+      "com_position": 15,
+      "edges": 21,
+      "colisoes": 0,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 2.93
+    },
+    "lente_resolve": {
+      "nodes": 24,
+      "com_position": 24,
+      "edges": 39,
+      "colisoes": 1,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 2.93
+    },
+    "lente_wiring": {
+      "nodes": 68,
+      "com_position": 68,
+      "edges": 154,
+      "colisoes": 2,
+      "nos_leves_referencias": 0,
+      "tempo_seg": 3.54
+    }
+  },
+  "uniao": {
+    "nodes_total": 351,
+    "edges_total": 1148,
+    "arestas_soltas": 0,
+    "tempo_seg": 0.0,
+    "crates_unidos": [
+      "lente_catalogo",
+      "lente_cli",
+      "lente_core",
+      "lente_estrutura",
+      "lente_filtro",
+      "lente_infra",
+      "lente_investiga",
+      "lente_ranking",
+      "lente_resolve",
+      "lente_wiring"
+    ],
+    "nos_fantasma": []
+  },
+  "cache": {
+    "diretorio": "/home/dikluwe/Documentos/Antigravity/tekt-cargo-dsm/lab/proto-impacto-diff/cache",
+    "extracoes_realizadas": [
+      "lente_core",
+      "lente_catalogo",
+      "lente_cli",
+      "lente_wiring",
+      "lente_estrutura",
+      "lente_filtro",
+      "lente_infra",
+      "lente_investiga",
+      "lente_ranking",
+      "lente_resolve"
+    ],
+    "extracoes_reusadas": [],
+    "tempo_extracao_fork_seg": 31.68,
+    "tempo_cache_io_seg": 0.0,
+    "cenario": "cold"
+  },
+  "cronometria": {
+    "total_seg": 31.76,
+    "metadata_seg": 0.058,
+    "extracoes_fork_seg": 31.68,
+    "cache_reuso_seg": 0.0,
+    "desserializar_unir_seg": 0.003,
+    "mapeamento_raio_seg": 0.006
+  },
+  "stdin": null,
+  "git": {
+    "fonte": "git",
+    "arquivos_tocados": [
+      {
+        "caminho": "01_core/src/domain/raio.rs",
+        "faixas": [
+          {
+            "inicio": 260,
+            "fim": 260
+          }
+        ]
+      },
+      {
+        "caminho": "01_core/src/entities/grafo.rs",
+        "faixas": [
+          {
+            "inicio": 218,
+            "fim": 235
+          },
+          {
+            "inicio": 267,
+            "fim": 271
+          },
+          {
+            "inicio": 347,
+            "fim": 411
+          },
+          {
+            "inicio": 512,
+            "fim": 512
+          }
+        ]
+      },
+      {
+        "caminho": "03_infra/src/dto.rs",
+        "faixas": [
+          {
+            "inicio": 46,
+            "fim": 59
+          }
+        ]
+      },
+      {
+        "caminho": "03_infra/src/traducao.rs",
+        "faixas": [
+          {
+            "inicio": 18,
+            "fim": 18
+          },
+          {
+            "inicio": 52,
+            "fim": 59
+          },
+          {
+            "inicio": 76,
+            "fim": 76
+          },
+          {
+            "inicio": 152,
+            "fim": 152
+          },
+          {
+            "inicio": 291,
+            "fim": 425
+          }
+        ]
+      },
+      {
+        "caminho": "05_investiga/src/fontes.rs",
+        "faixas": [
+          {
+            "inicio": 419,
+            "fim": 419
+          }
+        ]
+      },
+      {
+        "caminho": "05_investiga/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 136,
+            "fim": 136
+          }
+        ]
+      },
+      {
+        "caminho": "06_resolve/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 227,
+            "fim": 227
+          }
+        ]
+      },
+      {
+        "caminho": "07_filtro/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 134,
+            "fim": 134
+          }
+        ]
+      },
+      {
+        "caminho": "08_ranking/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 100,
+            "fim": 100
+          }
+        ]
+      },
+      {
+        "caminho": "09_estrutura/src/lib.rs",
+        "faixas": [
+          {
+            "inicio": 484,
+            "fim": 484
+          }
+        ]
+      }
+    ],
+    "impacto_por_crate": [
+      {
+        "crate_nome": "lente_core",
+        "arquivos": [
+          {
+            "arquivo": "01_core/src/domain/raio.rs",
+            "faixas": [
+              {
+                "inicio": 260,
+                "fim": 260
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 2,
+                "path": "lente_core::domain::raio",
+                "kind": "Mod",
+                "cadeia": [
+                  "lente_core",
+                  "lente_core::domain",
+                  "lente_core::domain::raio"
+                ],
+                "file_relativo": "01_core/src/domain/raio.rs",
+                "start_line": 1,
+                "end_line": 456,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          },
+          {
+            "arquivo": "01_core/src/entities/grafo.rs",
+            "faixas": [
+              {
+                "inicio": 218,
+                "fim": 235
+              },
+              {
+                "inicio": 267,
+                "fim": 271
+              },
+              {
+                "inicio": 347,
+                "fim": 411
+              },
+              {
+                "inicio": 512,
+                "fim": 512
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 23,
+                "path": "lente_core::entities::grafo",
+                "kind": "Mod",
+                "cadeia": [
+                  "lente_core",
+                  "lente_core::entities",
+                  "lente_core::entities::grafo"
+                ],
+                "file_relativo": "01_core/src/entities/grafo.rs",
+                "start_line": 1,
+                "end_line": 588,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 30,
+                "path": "lente_core::entities::grafo::Posicao",
+                "kind": "Struct",
+                "cadeia": [
+                  "lente_core",
+                  "lente_core::entities",
+                  "lente_core::entities::grafo",
+                  "lente_core::entities::grafo::Posicao"
+                ],
+                "file_relativo": "01_core/src/entities/grafo.rs",
+                "start_line": 218,
+                "end_line": 234,
+                "raio_local": {
+                  "classificacao": "Intermediário",
+                  "diretos": 4,
+                  "transitivos": 15,
+                  "amostra_montante": [
+                    "lente_core::domain::raio",
+                    "lente_core::domain::raio::Indices::construir",
+                    "lente_core::domain::raio::calcular_raio",
+                    "lente_core::entities::grafo::Grafo",
+                    "lente_core::entities::grafo::Grafo::clone",
+                    "lente_core::entities::grafo::Grafo::eq",
+                    "lente_core::entities::grafo::Grafo::fmt",
+                    "lente_core::entities::grafo::Grafo::new",
+                    "lente_core::entities::grafo::No",
+                    "lente_core::entities::grafo::No::clone"
+                  ]
+                },
+                "raio_workspace": {
+                  "classificacao": "Intermediário",
+                  "diretos": 5,
+                  "transitivos": 48,
+                  "amostra_montante": [
+                    "lente_core::domain::raio",
+                    "lente_core::domain::raio::Indices::construir",
+                    "lente_core::domain::raio::calcular_raio",
+                    "lente_core::entities::grafo::Grafo",
+                    "lente_core::entities::grafo::Grafo::clone",
+                    "lente_core::entities::grafo::Grafo::eq",
+                    "lente_core::entities::grafo::Grafo::fmt",
+                    "lente_core::entities::grafo::Grafo::new",
+                    "lente_core::entities::grafo::No",
+                    "lente_core::entities::grafo::No::clone"
+                  ]
+                },
+                "delta_cross_crate": 33
+              },
+              {
+                "id": 31,
+                "path": "lente_core::entities::grafo::No",
+                "kind": "Struct",
+                "cadeia": [
+                  "lente_core",
+                  "lente_core::entities",
+                  "lente_core::entities::grafo",
+                  "lente_core::entities::grafo::No"
+                ],
+                "file_relativo": "01_core/src/entities/grafo.rs",
+                "start_line": 236,
+                "end_line": 272,
+                "raio_local": {
+                  "classificacao": "Intermediário",
+                  "diretos": 4,
+                  "transitivos": 11,
+                  "amostra_montante": [
+                    "lente_core::domain::raio",
+                    "lente_core::domain::raio::Indices::construir",
+                    "lente_core::domain::raio::calcular_raio",
+                    "lente_core::entities::grafo::Grafo",
+                    "lente_core::entities::grafo::Grafo::clone",
+                    "lente_core::entities::grafo::Grafo::eq",
+                    "lente_core::entities::grafo::Grafo::fmt",
+                    "lente_core::entities::grafo::Grafo::new",
+                    "lente_core::entities::grafo::No::clone",
+                    "lente_core::entities::grafo::No::eq"
+                  ]
+                },
+                "raio_workspace": {
+                  "classificacao": "Intermediário",
+                  "diretos": 9,
+                  "transitivos": 44,
+                  "amostra_montante": [
+                    "lente_core::domain::raio",
+                    "lente_core::domain::raio::Indices::construir",
+                    "lente_core::domain::raio::calcular_raio",
+                    "lente_core::entities::grafo::Grafo",
+                    "lente_core::entities::grafo::Grafo::clone",
+                    "lente_core::entities::grafo::Grafo::eq",
+                    "lente_core::entities::grafo::Grafo::fmt",
+                    "lente_core::entities::grafo::Grafo::new",
+                    "lente_core::entities::grafo::No::clone",
+                    "lente_core::entities::grafo::No::eq"
+                  ]
+                },
+                "delta_cross_crate": 33
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_estrutura",
+        "arquivos": [
+          {
+            "arquivo": "09_estrutura/src/lib.rs",
+            "faixas": [
+              {
+                "inicio": 484,
+                "fim": 484
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 0,
+                "path": "lente_estrutura",
+                "kind": "Crate",
+                "cadeia": [
+                  "lente_estrutura"
+                ],
+                "file_relativo": "09_estrutura/src/lib.rs",
+                "start_line": 1,
+                "end_line": 935,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_filtro",
+        "arquivos": [
+          {
+            "arquivo": "07_filtro/src/lib.rs",
+            "faixas": [
+              {
+                "inicio": 134,
+                "fim": 134
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 0,
+                "path": "lente_filtro",
+                "kind": "Crate",
+                "cadeia": [
+                  "lente_filtro"
+                ],
+                "file_relativo": "07_filtro/src/lib.rs",
+                "start_line": 1,
+                "end_line": 449,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_infra",
+        "arquivos": [
+          {
+            "arquivo": "03_infra/src/dto.rs",
+            "faixas": [
+              {
+                "inicio": 46,
+                "fim": 59
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 1,
+                "path": "lente_infra::dto",
+                "kind": "Mod",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::dto"
+                ],
+                "file_relativo": "03_infra/src/dto.rs",
+                "start_line": 1,
+                "end_line": 75,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 6,
+                "path": "lente_infra::dto::NoDTO",
+                "kind": "Struct",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::dto",
+                  "lente_infra::dto::NoDTO"
+                ],
+                "file_relativo": "03_infra/src/dto.rs",
+                "start_line": 17,
+                "end_line": 51,
+                "raio_local": {
+                  "classificacao": "Intermediário",
+                  "diretos": 3,
+                  "transitivos": 7,
+                  "amostra_montante": [
+                    "lente_infra::dto::GrafoDTO",
+                    "lente_infra::dto::GrafoDTO::deserialize",
+                    "lente_infra::dto::GrafoDTO::fmt",
+                    "lente_infra::dto::NoDTO::deserialize",
+                    "lente_infra::dto::NoDTO::fmt",
+                    "lente_infra::traducao",
+                    "lente_infra::traducao::traduzir"
+                  ]
+                },
+                "raio_workspace": {
+                  "classificacao": "Intermediário",
+                  "diretos": 3,
+                  "transitivos": 7,
+                  "amostra_montante": [
+                    "lente_infra::dto::GrafoDTO",
+                    "lente_infra::dto::GrafoDTO::deserialize",
+                    "lente_infra::dto::GrafoDTO::fmt",
+                    "lente_infra::dto::NoDTO::deserialize",
+                    "lente_infra::dto::NoDTO::fmt",
+                    "lente_infra::traducao",
+                    "lente_infra::traducao::traduzir"
+                  ]
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 69,
+                "path": "lente_infra::dto::NoDTO::deserialize",
+                "kind": "Fn",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::dto",
+                  "lente_infra::dto::NoDTO",
+                  "lente_infra::dto::NoDTO::deserialize"
+                ],
+                "file_relativo": "03_infra/src/dto.rs",
+                "start_line": 18,
+                "end_line": 50,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 10,
+                "path": "lente_infra::dto::PositionDTO",
+                "kind": "Struct",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::dto",
+                  "lente_infra::dto::PositionDTO"
+                ],
+                "file_relativo": "03_infra/src/dto.rs",
+                "start_line": 53,
+                "end_line": 60,
+                "raio_local": {
+                  "classificacao": "Intermediário",
+                  "diretos": 3,
+                  "transitivos": 10,
+                  "amostra_montante": [
+                    "lente_infra::dto::GrafoDTO",
+                    "lente_infra::dto::GrafoDTO::deserialize",
+                    "lente_infra::dto::GrafoDTO::fmt",
+                    "lente_infra::dto::NoDTO",
+                    "lente_infra::dto::NoDTO::deserialize",
+                    "lente_infra::dto::NoDTO::fmt",
+                    "lente_infra::dto::PositionDTO::deserialize",
+                    "lente_infra::dto::PositionDTO::fmt",
+                    "lente_infra::traducao",
+                    "lente_infra::traducao::traduzir"
+                  ]
+                },
+                "raio_workspace": {
+                  "classificacao": "Intermediário",
+                  "diretos": 3,
+                  "transitivos": 10,
+                  "amostra_montante": [
+                    "lente_infra::dto::GrafoDTO",
+                    "lente_infra::dto::GrafoDTO::deserialize",
+                    "lente_infra::dto::GrafoDTO::fmt",
+                    "lente_infra::dto::NoDTO",
+                    "lente_infra::dto::NoDTO::deserialize",
+                    "lente_infra::dto::NoDTO::fmt",
+                    "lente_infra::dto::PositionDTO::deserialize",
+                    "lente_infra::dto::PositionDTO::fmt",
+                    "lente_infra::traducao",
+                    "lente_infra::traducao::traduzir"
+                  ]
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 70,
+                "path": "lente_infra::dto::PositionDTO::deserialize",
+                "kind": "Fn",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::dto",
+                  "lente_infra::dto::PositionDTO",
+                  "lente_infra::dto::PositionDTO::deserialize"
+                ],
+                "file_relativo": "03_infra/src/dto.rs",
+                "start_line": 56,
+                "end_line": 59,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          },
+          {
+            "arquivo": "03_infra/src/traducao.rs",
+            "faixas": [
+              {
+                "inicio": 18,
+                "fim": 18
+              },
+              {
+                "inicio": 52,
+                "fim": 59
+              },
+              {
+                "inicio": 76,
+                "fim": 76
+              },
+              {
+                "inicio": 152,
+                "fim": 152
+              },
+              {
+                "inicio": 291,
+                "fim": 425
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 35,
+                "path": "lente_infra::traducao",
+                "kind": "Mod",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::traducao"
+                ],
+                "file_relativo": "03_infra/src/traducao.rs",
+                "start_line": 1,
+                "end_line": 606,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              },
+              {
+                "id": 36,
+                "path": "lente_infra::traducao::traduzir",
+                "kind": "Fn",
+                "cadeia": [
+                  "lente_infra",
+                  "lente_infra::traducao",
+                  "lente_infra::traducao::traduzir"
+                ],
+                "file_relativo": "03_infra/src/traducao.rs",
+                "start_line": 24,
+                "end_line": 130,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_investiga",
+        "arquivos": [
+          {
+            "arquivo": "05_investiga/src/fontes.rs",
+            "faixas": [
+              {
+                "inicio": 419,
+                "fim": 419
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 1,
+                "path": "lente_investiga::fontes",
+                "kind": "Mod",
+                "cadeia": [
+                  "lente_investiga",
+                  "lente_investiga::fontes"
+                ],
+                "file_relativo": "05_investiga/src/fontes.rs",
+                "start_line": 1,
+                "end_line": 445,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          },
+          {
+            "arquivo": "05_investiga/src/lib.rs",
+            "faixas": [
+              {
+                "inicio": 136,
+                "fim": 136
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 0,
+                "path": "lente_investiga",
+                "kind": "Crate",
+                "cadeia": [
+                  "lente_investiga"
+                ],
+                "file_relativo": "05_investiga/src/lib.rs",
+                "start_line": 1,
+                "end_line": 278,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_ranking",
+        "arquivos": [
+          {
+            "arquivo": "08_ranking/src/lib.rs",
+            "faixas": [
+              {
+                "inicio": 100,
+                "fim": 100
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 0,
+                "path": "lente_ranking",
+                "kind": "Crate",
+                "cadeia": [
+                  "lente_ranking"
+                ],
+                "file_relativo": "08_ranking/src/lib.rs",
+                "start_line": 1,
+                "end_line": 216,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "crate_nome": "lente_resolve",
+        "arquivos": [
+          {
+            "arquivo": "06_resolve/src/lib.rs",
+            "faixas": [
+              {
+                "inicio": 227,
+                "fim": 227
+              }
+            ],
+            "nos_tocados": [
+              {
+                "id": 0,
+                "path": "lente_resolve",
+                "kind": "Crate",
+                "cadeia": [
+                  "lente_resolve"
+                ],
+                "file_relativo": "06_resolve/src/lib.rs",
+                "start_line": 1,
+                "end_line": 552,
+                "raio_local": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "raio_workspace": {
+                  "classificacao": "Folha",
+                  "diretos": 0,
+                  "transitivos": 0,
+                  "amostra_montante": []
+                },
+                "delta_cross_crate": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "arquivos_sem_crate": []
+  },
+  "comparacao": null,
+  "nota_honestidade": "Impacto ESTRUTURAL (quem depende via `Uses`), não comportamental. O 'raio workspace' atravessa crates (união por path); o 'raio local' fica dentro do crate dono do arquivo. Cache invalida por SHA-256 dos fontes do crate (pega edições não-comitadas)."
+}
