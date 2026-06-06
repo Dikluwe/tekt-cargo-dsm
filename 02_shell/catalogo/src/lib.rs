@@ -224,6 +224,37 @@ pub const ESTRUTURA_ORDEM_TITULO: &str = "Ordem da DSM (topológica + blocos):";
 pub const ESTRUTURA_ORDEM_LINHA_LIVRE: &str = "  ";
 pub const ESTRUTURA_ORDEM_LINHA_BLOCO: &str = "  ◆";
 
+// =============================================================================
+// DIFF — prompt 0047 (modo --diff: o que o diff toca, view-agnóstico → JSON)
+// =============================================================================
+
+pub const HELP_DIFF: &str =
+    "Mapeia o diff do repositório (git) aos nós que ele toca e emite o impacto \
+     em JSON. Opera na raiz do repo (ver --repo). Mutuamente exclusivo com os \
+     outros modos.";
+pub const HELP_REPO: &str =
+    "Raiz do repositório a analisar no modo --diff (default: diretório atual)";
+
+pub const ERRO_DIFF: Template =
+    Template("Falha ao analisar o diff do repositório: {detalhe}");
+
+/// Chaves do JSON do modo `--diff` (view-agnóstico). Esquema:
+/// `{ tocados: [{path, id, classificacao, montante, jusante}],
+///    combinado: { montante: [{path, profundidade}], jusante: [...] },
+///    ligados: [path], soltos: [path], nao_fonte: [path],
+///    fantasmas: [{path, referenciado_por: [crate]}] }`
+pub const JSON_TOCADOS: &str = "tocados";
+pub const JSON_ID: &str = "id";
+pub const JSON_MONTANTE: &str = "montante";
+pub const JSON_JUSANTE: &str = "jusante";
+pub const JSON_COMBINADO: &str = "combinado";
+pub const JSON_PROFUNDIDADE: &str = "profundidade";
+pub const JSON_LIGADOS: &str = "ligados";
+pub const JSON_SOLTOS: &str = "soltos";
+pub const JSON_NAO_FONTE: &str = "nao_fonte";
+pub const JSON_FANTASMAS: &str = "fantasmas";
+pub const JSON_REFERENCIADO_POR: &str = "referenciado_por";
+
 #[cfg(test)]
 mod tests {
     use super::*;

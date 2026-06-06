@@ -10,7 +10,8 @@
 
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
-use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses};
+use lente_core::entities::grafo::Path as PathGrafo;
+use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses, ResultadoDiff};
 
 /// Mapeia `Escopo` para o texto estável publicado pela CLI (catálogo).
 fn escopo_texto(e: Escopo) -> &'static str {
@@ -412,6 +413,127 @@ fn formatar_estrutura_texto(
     s
 }
 
+// =============================================================================
+// Modo diff — prompt 0047 (JSON view-agnóstico; vistas de texto = 0048)
+// =============================================================================
+
+/// Mapeia o `ResultadoDiff` (L1) para o **JSON** view-agnóstico, à mão com
+/// `serde_json::Map` — mesmo padrão da trilha global. As chaves vêm do catálogo
+/// (ADR-0002). Só JSON neste prompt; as três vistas de texto são o 0048.
+pub fn formatar_diff(resultado: &ResultadoDiff) -> String {
+    let mut root = serde_json::Map::new();
+
+    // tocados: cada nó tocado + resumo do seu raio.
+    let tocados: Vec<serde_json::Value> = resultado
+        .tocados
+        .iter()
+        .map(|t| {
+            let mut o = serde_json::Map::new();
+            o.insert(
+                cat::JSON_PATH.to_string(),
+                serde_json::Value::String(t.tocado.path.as_str().to_string()),
+            );
+            o.insert(
+                cat::JSON_ID.to_string(),
+                serde_json::Value::Number(t.tocado.id.into()),
+            );
+            o.insert(
+                cat::JSON_CLASSIFICACAO.to_string(),
+                serde_json::Value::String(classificacao_texto(t.raio.classificacao).to_string()),
+            );
+            o.insert(
+                cat::JSON_MONTANTE.to_string(),
+                serde_json::Value::Number(t.raio.montante.len().into()),
+            );
+            o.insert(
+                cat::JSON_JUSANTE.to_string(),
+                serde_json::Value::Number(t.raio.jusante.len().into()),
+            );
+            serde_json::Value::Object(o)
+        })
+        .collect();
+    root.insert(cat::JSON_TOCADOS.to_string(), serde_json::Value::Array(tocados));
+
+    // combinado: a união (path + profundidade).
+    let mut comb = serde_json::Map::new();
+    comb.insert(
+        cat::JSON_MONTANTE.to_string(),
+        pares_path_profundidade(&resultado.combinado.montante),
+    );
+    comb.insert(
+        cat::JSON_JUSANTE.to_string(),
+        pares_path_profundidade(&resultado.combinado.jusante),
+    );
+    root.insert(cat::JSON_COMBINADO.to_string(), serde_json::Value::Object(comb));
+
+    // censo do untracked.
+    root.insert(cat::JSON_LIGADOS.to_string(), lista_de_paths(&resultado.ligados));
+    root.insert(cat::JSON_SOLTOS.to_string(), lista_de_paths(&resultado.soltos));
+    root.insert(
+        cat::JSON_NAO_FONTE.to_string(),
+        lista_de_paths(&resultado.nao_fonte),
+    );
+
+    // fantasmas (do grafo de workspace, 0045).
+    let fantasmas: Vec<serde_json::Value> = resultado
+        .fantasmas
+        .iter()
+        .map(|f| {
+            let mut o = serde_json::Map::new();
+            o.insert(
+                cat::JSON_PATH.to_string(),
+                serde_json::Value::String(f.path.as_str().to_string()),
+            );
+            o.insert(
+                cat::JSON_REFERENCIADO_POR.to_string(),
+                serde_json::Value::Array(
+                    f.referenciado_por
+                        .iter()
+                        .map(|c| serde_json::Value::String(c.clone()))
+                        .collect(),
+                ),
+            );
+            serde_json::Value::Object(o)
+        })
+        .collect();
+    root.insert(
+        cat::JSON_FANTASMAS.to_string(),
+        serde_json::Value::Array(fantasmas),
+    );
+
+    serde_json::Value::Object(root).to_string()
+}
+
+/// `[(path, profundidade)]` → array de `{path, profundidade}`.
+fn pares_path_profundidade(pares: &[(PathGrafo, usize)]) -> serde_json::Value {
+    serde_json::Value::Array(
+        pares
+            .iter()
+            .map(|(p, d)| {
+                let mut o = serde_json::Map::new();
+                o.insert(
+                    cat::JSON_PATH.to_string(),
+                    serde_json::Value::String(p.as_str().to_string()),
+                );
+                o.insert(
+                    cat::JSON_PROFUNDIDADE.to_string(),
+                    serde_json::Value::Number((*d).into()),
+                );
+                serde_json::Value::Object(o)
+            })
+            .collect(),
+    )
+}
+
+fn lista_de_paths(paths: &[std::path::PathBuf]) -> serde_json::Value {
+    serde_json::Value::Array(
+        paths
+            .iter()
+            .map(|p| serde_json::Value::String(p.to_string_lossy().into_owned()))
+            .collect(),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -800,5 +922,70 @@ mod tests {
         );
         assert!(s.contains("Ordem da DSM"));
         assert!(!s.contains("◆"));
+    }
+
+    // ---- Modo diff (prompt 0047) --------------------------------------------
+
+    #[test]
+    fn diff_json_tem_o_esquema_e_e_desserializavel() {
+        use lente_core::domain::mapeamento::NoTocado;
+        use lente_core::entities::grafo::Path;
+        use lente_wiring::{Fantasma, RaioCombinado, ResultadoDiff, TocadoComRaio};
+        use std::collections::HashMap;
+
+        let mut montante = HashMap::new();
+        montante.insert(Path::from("t::B"), 1usize);
+        let raio = Raio {
+            alvo: Path::from("t::A"),
+            classificacao: Classificacao::Base,
+            uses_entrada: 1,
+            uses_saida: 0,
+            montante,
+            jusante: HashMap::new(),
+            owns_pai: None,
+            owns_filhos: Vec::new(),
+        };
+        let resultado = ResultadoDiff {
+            tocados: vec![TocadoComRaio {
+                tocado: NoTocado {
+                    id: 1,
+                    path: Path::from("t::A"),
+                },
+                raio,
+            }],
+            combinado: RaioCombinado {
+                montante: vec![(Path::from("t::B"), 1)],
+                jusante: Vec::new(),
+            },
+            ligados: vec![std::path::PathBuf::from("/r/a/src/lig.rs")],
+            soltos: vec![std::path::PathBuf::from("/r/a/src/solto.rs")],
+            nao_fonte: vec![std::path::PathBuf::from("/r/README.md")],
+            fantasmas: vec![Fantasma {
+                path: Path::from("t::Some"),
+                referenciado_por: vec!["x".to_string()],
+            }],
+        };
+
+        let json = formatar_diff(&resultado);
+        let v: serde_json::Value =
+            serde_json::from_str(&json).expect("JSON do diff deve desserializar");
+
+        // tocados com raio
+        assert_eq!(v["tocados"][0]["path"], "t::A");
+        assert_eq!(v["tocados"][0]["id"], 1);
+        assert!(v["tocados"][0]["classificacao"].is_string());
+        assert_eq!(v["tocados"][0]["montante"], 1);
+        assert_eq!(v["tocados"][0]["jusante"], 0);
+        // combinado (path + profundidade)
+        assert_eq!(v["combinado"]["montante"][0]["path"], "t::B");
+        assert_eq!(v["combinado"]["montante"][0]["profundidade"], 1);
+        assert!(v["combinado"]["jusante"].as_array().unwrap().is_empty());
+        // censo do untracked
+        assert_eq!(v["ligados"][0], "/r/a/src/lig.rs");
+        assert_eq!(v["soltos"][0], "/r/a/src/solto.rs");
+        assert_eq!(v["nao_fonte"][0], "/r/README.md");
+        // fantasmas
+        assert_eq!(v["fantasmas"][0]["path"], "t::Some");
+        assert_eq!(v["fantasmas"][0]["referenciado_por"][0], "x");
     }
 }

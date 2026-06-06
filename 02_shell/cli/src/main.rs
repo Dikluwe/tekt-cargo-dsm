@@ -76,6 +76,12 @@ fn escolher_modo_uses(cli: &args::Cli) -> ModoUses {
 
 /// Composição testável: a partir de `Cli`, decide e produz stdout ou erro.
 fn run(cli: args::Cli) -> Result<String, SaidaErro> {
+    // Modo diff (prompt 0047): opera na raiz do repo, não usa `--grafo`/
+    // `--pacote`. Roteado antes de `construir_fonte` (não há fonte a construir).
+    if cli.diff {
+        return run_diff(&cli);
+    }
+
     let fonte = construir_fonte(&cli)?;
     let escopo = escolher_escopo(&cli);
 
@@ -146,6 +152,27 @@ fn run_ranking(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<Str
             };
             Ok(saida::formatar_ranking(&itens, escopo, &modo))
         }
+        Err(e) => Err(SaidaErro {
+            codigo: 1,
+            mensagem: erro::traduzir(&e, &contexto),
+        }),
+    }
+}
+
+/// Pipeline do modo diff (prompt 0047): roda `analisar_diff` na raiz do repo
+/// (`--repo` ou o diretório atual) e emite o **JSON** do resultado. Só JSON
+/// neste prompt — as três vistas de texto (A/B/C) são o 0048. Erros do wiring
+/// (incl. `ErroLente::Diff` do git) viram `SaidaErro` pela mesma tradução.
+fn run_diff(cli: &args::Cli) -> Result<String, SaidaErro> {
+    let raiz = cli
+        .repo
+        .clone()
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let contexto = erro::ContextoErro {
+        alvo_informado: String::new(),
+    };
+    match lente_wiring::analisar_diff(&raiz) {
+        Ok(resultado) => Ok(saida::formatar_diff(&resultado)),
         Err(e) => Err(SaidaErro {
             codigo: 1,
             mensagem: erro::traduzir(&e, &contexto),
@@ -237,6 +264,8 @@ mod tests {
             filtrar_stdlib: false,
             estrutura: false,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: false,
             verbose: false,
         }
@@ -307,6 +336,8 @@ mod tests {
             filtrar_stdlib: false,
             estrutura: false,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: false,
             verbose: false,
         };
@@ -329,6 +360,8 @@ mod tests {
             filtrar_stdlib: false,
             estrutura: false,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: false,
             verbose: false,
         };
@@ -352,6 +385,8 @@ mod tests {
             filtrar_stdlib: false,
             estrutura: false,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: true,
             verbose: false,
         };
@@ -524,6 +559,8 @@ mod tests {
             filtrar_stdlib: false,
             estrutura: true,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: true,
             verbose: false,
         };
@@ -549,6 +586,8 @@ mod tests {
             filtrar_stdlib: true,
             estrutura: false,
             so_referencia: false,
+            diff: false,
+            repo: None,
             text: true,
             verbose: false,
         };
