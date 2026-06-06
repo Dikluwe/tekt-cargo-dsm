@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>proto-impacto-diff (multi-crate) — lente</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font: 13px/1.45 ui-sans-serif, system-ui, sans-serif;
+    margin: 0;
+    background: #f4f4f0;
+    color: #222;
+  }
+  header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+  header .sub { color: #888; font-size: 12px; }
+  header label { color: #666; font-size: 12px; }
+  header select { padding: 3px 6px; font-size: 13px; }
+  .meta {
+    color: #444; font-size: 12px; margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .meta strong { color: #222; }
+  main { padding: 12px 14px; }
+
+  .nota {
+    margin: 0 0 14px 0;
+    padding: 10px 12px;
+    background: #fffbe6;
+    border: 1px solid #f0e0a4;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #654;
+    max-width: 1000px;
+  }
+  .nota strong { color: #432; }
+  .nota code { font-family: ui-monospace, monospace; font-size: 11px; }
+
+  /* crate — primeira camada */
+  .crate {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .crate > summary {
+    cursor: pointer;
+    padding: 12px 16px;
+    list-style: none;
+    background: #f3eccf;
+    border-bottom: 1px solid #e5d8a8;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .crate > summary::-webkit-details-marker { display: none; }
+  .crate > summary::before {
+    content: "▸"; color: #6a4d0d; font-size: 11px;
+  }
+  .crate[open] > summary::before { content: "▾"; }
+  .crate .nome {
+    font-family: ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #432;
+  }
+  .crate .resumo { color: #6a4d0d; font-size: 11px; }
+
+  /* arquivo — segunda camada */
+  .arquivo {
+    border-top: 1px solid #eee;
+    background: #fafaf6;
+    overflow: hidden;
+  }
+  .arquivo > summary {
+    cursor: pointer; padding: 8px 14px;
+    list-style: none;
+    display: flex; gap: 12px; align-items: baseline;
+    border-bottom: 1px solid transparent;
+  }
+  .arquivo[open] > summary {
+    border-bottom-color: #eee;
+    background: #fff;
+  }
+  .arquivo > summary::-webkit-details-marker { display: none; }
+  .arquivo > summary::before { content: "▸"; color: #999; font-size: 10px; }
+  .arquivo[open] > summary::before { content: "▾"; }
+  .arquivo .caminho {
+    font-family: ui-monospace, monospace;
+    font-size: 12px; font-weight: 600;
+    color: #222; flex: 1;
+  }
+  .arquivo .resumo { color: #888; font-size: 11px; }
+
+  .arquivo-body { padding: 6px 14px 10px 28px; background: #fff; }
+  .faixas {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: #555; margin: 4px 0 10px 0;
+  }
+  .faixas .chip {
+    background: #f3eccf; padding: 1px 6px; border-radius: 6px;
+    color: #6a4d0d;
+  }
+  .vazio { color: #aaa; font-size: 12px; padding: 4px 0; }
+
+  /* nó tocado — terceira camada */
+  .no {
+    border-top: 1px solid #f0f0f0;
+    padding: 8px 0;
+  }
+  .no:first-of-type { border-top: 0; }
+  .no > summary {
+    cursor: pointer; list-style: none;
+    display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  }
+  .no > summary::-webkit-details-marker { display: none; }
+  .no > summary::before { content: "+"; color: #888; font-weight: 700; }
+  .no[open] > summary::before { content: "−"; }
+  .no .cadeia {
+    flex: 1; min-width: 280px;
+    font-family: ui-monospace, monospace; font-size: 12px;
+    word-break: break-all;
+  }
+  .no .cadeia .ext { color: #999; }
+  .no .cadeia .item { color: #222; font-weight: 600; }
+  .no .cadeia .sep { color: #ccc; }
+  .no .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge.Base { background: #fde2c4; color: #8a4b00; }
+  .badge.Intermediário { background: #d6e4ff; color: #2a3b75; }
+  .badge.Folha { background: #d8eedd; color: #2b6b3e; }
+  .badge.Isolado { background: #e5e5e5; color: #555; }
+  .raio-num { color: #555; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .raio-num strong { color: #222; }
+  .delta-pos { color: #b54708; font-weight: 700; }
+  .delta-zero { color: #999; }
+  .pos { color: #aaa; font-family: ui-monospace, monospace; font-size: 11px; }
+
+  .no-body { padding: 8px 0 0 22px; }
+  .no-body .titulo {
+    color: #666; font-size: 11px; margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  ul.montante {
+    list-style: none; margin: 0; padding: 0;
+    font-family: ui-monospace, monospace; font-size: 11px;
+  }
+  ul.montante li {
+    padding: 1px 0; color: #444; word-break: break-all;
+  }
+
+  .grid-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 8px 0 14px 0;
+    max-width: 1000px;
+  }
+  .card {
+    background: #fff; border: 1px solid #ddd; border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .card .label {
+    color: #888; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .card .val {
+    font-size: 18px; font-weight: 700; color: #222;
+    font-variant-numeric: tabular-nums;
+  }
+  .card .sub { color: #666; font-size: 11px; }
+
+  .erro { padding: 18px; color: #a55; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>proto-impacto-diff — multi-crate</h1>
+  <div class="sub">protótipo de Arena (laudos 0039/0040/0041)</div>
+  <label for="dump">Dump:</label>
+  <select id="dump">
+    <option value="colisoes-quente-resolver.json">colisões (resolver — laudo 0041)</option>
+    <option value="colisoes-quente-sem-resolver.json">colisões (sem-resolução — baseline)</option>
+    <option value="colisoes-antes-depois.json">antes/depois (ErroRaio::fmt)</option>
+    <option value="colisoes-antes-depois-from.json">antes/depois (ErroLente::from)</option>
+    <option value="colisoes-cold.json">colisões — cold (cache vazio + resolução)</option>
+    <option value="colisoes-renomeacao.json">colisões + renomeação (fantasma + resolução)</option>
+    <option value="cache-quente.json">cache quente (laudo 0040)</option>
+    <option value="cache-morno1.json">morno-1 (1 crate invalidado)</option>
+    <option value="cache-morno3.json">morno-3 (3 crates invalidados)</option>
+    <option value="cache-cold.json">cold (cache vazio)</option>
+    <option value="cache-renomeacao.json">renomeação (cache stale)</option>
+    <option value="impacto-multi-ambos.json">multi-crate (laudo 0039)</option>
+    <option value="impacto-ambos.json">single-crate (laudo 0038)</option>
+  </select>
+  <label for="fonte">Fonte:</label>
+  <select id="fonte">
+    <option value="git">git</option>
+    <option value="stdin">stdin</option>
+  </select>
+  <span class="meta" id="meta">…</span>
+</header>
+
+<main>
+  <div class="nota">
+    <strong>Honestidade.</strong> Impacto <strong>estrutural</strong>
+    (quem depende via arestas <code>Uses</code> no grafo), <strong>não
+    comportamental</strong>. Cada nó mostra dois raios:
+    <code>local</code> (no grafo do crate dono) e <code>workspace</code>
+    (na união de todos os crates, casada por <em>path</em> — abordagem B
+    do prompt 0039). O <span class="delta-pos">Δ</span> em
+    <strong style="color:#b54708">laranja</strong> é o que cruza
+    a fronteira do crate.
+  </div>
+
+  <div class="grid-resumo" id="resumo"></div>
+  <div id="conteudo"></div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let estado = { dados: null, dump: null, fonte: "git" };
+
+async function carregar(dump) {
+  try {
+    const r = await fetch("dados/" + dump);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    estado = { dados: await r.json(), dump, fonte: estado.fonte };
+    if (!estado.dados[estado.fonte]) {
+      estado.fonte = estado.dados.git ? "git" : "stdin";
+      $("#fonte").value = estado.fonte;
+    }
+    renderTudo();
+  } catch (e) {
+    $("#conteudo").innerHTML = `<div class="erro">falha: ${e}<br>
+      Servir via HTTP: <code>cd lab/proto-impacto-diff && python3 -m http.server 8080</code></div>`;
+    $("#resumo").innerHTML = "";
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderTudo() {
+  const d = estado.dados;
+  const isMulti = d.crates_workspace !== undefined;
+  renderMeta(d, isMulti);
+  if (isMulti) renderResumo(d);
+  else $("#resumo").innerHTML = "";
+  renderConteudo(d, isMulti);
+}
+
+function renderMeta(d, isMulti) {
+  if (isMulti) {
+    const comp = d.comparacao
+      ? (d.comparacao.iguais ? '<span style="color:#2b6b3e">stdin=git</span>'
+         : '<span style="color:#a55">stdin≠git</span>')
+      : "—";
+    $("#meta").innerHTML =
+      `workspace=<strong>${d.crates_workspace.length}</strong> crates · ` +
+      `tocados=<strong>${d.crates_tocados.length}</strong> · ` +
+      `união=<strong>${d.uniao.nodes_total}</strong> nós (${d.uniao.arestas_soltas} soltas) · ` +
+      `comparação: ${comp}`;
+  } else {
+    // formato single-crate (laudo 0038)
+    const comp = d.comparacao
+      ? (d.comparacao.iguais ? '<span style="color:#2b6b3e">stdin=git</span>'
+         : '<span style="color:#a55">stdin≠git</span>')
+      : "—";
+    $("#meta").innerHTML =
+      `crate=<strong>${d.crate_alvo}</strong> · ` +
+      `${d.nodes_total} nós · comparação: ${comp}`;
+  }
+}
+
+function renderResumo(d) {
+  const linhas = [];
+  linhas.push(card("crates workspace", d.crates_workspace.length, ""));
+  linhas.push(card("crates tocados", d.crates_tocados.length, d.crates_tocados.join(", ")));
+  linhas.push(card("união (nós)", d.uniao.nodes_total, `${d.uniao.edges_total} edges · ${d.uniao.arestas_soltas} soltas`));
+  if (d.cache && d.cronometria) {
+    const c = d.cronometria;
+    const cen = d.cache.cenario;
+    linhas.push(card(`cenário cache (${cen})`, c.total_seg.toFixed(2) + "s",
+      `fork ${c.extracoes_fork_seg.toFixed(2)}s · meta ${(c.metadata_seg*1000).toFixed(0)}ms · desser+união ${(c.desserializar_unir_seg*1000).toFixed(0)}ms`));
+    linhas.push(card("extrações",
+      `${d.cache.extracoes_realizadas.length}/${d.cache.extracoes_realizadas.length + d.cache.extracoes_reusadas.length}`,
+      d.cache.extracoes_realizadas.length
+        ? `re-extraídos: ${d.cache.extracoes_realizadas.join(", ")}`
+        : "todos reusados do cache"));
+  } else {
+    const tempoTotal = Object.values(d.extracoes).reduce((a, e) => a + e.tempo_seg, 0);
+    linhas.push(card("tempo extração", tempoTotal.toFixed(1) + "s",
+      `~3.3s/crate × ${Object.keys(d.extracoes).length}`));
+  }
+  if (d.uniao.nos_fantasma && d.uniao.nos_fantasma.length) {
+    const f0 = d.uniao.nos_fantasma[0];
+    linhas.push(card("⚠ fantasmas", d.uniao.nos_fantasma.length,
+      `ex.: ${f0.path} (esperado em ${f0.crate_esperado})`));
+  }
+  $("#resumo").innerHTML = linhas.join("");
+}
+
+function card(label, val, sub) {
+  return `<div class="card">
+    <div class="label">${esc(label)}</div>
+    <div class="val">${esc(val)}</div>
+    <div class="sub">${esc(sub)}</div>
+  </div>`;
+}
+
+function renderConteudo(d, isMulti) {
+  if (!isMulti) {
+    // fallback: dump do 0038. Exibir formato simples.
+    const modo = d[estado.fonte];
+    if (!modo || !modo.impacto.length) {
+      $("#conteudo").innerHTML = `<div class="vazio">sem dado</div>`;
+      return;
+    }
+    let html = "";
+    for (const arq of modo.impacto) {
+      html += `<details class="arquivo" ${arq.nos_tocados.length ? "open" : ""}>
+        <summary><span class="caminho">${esc(arq.arquivo)}</span>
+          <span class="resumo">${arq.nos_tocados.length} nós</span></summary>
+        <div class="arquivo-body">${arq.nos_tocados.map(renderNoSingle).join("")}</div>
+      </details>`;
+    }
+    $("#conteudo").innerHTML = html;
+    return;
+  }
+  // multi-crate
+  const modo = d[estado.fonte];
+  if (!modo || !modo.impacto_por_crate.length) {
+    $("#conteudo").innerHTML = `<div class="vazio">sem dado</div>`;
+    return;
+  }
+  let html = "";
+  for (const ic of modo.impacto_por_crate) {
+    const nos_total = ic.arquivos.reduce((a, b) => a + b.nos_tocados.length, 0);
+    const cruzam = ic.arquivos.reduce((a, b) =>
+      a + b.nos_tocados.filter((n) => n.delta_cross_crate > 0).length, 0);
+    const ext = d.extracoes[ic.crate_nome];
+    const ext_str = ext
+      ? `${ext.nodes} nós · ${ext.edges} edges · colisões=${ext.colisoes} · ${ext.tempo_seg.toFixed(2)}s`
+      : "";
+    let arq_html = "";
+    for (const arq of ic.arquivos) {
+      const n = arq.nos_tocados.length;
+      const faixas = arq.faixas
+        .map((f) => `<span class="chip">${f.inicio}–${f.fim}</span>`).join(" ");
+      const nos_html = n
+        ? arq.nos_tocados.map(renderNoMulti).join("")
+        : `<div class="vazio">faixas não casam nenhum nó deste arquivo</div>`;
+      arq_html += `<details class="arquivo" ${n ? "open" : ""}>
+        <summary>
+          <span class="caminho">${esc(arq.arquivo)}</span>
+          <span class="resumo">${n} nó${n === 1 ? "" : "s"}</span>
+        </summary>
+        <div class="arquivo-body">
+          <div class="faixas">linhas alteradas: ${faixas}</div>
+          ${nos_html}
+        </div>
+      </details>`;
+    }
+    html += `<details class="crate" ${nos_total ? "open" : ""}>
+      <summary>
+        <span class="nome">${esc(ic.crate_nome)}</span>
+        <span class="resumo">${nos_total} nó${nos_total === 1 ? "" : "s"} tocado${nos_total === 1 ? "" : "s"}${cruzam ? ` · ${cruzam} cruza${cruzam === 1 ? "" : "m"} crates` : ""}${ext_str ? " · " + ext_str : ""}</span>
+      </summary>
+      ${arq_html}
+    </details>`;
+  }
+  $("#conteudo").innerHTML = html;
+}
+
+function renderNoMulti(no) {
+  const cad = no.cadeia.map((p, i, arr) => {
+    const cls = i === arr.length - 1 ? "item" : "ext";
+    return `<span class="${cls}">${esc(p.split("::").slice(-1)[0])}</span>`;
+  });
+  const cadeia_html = cad.join(`<span class="sep">  ›  </span>`);
+  const delta_html = no.delta_cross_crate > 0
+    ? `<span class="delta-pos">Δ+${no.delta_cross_crate}</span>`
+    : `<span class="delta-zero">Δ${no.delta_cross_crate >= 0 ? "+" : ""}${no.delta_cross_crate}</span>`;
+  return `<details class="no">
+    <summary>
+      <span class="cadeia">${cadeia_html}</span>
+      <span class="badge ${no.raio_workspace.classificacao}">${esc(no.raio_workspace.classificacao)}</span>
+      <span class="raio-num">local <strong>${no.raio_local.transitivos}</strong> · workspace <strong>${no.raio_workspace.transitivos}</strong> ${delta_html}</span>
+      <span class="pos">L${no.start_line}–${no.end_line}</span>
+    </summary>
+    <div class="no-body">
+      <div class="titulo">path completo</div>
+      <div style="font-family:ui-monospace,monospace;font-size:11px;color:#444;">${esc(no.path)} <span style="color:#999">(${esc(no.kind)})</span></div>
+      ${renderMontante(no.raio_workspace, "montante (workspace)")}
+      ${no.raio_local.transitivos !== no.raio_workspace.transitivos
+        ? renderMontante(no.raio_local, "montante (local — só no crate)")
+        : ""}
+    </div>
+  </details>`;
+}
+
+function renderNoSingle(no) {
+  // dump do 0038 (sem multi-crate)
+  const cad = no.cadeia.map((p, i, arr) => {
+    const cls = i === arr.length - 1 ? "item" : "ext";
+    return `<span class="${cls}">${esc(p.split("::").slice(-1)[0])}</span>`;
+  });
+  return `<details class="no">
+    <summary>
+      <span class="cadeia">${cad.join(`<span class="sep">  ›  </span>`)}</span>
+      <span class="badge ${no.raio.classificacao}">${esc(no.raio.classificacao)}</span>
+      <span class="raio-num"><strong>${no.raio.transitivos}</strong> transitivos</span>
+      <span class="pos">L${no.start_line}–${no.end_line}</span>
+    </summary>
+    <div class="no-body">
+      <div class="titulo">path</div>
+      <div style="font-family:ui-monospace,monospace;font-size:11px;color:#444;">${esc(no.path)}</div>
+    </div>
+  </details>`;
+}
+
+function renderMontante(raio, titulo) {
+  const am = raio.amostra_montante || [];
+  if (raio.transitivos === 0) {
+    return `<div class="titulo" style="margin-top:8px;">${esc(titulo)}: vazio</div>`;
+  }
+  const lis = am.map((p) => `<li>${esc(p)}</li>`).join("");
+  const sufixo = raio.transitivos > am.length
+    ? `<li style="color:#aaa;">… +${raio.transitivos - am.length} mais</li>`
+    : "";
+  return `<div class="titulo" style="margin-top:8px;">${esc(titulo)} — ${raio.transitivos} item${raio.transitivos === 1 ? "" : "s"}, amostra alfabética:</div>
+    <ul class="montante">${lis}${sufixo}</ul>`;
+}
+
+$("#dump").addEventListener("change", (e) => carregar(e.target.value));
+$("#fonte").addEventListener("change", (e) => {
+  estado.fonte = e.target.value;
+  renderTudo();
+});
+carregar($("#dump").value);
+</script>
+</body>
+</html>
