@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0056-estagio2_mover_vocabulario_l1.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/consulta.md
+//! @prompt-hash a3fa1581
+//! @layer L1
+//! @updated 2026-06-07
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 //!
 //! O **vocabulário de pedido** da lente: como o usuário aponta a fonte do grafo,

@@ -26,6 +26,15 @@ build = "target"
 vcs   = ".git"
 cargo = ".cargo"
 
+# Agregadores estruturais excluídos da checagem de linhagem (ADR-0010 do linter:
+# fora da topologia de camadas). `mod.rs`/`lib.rs` que só fazem `pub mod` (sem
+# interface pública própria) não são nucleados — exclusão por path relativo
+# exato. Migração de convenção, prompt 0059 (escala arquivo-a-arquivo).
+[excluded_files]
+core_lib          = "01_core/core/src/lib.rs"
+core_domain_mod   = "01_core/core/src/domain/mod.rs"
+core_entities_mod = "01_core/core/src/entities/mod.rs"
+
 # Módulos internos dos crates L1 — usados pela resolução de `crate::`.
 [module_layers]
 entities = "L1"
