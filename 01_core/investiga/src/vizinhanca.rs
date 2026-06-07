@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0004-lente_investiga.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/vizinhanca.md
+//! @prompt-hash c44abf31
+//! @layer L1
+//! @updated 2026-06-07
 //!
 //! Estratégia 1 — vizinhança no grafo. Compara conjuntos de arestas dos dois
 //! nós do par. Critério categórico (sem thresholds mágicos):
