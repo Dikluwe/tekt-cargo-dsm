@@ -1,0 +1,24 @@
+[package]
+name = "lente_app"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[[bin]]
+name = "lente"
+path = "src/main.rs"
+
+[dependencies]
+# L4 (orquestração) + o ErroLente agregado.
+lente_wiring = { path = ".." }
+# L1 (vocabulário de consulta, Path).
+lente_core = { path = "../../01_core/core" }
+# L2 (apresentação pura — args clap + formatadores).
+lente_cli = { path = "../../02_shell/cli" }
+lente_catalogo = { path = "../../02_shell/catalogo" }
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+# Só nos testes da tradução de erro (constroem variantes de `ErroAdaptador`).
+lente_infra = { path = "../../03_infra" }
