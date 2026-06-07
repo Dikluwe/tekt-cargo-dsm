@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0019-l4-wiring.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/wiring.md
+//! @prompt-hash f66f9e0b
+//! @layer L4
+//! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
 //!          escopo do usuário por prompt 00_nucleo/prompt/0030-escopo-usuario.md
 //! Camada:  L4 — Fiação (composição pura, sem lógica de negócio).

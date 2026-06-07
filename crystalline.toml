@@ -19,12 +19,18 @@ L1  = "01_core"
 L2  = "02_shell"
 L3  = "03_infra"
 L4  = "04_wiring"
-lab = "lab"
+# `lab` NÃO é camada do lattice — é a Arena (código descartável, workspace
+# próprio; manifesto Tekt). Excluído da checagem (abaixo), não nucleado (0065).
 
 [excluded]
-build = "target"
-vcs   = ".git"
-cargo = ".cargo"
+build      = "target"
+vcs        = ".git"
+cargo      = ".cargo"
+# Arena (lab/): experimentos descartáveis, fora do lattice — não se nucleia (0065).
+arena      = "lab"
+# Crate-fixture de teste do L3 (excluído do workspace cargo): harness, não
+# unidade de arquitetura — não se nucleia (0065).
+fixture    = "crate-amostra"
 
 # Agregadores estruturais excluídos da checagem de linhagem (ADR-0010 do linter:
 # fora da topologia de camadas). `mod.rs`/`lib.rs` que só fazem `pub mod` (sem
