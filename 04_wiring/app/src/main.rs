@@ -1,14 +1,17 @@
 //! Lineage: prompt 00_nucleo/prompt/0020-l2-cli.md
-//! Camada:  L2 — Casca (CLI). Nasce sob o Tekt ADR-0002: zero literais de
-//!          apresentação fora do `lente_catalogo`.
+//!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
+//! Camada:  L4 — Fiação (app/ponto de composição). É o crate que **compõe** a
+//!          apresentação (`lente_cli`, L2) com a orquestração (`lente_wiring`,
+//!          L4) — L4 importa L1/L2/L3/L4 (para baixo, permitido).
 //!
 //! Binário `lente`. O `main` é fino — só chama `Cli::parse()` e `run()`,
 //! traduz o resultado em código de saída e canal certo (stdout/stderr).
-//! Toda a lógica de composição está em `run`.
+//! Toda a lógica de composição está em `run`. A tradução do `ErroLente` (L4)
+//! vive em `erro` aqui, não na CLI — é o que tira o L4 da apresentação (0057).
 
-mod args;
 mod erro;
-mod saida;
+
+use lente_cli::{args, saida};
 
 use std::process::ExitCode;
 

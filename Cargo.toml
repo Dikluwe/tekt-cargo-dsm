@@ -11,5 +11,6 @@ members = [
     "02_shell/cli",
     "03_infra",
     "04_wiring",
+    "04_wiring/app",
 ]
 exclude = ["03_infra/tests/fixtures/crate-amostra"]
