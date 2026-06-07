@@ -20,6 +20,7 @@ use core::fmt;
 
 use lente_core::entities::grafo::{Grafo, ValorDesconhecido};
 
+mod diff;
 mod dto;
 mod invocacao;
 mod metadata;
@@ -27,6 +28,7 @@ mod traducao;
 mod workspace;
 pub mod fork;
 
+pub use diff::{ErroDiff, ler_diff};
 pub use metadata::ErroMetadata;
 pub use workspace::{
     ErroWorkspace, MembroWorkspace, chave_cache, enumerar_membros, extrair_grafo_cacheado,
