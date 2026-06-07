@@ -1,0 +1,47 @@
+# crystalline.toml — config do crystalline-lint (tekt-linter v0.1.0) para o
+# tekt-cargo-dsm. Criado pelo prompt 0049 (verificação arquitetural).
+#
+# CRUX REGISTRADO: o `[layers]` mapeia UM diretório por camada
+# (`pub layers: HashMap<String, String>` no linter). O projeto tem SEIS crates
+# L1 — 01_core, 05_investiga, 06_resolve, 07_filtro, 08_ranking, 09_estrutura —
+# e a lista NÃO é aceita. Só `01_core` é mapeado como L1; os crates 05–09 ficam
+# fora de qualquer camada → V8 (AlienFile, fatal). É o achado ESTRUTURAL: o
+# modelo de-um-diretório-por-camada do linter vs a estrutura multi-crate-L1 do
+# projeto. Não reestruturar sem decisão (prompt 0049).
+
+[project]
+root = "."
+
+[languages]
+rust = { grammar = "tree-sitter-rust", enabled = true }
+
+# Um diretório por camada (limitação do linter — ver CRUX acima).
+[layers]
+L0  = "00_nucleo"
+L1  = "01_core"
+L2  = "02_shell"
+L3  = "03_infra"
+L4  = "04_wiring"
+lab = "lab"
+
+[excluded]
+build = "target"
+vcs   = ".git"
+cargo = ".cargo"
+
+# Módulos internos do 01_core (L1) — usados pela resolução de `crate::`.
+[module_layers]
+entities = "L1"
+domain   = "L1"
+
+# Portas públicas do L1 (subdiretórios acessíveis de fora) — V9.
+[l1_ports]
+entities = "entities"
+domain   = "domain"
+
+# L1 puro: nenhum externo autorizado (princípio do projeto — V14 confirma).
+[l1_allowed_external]
+rust       = []
+typescript = []
+python     = []
+zig        = []
