@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0025-l1-filtro-stdlib.md (revisão A)
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/filtro.md
+//! @prompt-hash 59f298bd
+//! @layer L1
+//! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0034-modo-uses-estrutura.md
 //! Spec:    00_nucleo/specs/forma-organizada.md (Limite 2 — fronteira fina)
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md (D3 preservada)

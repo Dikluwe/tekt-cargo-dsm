@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0004-lente_investiga.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/investiga.md
+//! @prompt-hash ad96c985
+//! @layer L1
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0004-resolucao-colisoes-path.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O.

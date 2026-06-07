@@ -34,6 +34,15 @@ cargo = ".cargo"
 core_lib          = "01_core/core/src/lib.rs"
 core_domain_mod   = "01_core/core/src/domain/mod.rs"
 core_entities_mod = "01_core/core/src/entities/mod.rs"
+# Prompt 0060: módulos internos sem interface pública (regra estendida do 0059 —
+# `pub(crate)`/quarentena também não se nucleia, só o que é `pub`).
+# `investiga/fontes` = E2 em quarentena (laudo 0014); `investiga/vizinhanca` =
+# helper `pub(crate)` (sem interface pública própria).
+investiga_fontes      = "01_core/investiga/src/fontes.rs"
+investiga_vizinhanca  = "01_core/investiga/src/vizinhanca.rs"
+# Arquivo de teste de integração (`tests/`): harness de verificação, não unidade
+# arquitetural — não se nucleia.
+filtro_e2e_test       = "01_core/filtro/tests/e2e_lente_core.rs"
 
 # Módulos internos dos crates L1 — usados pela resolução de `crate::`.
 [module_layers]
