@@ -1,3 +1,9 @@
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/cli-saida.md
+//! @prompt-hash fde449dd
+//! @layer L2
+//! @updated 2026-06-07
+//!
 //! Formatação do `Raio` para stdout. Quatro modos (matriz `--text` ×
 //! `--verbose`); todos os literais visíveis ao usuário vêm do
 //! `lente_catalogo` (ADR-0002).

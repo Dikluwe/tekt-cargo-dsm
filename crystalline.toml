@@ -41,6 +41,9 @@ core_entities_mod = "01_core/core/src/entities/mod.rs"
 # walk. Por isso o `investiga/vizinhanca.rs` saiu daqui (0062) — é lógica `pub(crate)`
 # pura que fica.
 investiga_fontes      = "01_core/investiga/src/fontes.rs"   # E2 em quarentena (laudo 0014)
+# Agregador só-`pub mod` da CLI (L2, 0063): a lib de apresentação só agrupa
+# `args`/`saida` (sem corpo) — V1–V14 nada têm a checar.
+cli_lib               = "02_shell/cli/src/lib.rs"
 # Arquivo de teste de integração (`tests/`): harness de verificação, não unidade
 # arquitetural — não se nucleia.
 filtro_e2e_test       = "01_core/filtro/tests/e2e_lente_core.rs"

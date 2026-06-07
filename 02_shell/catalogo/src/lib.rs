@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0020-l2-cli.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/catalogo.md
+//! @prompt-hash 28b667e5
+//! @layer L2
+//! @updated 2026-06-07
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
 //!          conteúdo de mensagens ao usuário é dado de L2; código nunca
 //!          carrega literais de apresentação.

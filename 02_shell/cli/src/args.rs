@@ -1,3 +1,9 @@
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/cli-args.md
+//! @prompt-hash c3f4d3c4
+//! @layer L2
+//! @updated 2026-06-07
+//!
 //! Argumentos da CLI. Todos os textos `help`/`about` vêm do
 //! `lente_catalogo` (ADR-0002).
 
