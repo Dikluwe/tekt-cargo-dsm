@@ -1,17 +1,30 @@
 //! Lineage: prompt 00_nucleo/prompt/0010-lente_resolve-v2.md
+//!          ampliado por prompt 00_nucleo/prompt/0042-resolve_escada_trait_ref.md
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0004-resolucao-colisoes-path.md
 //!          00_nucleo/adr/0005-validacao-pos-medicao.md
+//!          00_nucleo/adr/0006-nomeacao-trait-padrao.md (ampliado em laudo 0042)
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O.
 //!
 //! Aplicação da resolução de colisões de path. Recebe o `Veredito` que o
 //! `lente_investiga` produziu e o materializa num `Grafo` novo (operação
 //! pura — o grafo de entrada permanece intacto).
 //!
-//! Nomeação (ADR-0005 Ajuste 2):
-//! - Padrão: contador por ordem de id (`path#1`, `path#2`, ...).
-//! - Enriquecida: quando a evidência traz traits (`ImplDeTraitsDiferentes`)
-//!   e há exatamente 2 cópias, usa `Tipo::<Trait>::metodo`.
+//! Nomeação (ADR-0006, escada do prompt 0042):
+//! degrau 1 — `<trait_>` antes do último segmento;
+//! degrau 2 — se 2+ nós ficaram com o mesmo nome no degrau 1 (mesmo
+//!            `trait_`), reescrever **esses** por `<trait_ref>`
+//!            (a referência com argumentos: `From<&str>`);
+//! degrau 3 — contador `#N` por ordem de id é o **piso** que sempre
+//!            garante unicidade (id é único no grafo). Cai aqui o nó
+//!            sem `trait_`, o nó cujo `trait_ref` ainda colide no
+//!            degrau 2, e o nó com `trait_` colidindo mas `trait_ref =
+//!            None`.
+//!
+//! Razão da escada: a regra original (só `trait_`) violava em silêncio
+//! o invariante "paths únicos" para impls genéricos do mesmo trait
+//! (4× `From<T>` viravam 4× `<From>::from`). Achado pela Arena no
+//! laudo 0041; corrigido aqui (laudo 0042).
 //!
 //! A redistribuição de arestas é **determinística** graças à
 //! identidade-por-nó (`id_from`/`id_to`): cada aresta sabe a qual cópia
@@ -106,27 +119,96 @@ fn aplicar_distintos(grafo: &Grafo, colisao: &Path, ids_colidentes: &[usize]) ->
     let mut ids: Vec<usize> = ids_colidentes.to_vec();
     ids.sort_unstable();
 
-    // `trait_` de cada nó colidente — a fonte do nome (ADR-0006). Vem do
-    // próprio nó (id correto), encerrando a D4: nada de adivinhar por ordem.
+    // `trait_` e `trait_ref` de cada nó colidente — a fonte do nome
+    // (ADR-0006, escada do prompt 0042). Vêm do próprio nó (id correto),
+    // encerrando a D4: nada de adivinhar por ordem.
     let trait_por_id: HashMap<usize, Option<String>> = grafo
         .nodes
         .iter()
         .filter(|n| ids.contains(&n.id))
         .map(|n| (n.id, n.trait_.clone()))
         .collect();
+    let trait_ref_por_id: HashMap<usize, Option<String>> = grafo
+        .nodes
+        .iter()
+        .filter(|n| ids.contains(&n.id))
+        .map(|n| (n.id, n.trait_ref.clone()))
+        .collect();
 
-    // id -> novo path. Regra única (ADR-0006), aplicada nó a nó:
-    // - tem `trait_` → nomeia por trait (`Tipo::<Trait>::metodo`);
-    // - não tem → contador `#N` por ordem de id (piso, laudo 0010).
-    let mut novo: HashMap<usize, String> = HashMap::new();
-    for (i, id) in ids.iter().enumerate() {
-        let nome = match trait_por_id.get(id).and_then(|t| t.as_deref()) {
-            Some(t) => path_com_trait(colisao.as_str(), t),
-            None => format!("{}#{}", colisao.as_str(), i + 1),
-        };
-        novo.insert(*id, nome);
+    // Degrau 1 — tenta `<trait_>`. Nó sem `trait_` é separado para o
+    // contador desde já (não dá pra nomear por trait sem trait).
+    let mut nome_d1: HashMap<usize, String> = HashMap::new();
+    let mut sem_trait: Vec<usize> = Vec::new();
+    for id in &ids {
+        match trait_por_id.get(id).and_then(|t| t.as_deref()) {
+            Some(t) => {
+                nome_d1.insert(*id, path_com_trait(colisao.as_str(), t));
+            }
+            None => sem_trait.push(*id),
+        }
     }
 
+    // Contagem dos nomes do degrau 1 para detectar grupos colidentes.
+    let mut grupos_d1: HashMap<String, Vec<usize>> = HashMap::new();
+    for (id, nome) in &nome_d1 {
+        grupos_d1.entry(nome.clone()).or_default().push(*id);
+    }
+
+    // Para cada grupo do degrau 1:
+    //   - tamanho 1 → fica com o nome do degrau 1 (sem regressão do
+    //     caso `Display + Debug`);
+    //   - tamanho ≥ 2 → escala para o degrau 2 (`<trait_ref>`).
+    let mut nomes_finais: HashMap<usize, String> = HashMap::new();
+    // `pendentes_contador` recebe os ids que não tiveram nome único nem no
+    // degrau 1 nem no degrau 2.
+    let mut pendentes_contador: Vec<usize> = sem_trait;
+    for (_nome_d1_str, ids_grupo) in grupos_d1 {
+        if ids_grupo.len() == 1 {
+            let id = ids_grupo[0];
+            nomes_finais.insert(id, nome_d1.get(&id).expect("nome_d1[id]").clone());
+            continue;
+        }
+        // Degrau 2 — tenta `<trait_ref>`. Conta dentro do grupo.
+        let mut nome_d2: HashMap<usize, String> = HashMap::new();
+        let mut sem_ref: Vec<usize> = Vec::new();
+        for id in &ids_grupo {
+            match trait_ref_por_id.get(id).and_then(|t| t.as_deref()) {
+                Some(tr) => {
+                    nome_d2.insert(*id, path_com_trait(colisao.as_str(), tr));
+                }
+                None => sem_ref.push(*id),
+            }
+        }
+        pendentes_contador.extend(sem_ref);
+        // Verificar unicidade entre os do grupo (degrau 2).
+        let mut grupos_d2: HashMap<String, Vec<usize>> = HashMap::new();
+        for (id, nome) in &nome_d2 {
+            grupos_d2.entry(nome.clone()).or_default().push(*id);
+        }
+        for (_nome_d2_str, ids_g2) in grupos_d2 {
+            if ids_g2.len() == 1 {
+                let id = ids_g2[0];
+                nomes_finais.insert(id, nome_d2.get(&id).expect("nome_d2[id]").clone());
+            } else {
+                // Degrau 2 ainda colide (mesmo `trait_ref`, patológico) →
+                // contador.
+                pendentes_contador.extend(ids_g2);
+            }
+        }
+    }
+
+    // Degrau 3 — contador `#N` por ordem de id no conjunto original
+    // (`ids`, já sortido). O índice **global** (posição em `ids`) preserva
+    // o comportamento do laudo 0010 D9: ids = [1, 2], id=2 sem trait →
+    // `#2` (não `#1`), mesmo quando id=1 ganha nome por trait.
+    pendentes_contador.sort_unstable();
+    pendentes_contador.dedup();
+    for id in &pendentes_contador {
+        let i = ids.iter().position(|x| x == id).expect("id ∈ ids");
+        nomes_finais.insert(*id, format!("{}#{}", colisao.as_str(), i + 1));
+    }
+
+    let novo = nomes_finais;
     let nodes: Vec<No> = grafo
         .nodes
         .iter()
@@ -224,12 +306,21 @@ mod tests {
             cfg: None,
             macro_kind: None,
             is_non_exhaustive: false,
+            position: None,
         }
     }
 
     fn no_com_trait(id: usize, path: &str, trait_: &str) -> No {
         let mut n = no(id, path);
         n.trait_ = Some(trait_.to_string());
+        n
+    }
+
+    /// Auxiliar do prompt 0042: nó com `trait_` E `trait_ref` (impls
+    /// genéricos do mesmo trait, ex.: `From<&str>`, `From<String>`).
+    fn no_com_trait_e_ref(id: usize, path: &str, trait_: &str, trait_ref: &str) -> No {
+        let mut n = no_com_trait(id, path, trait_);
+        n.trait_ref = Some(trait_ref.to_string());
         n
     }
 
@@ -546,5 +637,274 @@ mod tests {
         // O grafo de entrada continua com as cópias colidentes intactas.
         let copias: Vec<_> = g.nodes.iter().filter(|n| n.path.as_str() == "T::f").collect();
         assert_eq!(copias.len(), 2);
+    }
+
+    // ---- Escada `trait_` → `trait_ref` → contador (prompt 0042) -------------
+
+    /// **Degrau 2 (2 cópias)**: o caso real do laudo 0041 — `Path::from`
+    /// com duas cópias, ambas `trait_ = "From"`, `trait_ref` distintos
+    /// (`From<&str>`, `From<String>`). Antes do prompt 0042, viravam
+    /// `Path::<From>::from` ×2 (colidem). Agora viram
+    /// `Path::<From<&str>>::from` e `Path::<From<String>>::from`.
+    #[test]
+    fn escada_d2_path_from_dois_impl_genericos_se_distinguem_por_trait_ref() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::Path"),
+                no_com_trait_e_ref(1, "M::Path::from", "From", "From<&str>"),
+                no_com_trait_e_ref(2, "M::Path::from", "From", "From<String>"),
+            ],
+            edges: vec![
+                aresta("M::Path", 0, "M::Path::from", 1, Relation::Owns),
+                aresta("M::Path", 0, "M::Path::from", 2, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r = aplicar(&g, &Path::from("M::Path::from"), &v).unwrap();
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(),
+            "M::Path::<From<&str>>::from"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
+            "M::Path::<From<String>>::from"
+        );
+        assert!(paths_unicos(&r), "paths únicos após resolução (invariante laudo 0010)");
+        checar_invariantes(&r);
+    }
+
+    /// **Degrau 2 (4 cópias)**: o caso real do laudo 0041 —
+    /// `ErroLente::from` com 4 cópias, todas `trait_ = "From"`, `trait_ref`
+    /// distintos por argumento (`From<ErroFork>`, `From<ErroAdaptador>`,
+    /// `From<ErroResolve>`, `From<ErroRaio>`). 4 paths únicos via
+    /// `<trait_ref>`.
+    #[test]
+    fn escada_d2_erro_lente_from_quatro_impl_genericos_se_distinguem() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "W::ErroLente"),
+                no_com_trait_e_ref(10, "W::ErroLente::from", "From", "From<ErroFork>"),
+                no_com_trait_e_ref(11, "W::ErroLente::from", "From", "From<ErroAdaptador>"),
+                no_com_trait_e_ref(12, "W::ErroLente::from", "From", "From<ErroResolve>"),
+                no_com_trait_e_ref(13, "W::ErroLente::from", "From", "From<ErroRaio>"),
+            ],
+            edges: vec![
+                aresta("W::ErroLente", 0, "W::ErroLente::from", 10, Relation::Owns),
+                aresta("W::ErroLente", 0, "W::ErroLente::from", 11, Relation::Owns),
+                aresta("W::ErroLente", 0, "W::ErroLente::from", 12, Relation::Owns),
+                aresta("W::ErroLente", 0, "W::ErroLente::from", 13, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 2,
+                exclusivas_b: 2,
+            },
+        };
+        let r = aplicar(&g, &Path::from("W::ErroLente::from"), &v).unwrap();
+        let p = |id: usize| {
+            r.nodes
+                .iter()
+                .find(|n| n.id == id)
+                .unwrap()
+                .path
+                .as_str()
+                .to_string()
+        };
+        assert_eq!(p(10), "W::ErroLente::<From<ErroFork>>::from");
+        assert_eq!(p(11), "W::ErroLente::<From<ErroAdaptador>>::from");
+        assert_eq!(p(12), "W::ErroLente::<From<ErroResolve>>::from");
+        assert_eq!(p(13), "W::ErroLente::<From<ErroRaio>>::from");
+        assert!(paths_unicos(&r));
+        checar_invariantes(&r);
+    }
+
+    /// **Degrau 1 não-regressão**: `Display + Debug` em `T::fmt` continua
+    /// virando `T::<Display>::fmt` / `T::<Debug>::fmt` — o `trait_` já
+    /// distingue, a escada não escala. Garante zero regressão do caso
+    /// canônico que dominava os testes pré-0042.
+    #[test]
+    fn escada_d1_display_debug_nao_escala_para_d2_nem_d3() {
+        // Cópias com `trait_ref` preenchido também (mais realista — o
+        // fork emite ambos). O `trait_` já basta, então `<Display>` e
+        // `<Debug>`, NÃO `<Display>::for-…>::fmt` ou similar.
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::T"),
+                no_com_trait_e_ref(1, "M::T::fmt", "Display", "Display"),
+                no_com_trait_e_ref(2, "M::T::fmt", "Debug", "Debug"),
+            ],
+            edges: vec![
+                aresta("M::T", 0, "M::T::fmt", 1, Relation::Owns),
+                aresta("M::T", 0, "M::T::fmt", 2, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r = aplicar(&g, &Path::from("M::T::fmt"), &v).unwrap();
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(),
+            "M::T::<Display>::fmt"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
+            "M::T::<Debug>::fmt"
+        );
+        assert!(paths_unicos(&r));
+        checar_invariantes(&r);
+    }
+
+    /// **Degrau 3 — `trait_ref = None` num conjunto que colide no d1**.
+    /// Duas cópias, ambas `trait_ = "From"`, mas **sem** `trait_ref`
+    /// (fork hipoteticamente velho, ou nó-referência sem o subcampo).
+    /// Ambas escalam para d2, ambas têm `trait_ref = None` → caem no
+    /// contador.
+    #[test]
+    fn escada_d3_trait_ref_ausente_no_grupo_colidindo_cai_no_contador() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::T"),
+                no_com_trait(1, "M::T::from", "From"), // sem trait_ref
+                no_com_trait(2, "M::T::from", "From"), // sem trait_ref
+            ],
+            edges: vec![
+                aresta("M::T", 0, "M::T::from", 1, Relation::Owns),
+                aresta("M::T", 0, "M::T::from", 2, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r = aplicar(&g, &Path::from("M::T::from"), &v).unwrap();
+        // ids = [1, 2] (sortidos); pendentes → posição 0 e 1 → #1 e #2.
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(),
+            "M::T::from#1"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
+            "M::T::from#2"
+        );
+        assert!(paths_unicos(&r));
+        checar_invariantes(&r);
+    }
+
+    /// **Degrau 3 — patológico: `trait_ref` idênticos**. Não deveria
+    /// acontecer no Rust real, mas o piso protege: duas cópias com
+    /// `trait_ref` iguais (impossível na linguagem; teste construído)
+    /// caem no contador. Garante que o piso pega 100% dos casos.
+    #[test]
+    fn escada_d3_patologico_trait_ref_identicos_cai_no_contador() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::T"),
+                no_com_trait_e_ref(1, "M::T::from", "From", "From<X>"),
+                no_com_trait_e_ref(2, "M::T::from", "From", "From<X>"),
+            ],
+            edges: vec![
+                aresta("M::T", 0, "M::T::from", 1, Relation::Owns),
+                aresta("M::T", 0, "M::T::from", 2, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r = aplicar(&g, &Path::from("M::T::from"), &v).unwrap();
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(),
+            "M::T::from#1"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
+            "M::T::from#2"
+        );
+        assert!(paths_unicos(&r));
+        checar_invariantes(&r);
+    }
+
+    /// **Mistura d1 ok + d2 colide**: 3 cópias — uma `Display` (d1 sai
+    /// limpo), duas `From<T>` (d1 colide entre essas duas, escalam para
+    /// d2 — ambas com `trait_ref` distintos, d2 resolve).
+    #[test]
+    fn escada_mistura_d1_ok_e_d2_resolvendo() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::T"),
+                no_com_trait_e_ref(1, "M::T::fmt", "Display", "Display"),
+                no_com_trait_e_ref(2, "M::T::fmt", "From", "From<&str>"),
+                no_com_trait_e_ref(3, "M::T::fmt", "From", "From<u32>"),
+            ],
+            edges: vec![
+                aresta("M::T", 0, "M::T::fmt", 1, Relation::Owns),
+                aresta("M::T", 0, "M::T::fmt", 2, Relation::Owns),
+                aresta("M::T", 0, "M::T::fmt", 3, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r = aplicar(&g, &Path::from("M::T::fmt"), &v).unwrap();
+        let p = |id: usize| r.nodes.iter().find(|n| n.id == id).unwrap().path.as_str().to_string();
+        assert_eq!(p(1), "M::T::<Display>::fmt"); // d1 limpo
+        assert_eq!(p(2), "M::T::<From<&str>>::fmt"); // d2
+        assert_eq!(p(3), "M::T::<From<u32>>::fmt"); // d2
+        assert!(paths_unicos(&r));
+        checar_invariantes(&r);
+    }
+
+    /// **Determinismo da escada**: o conjunto de saídas é estável entre
+    /// execuções (HashMap interno não vaza ordem para o resultado;
+    /// pendentes_contador é ordenado por id). Aplicar duas vezes dá o
+    /// mesmo grafo.
+    #[test]
+    fn escada_determinismo_aplicar_duas_vezes() {
+        let g = Grafo {
+            crate_name: "c".to_string(),
+            nodes: vec![
+                no(0, "M::T"),
+                no_com_trait_e_ref(7, "M::T::from", "From", "From<A>"),
+                no_com_trait_e_ref(3, "M::T::from", "From", "From<B>"),
+                no_com_trait_e_ref(11, "M::T::from", "From", "From<C>"),
+            ],
+            edges: vec![
+                aresta("M::T", 0, "M::T::from", 7, Relation::Owns),
+                aresta("M::T", 0, "M::T::from", 3, Relation::Owns),
+                aresta("M::T", 0, "M::T::from", 11, Relation::Owns),
+            ],
+        };
+        let v = Veredito::Distintos {
+            evidencia: Evidencia::VizinhancaDisjunta {
+                exclusivas_a: 1,
+                exclusivas_b: 1,
+            },
+        };
+        let r1 = aplicar(&g, &Path::from("M::T::from"), &v).unwrap();
+        let r2 = aplicar(&g, &Path::from("M::T::from"), &v).unwrap();
+        assert_eq!(r1, r2);
+        assert!(paths_unicos(&r1));
     }
 }
