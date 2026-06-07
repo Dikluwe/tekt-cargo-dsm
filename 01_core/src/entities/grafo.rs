@@ -215,6 +215,24 @@ pub struct Modificadores {
     pub is_unsafe: bool,
 }
 
+/// Posição de um nó no código-fonte, como o fork `cargo-modules` a emite
+/// (prompt 0037 — 5ª rodada do fork).
+///
+/// Ausente para itens sem fonte (tipos embutidos da stdlib, ou crates de
+/// dependência cujo fonte não foi processado). Para itens gerados por
+/// macro, é a posição do **call-site** (o fork não inventa expansão).
+/// Linhas contadas a partir de 1 (1-based).
+///
+/// `file` é armazenado **verbatim** como o fork o emite — caminho
+/// **absoluto**. Relativizar para casar com paths de um `git diff` é
+/// trabalho do mapeamento diff→nós (prompt futuro), não deste nível.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Posicao {
+    pub file: String,
+    pub start_line: u32,
+    pub end_line: u32,
+}
+
 /// Nó do grafo. Identidade canônica é `id` (atribuído pela fonte; o
 /// `path` **pode repetir** entre nós distintos no mesmo grafo — ex.: dois
 /// métodos `fmt` colidentes via Display+Debug).
@@ -246,6 +264,11 @@ pub struct No {
     /// Tipo de macro, quando o nó é uma macro. `None` caso não.
     pub macro_kind: Option<String>,
     pub is_non_exhaustive: bool,
+    /// Posição do nó no código-fonte (prompt 0037). `None` quando o item
+    /// não tem fonte (tipo embutido) ou quando o JSON é de um fork antigo
+    /// que ainda não emite o campo. **Não é erro** quando ausente — é a
+    /// natureza opcional do campo (diferente do `id`, que é obrigatório).
+    pub position: Option<Posicao>,
 }
 
 /// Aresta dirigida do grafo. `id_from`/`id_to` são a referência canônica
@@ -319,6 +342,71 @@ mod tests {
         let err = UsesKind::try_from("reexport").unwrap_err();
         assert_eq!(err.tipo, "UsesKind");
         assert_eq!(err.texto, "reexport");
+    }
+
+    // ---- prompt 0037: Posicao + No.position ---------------------------------
+
+    #[test]
+    fn posicao_carrega_arquivo_e_linhas_1_based() {
+        let p = Posicao {
+            file: "/abs/src/lib.rs".to_string(),
+            start_line: 10,
+            end_line: 42,
+        };
+        assert_eq!(p.file, "/abs/src/lib.rs");
+        assert_eq!(p.start_line, 10);
+        assert_eq!(p.end_line, 42);
+    }
+
+    /// Constrói um nó com `Some(Posicao)`; confere acesso aos três campos.
+    #[test]
+    fn no_com_position_some_e_acessivel() {
+        let n = No {
+            id: 7,
+            path: Path::from("k::a"),
+            name: "a".to_string(),
+            kind: Kind::Fn,
+            modificadores: Modificadores::default(),
+            visibility: Visibility::Pub,
+            crate_name: "k".to_string(),
+            trait_: None,
+            trait_ref: None,
+            cfg: None,
+            macro_kind: None,
+            is_non_exhaustive: false,
+            position: Some(Posicao {
+                file: "/abs/k/src/lib.rs".to_string(),
+                start_line: 5,
+                end_line: 9,
+            }),
+        };
+        let p = n.position.as_ref().expect("position presente");
+        assert_eq!(p.file, "/abs/k/src/lib.rs");
+        assert_eq!(p.start_line, 5);
+        assert_eq!(p.end_line, 9);
+    }
+
+    /// `None` em `position` é estado válido (prompt 0037 §"position é
+    /// opcional por natureza" — itens embutidos ou JSON antigo). Não é
+    /// erro construir um nó assim.
+    #[test]
+    fn no_com_position_none_e_estado_valido() {
+        let n = No {
+            id: 8,
+            path: Path::from("core::fmt"),
+            name: "fmt".to_string(),
+            kind: Kind::Mod,
+            modificadores: Modificadores::default(),
+            visibility: Visibility::Pub,
+            crate_name: "k".to_string(),
+            trait_: None,
+            trait_ref: None,
+            cfg: None,
+            macro_kind: None,
+            is_non_exhaustive: false,
+            position: None,
+        };
+        assert!(n.position.is_none());
     }
 
     #[test]
@@ -421,6 +509,7 @@ mod tests {
             cfg: None,
             macro_kind: None,
             is_non_exhaustive: false,
+            position: None,
         }
     }
 

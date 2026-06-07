@@ -43,6 +43,20 @@ pub(crate) struct NoDTO {
     pub(crate) cfg: Option<serde_json::Value>,
     #[serde(default)]
     pub(crate) macro_kind: Option<String>,
+    /// `position` emitido pela 5ª rodada do fork (prompt 0037). Ausente para
+    /// itens sem fonte (tipos embutidos) ou JSON antigo (sem o campo). O
+    /// `#[serde(default)]` cobre os dois casos como `None`, sem erro.
+    #[serde(default)]
+    pub(crate) position: Option<PositionDTO>,
+}
+
+/// DTO espelho do objeto `position` do JSON do fork. `file` é caminho
+/// absoluto verbatim; linhas 1-based.
+#[derive(Debug, Deserialize)]
+pub(crate) struct PositionDTO {
+    pub(crate) file: String,
+    pub(crate) start_line: u32,
+    pub(crate) end_line: u32,
 }
 
 #[derive(Debug, Deserialize)]
