@@ -1,4 +1,9 @@
-//! Lineage: prompt 00_nucleo/prompt/0027-ranking-top-n.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/ranking.md
+//! @prompt-hash 79471c54
+//! @layer L1
+//! @updated 2026-06-07
+//!
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
 //! Lições:  00_nucleo/lessons/0027-ranking-top-n.md
