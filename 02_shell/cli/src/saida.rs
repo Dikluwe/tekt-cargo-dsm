@@ -13,7 +13,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
 use lente_core::entities::grafo::Path as PathGrafo;
-use lente_wiring::{Escopo, EstruturaModulos, ItemRanking, ModoUses, ResultadoDiff, TocadoComRaio};
+// Prompt 0055 (Estágio 1): os L1-origem vêm direto do crate L1; o vocabulário
+// L4-nativo (Escopo/EstruturaModulos/ModoUses) segue pela fachada (sai no Est. 2).
+use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
+use lente_ranking::ItemRanking;
+use lente_wiring::{Escopo, EstruturaModulos, ModoUses};
 
 use crate::args::Vista;
 
@@ -968,7 +972,8 @@ mod tests {
 
     // ---- Modo estrutura (prompt 0031) ----------------------------------------
 
-    use lente_wiring::{Ciclo, DependenciaModulo};
+    use lente_estrutura::Ciclo;
+    use lente_wiring::DependenciaModulo;
 
     fn estrutura_amostra() -> EstruturaModulos {
         EstruturaModulos {
@@ -1139,7 +1144,8 @@ mod tests {
     fn diff_json_tem_o_esquema_e_e_desserializavel() {
         use lente_core::domain::mapeamento::NoTocado;
         use lente_core::entities::grafo::Path;
-        use lente_wiring::{Fantasma, RaioCombinado, ResultadoDiff, TocadoComRaio};
+        use lente_core::domain::resultado_diff::{RaioCombinado, ResultadoDiff, TocadoComRaio};
+        use lente_core::domain::uniao::Fantasma;
         use std::collections::HashMap;
 
         let mut montante = HashMap::new();
@@ -1224,7 +1230,7 @@ mod tests {
     /// entities::grafo [Intermediario], jusante 1), combinado cruzando
     /// lente_infra/lente_wiring, 1 solto, 0 fantasmas.
     fn resultado_amostra() -> ResultadoDiff {
-        use lente_wiring::{RaioCombinado, TocadoComRaio};
+        use lente_core::domain::resultado_diff::{RaioCombinado, TocadoComRaio};
         ResultadoDiff {
             tocados: vec![
                 TocadoComRaio {
@@ -1303,7 +1309,7 @@ mod tests {
 
     #[test]
     fn vista_resumo_enfase_adaptativa_arquivo_novo_lidera_jusante() {
-        use lente_wiring::RaioCombinado;
+        use lente_core::domain::resultado_diff::RaioCombinado;
         let mut r = resultado_amostra();
         // Diff só-arquivo-novo: montante combinado vazio, ligados presentes.
         r.combinado = RaioCombinado {
@@ -1318,7 +1324,7 @@ mod tests {
 
     #[test]
     fn fantasma_aparece_so_se_maior_que_zero() {
-        use lente_wiring::Fantasma;
+        use lente_core::domain::uniao::Fantasma;
         let mut r = resultado_amostra();
         assert!(!formatar_diff_resumo(&r).contains("fantasmas"));
         r.fantasmas = vec![Fantasma {
