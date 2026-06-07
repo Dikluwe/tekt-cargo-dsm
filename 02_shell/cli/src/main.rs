@@ -15,7 +15,7 @@ use std::process::ExitCode;
 use clap::Parser;
 use lente_catalogo as cat;
 use lente_core::entities::grafo::Path as PathGrafo;
-use lente_wiring::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
+use lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
 
 fn main() -> ExitCode {
     let cli = args::Cli::parse();

@@ -42,6 +42,46 @@ pub struct Ciclo {
     pub modulos: Vec<Path>,
 }
 
+/// Dependência módulo→módulo no resultado do modo estrutura.
+///
+/// Formato pensado para o JSON DSM-friendly (prompt 0031): pares
+/// `{de, para}` deduplicados, ordenados deterministicamente. A
+/// representação em si é apenas dois paths — a forma que uma DSM
+/// futura consome (linhas e colunas).
+///
+/// Movido do `lente_wiring` (L4) para cá no Estágio 2 (refactor V3+V12, 0056):
+/// é dado de estrutura puro e mora junto do [`Ciclo`] que o [`EstruturaModulos`]
+/// referencia.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DependenciaModulo {
+    pub de: Path,
+    pub para: Path,
+}
+
+/// Resultado do modo estrutura (prompt 0031, ampliado pelo 0035): a lista
+/// de **módulos** do crate, as **dependências** módulo→módulo agregadas,
+/// os **ciclos** detectados (SCCs ≥ 2), e o **ordenamento** da DSM
+/// (`ordem` + `blocos` — prompt 0035). Todos os campos determinísticos.
+///
+/// `modulos` mantém a ordem **alfabética** (compatibilidade com clientes
+/// pré-0035); `ordem` traz a **ordem topológica da condensação dos SCCs**
+/// — é a sequência em que linhas/colunas da DSM aparecem. Ambas são
+/// emitidas em paralelo.
+///
+/// Movido do `lente_wiring` (L4) no Estágio 2 (0056) — dado puro de estrutura.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EstruturaModulos {
+    pub modulos: Vec<Path>,
+    pub dependencias: Vec<DependenciaModulo>,
+    pub ciclos: Vec<Ciclo>,
+    /// Módulos na ordem da DSM (prompt 0035). Ordem topológica da
+    /// condensação; SCCs ≥ 2 expandidos com membros agrupados.
+    pub ordem: Vec<Path>,
+    /// SCCs ≥ 2 na ordem em que aparecem em `ordem` (prompt 0035). Cada
+    /// bloco é um intervalo contíguo de `ordem`.
+    pub blocos: Vec<Vec<Path>>,
+}
+
 /// Ordenamento dos módulos para a DSM (prompt 0035): a sequência em que os
 /// nós aparecem nas linhas/colunas da matriz, mais os **blocos** (SCCs ≥ 2)
 /// na ordem em que aparecem em `ordem`.

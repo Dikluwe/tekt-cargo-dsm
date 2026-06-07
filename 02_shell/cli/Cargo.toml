@@ -13,14 +13,14 @@ path = "src/main.rs"
 lente_core = { path = "../../01_core/core" }
 lente_wiring = { path = "../../04_wiring" }
 lente_catalogo = { path = "../catalogo" }
-# Prompt 0055 (Estágio 1): tipos L1-origem re-apontados da fachada lente_wiring
-# para o crate L1 de origem. `ItemRanking` é usado no formatador (não-teste).
+# Estágios 1/2 (0055/0056): tipos L1-origem re-apontados da fachada lente_wiring
+# para o crate L1 de origem. `ItemRanking` e `EstruturaModulos`/`DependenciaModulo`
+# são usados no formatador (não-teste).
 lente_ranking = { path = "../../01_core/ranking" }
+lente_estrutura = { path = "../../01_core/estrutura" }
 clap = { version = "4", features = ["derive"] }
 serde_json = "1"
 
 [dev-dependencies]
 # Só nos testes (constroem variantes específicas de `ErroAdaptador`).
 lente_infra = { path = "../../03_infra" }
-# Prompt 0055 (Estágio 1): `Ciclo` re-apontado p/ a origem L1; usado só em teste.
-lente_estrutura = { path = "../../01_core/estrutura" }

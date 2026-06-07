@@ -49,80 +49,15 @@ use lente_resolve::ErroResolve;
 pub use lente_core::domain::resultado_diff::{
     RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,
 };
+pub use lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
 pub use lente_core::domain::uniao::Fantasma;
-pub use lente_estrutura::{Ciclo, OrdemDsm};
+pub use lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm};
 pub use lente_ranking::ItemRanking;
 
-/// De onde vem o grafo: JSON pronto ou nome de pacote (invoca o fork).
-pub enum FonteGrafo {
-    /// JSON pronto (o L2 leu de arquivo ou stdin).
-    Json(String),
-    /// Nome de pacote — o wiring invoca o fork via `lente_infra::fork`.
-    Pacote(String),
-}
-
-/// Escopo do grafo sobre o qual a lente responde — escolha do usuário
-/// (prompt 0030).
-///
-/// **`Completo`** (default): forma resolvida inclui sysroot (`core::*`,
-/// `std::*`, `alloc::*`, …). É o grafo cru-mas-resolvido como o fork
-/// `cargo-modules` o entrega. Classificações refletem o que o nó usa,
-/// inclusive stdlib.
-///
-/// **`SeuCodigo`**: forma resolvida com `lente_filtro::filtrar_stdlib`
-/// aplicado — sysroot escondido (laudo 0025). Classificações refletem
-/// só o que o nó usa **dentro do código do usuário** (mais
-/// dependências não-stdlib).
-///
-/// **Invariante do montante** (prompt 0030 Fase 1, confirmado): para um
-/// nó do código do usuário, o `montante` (quem-depende-de-mim) é o
-/// **mesmo** nos dois escopos — stdlib não depende de código do
-/// usuário. O escopo só muda `uses_saida` e, por consequência, a
-/// classificação. Os campos `uses_entrada` (= "diretos") e
-/// `montante.len()` (= "transitivos") permanecem.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Escopo {
-    Completo,
-    SeuCodigo,
-}
-
-impl Default for Escopo {
-    fn default() -> Self {
-        Escopo::Completo
-    }
-}
-
-/// Modo de inclusão das arestas `Uses` no modo `--estrutura` — escolha
-/// do usuário (prompt 0034).
-///
-/// **`Todas`** (default): inclui todas as `Uses` (a vista do laudo 0031;
-/// SCC de 85 módulos no egui).
-///
-/// **`SoReferencia`**: inclui apenas `Uses` cujo `uses_kind == Reference`
-/// (uso de tipo direto). Descarta `Import` (Limite 4) — o acoplamento
-/// de tipo "real" (laudo 0033: SCC cai para 42).
-///
-/// **Caso `None`** (fork antigo, sem `uses_kind` no JSON): se o usuário
-/// pediu `SoReferencia` e nenhuma aresta `Uses` do grafo tem `uses_kind`,
-/// `analisar_estrutura` retorna `ErroLente::ForkSemUsesKind` — não
-/// silencia produzindo `Todas` disfarçado.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ModoUses {
-    Todas,
-    SoReferencia,
-}
-
-impl Default for ModoUses {
-    fn default() -> Self {
-        ModoUses::Todas
-    }
-}
-
-/// Como o alvo do raio é apontado: por path canônico ou por id.
-pub enum AlvoBusca {
-    PorPath(Path),
-    PorId(usize),
-}
+// O vocabulário de pedido — `FonteGrafo`/`Escopo`/`ModoUses`/`AlvoBusca` — desceu
+// ao L1 no Estágio 2 (0056): `lente_core::domain::consulta`, re-exportado acima.
+// A fiação só os importa nas assinaturas; não os define mais (V12 deixa de
+// disparar por eles).
 
 /// Erro agregado do pipeline. Embrulha os erros das camadas internas via
 /// `From` impls (uso natural com `?`).
@@ -362,39 +297,9 @@ pub fn rankear_pacote(
     Ok(rankear(&grafo, n))
 }
 
-/// Dependência módulo→módulo no resultado do modo estrutura.
-///
-/// Formato pensado para o JSON DSM-friendly (prompt 0031): pares
-/// `{de, para}` deduplicados, ordenados deterministicamente. A
-/// representação em si é apenas dois paths — a forma que uma DSM
-/// futura consome (linhas e colunas).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DependenciaModulo {
-    pub de: Path,
-    pub para: Path,
-}
-
-/// Resultado do modo estrutura (prompt 0031, ampliado pelo 0035): a lista
-/// de **módulos** do crate, as **dependências** módulo→módulo agregadas,
-/// os **ciclos** detectados (SCCs ≥ 2), e o **ordenamento** da DSM
-/// (`ordem` + `blocos` — prompt 0035). Todos os campos determinísticos.
-///
-/// `modulos` mantém a ordem **alfabética** (compatibilidade com clientes
-/// pré-0035); `ordem` traz a **ordem topológica da condensação dos SCCs**
-/// — é a sequência em que linhas/colunas da DSM aparecem. Ambas são
-/// emitidas em paralelo.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EstruturaModulos {
-    pub modulos: Vec<Path>,
-    pub dependencias: Vec<DependenciaModulo>,
-    pub ciclos: Vec<Ciclo>,
-    /// Módulos na ordem da DSM (prompt 0035). Ordem topológica da
-    /// condensação; SCCs ≥ 2 expandidos com membros agrupados.
-    pub ordem: Vec<Path>,
-    /// SCCs ≥ 2 na ordem em que aparecem em `ordem` (prompt 0035). Cada
-    /// bloco é um intervalo contíguo de `ordem`.
-    pub blocos: Vec<Vec<Path>>,
-}
+// `DependenciaModulo` e `EstruturaModulos` desceram ao `lente_estrutura` (L1) no
+// Estágio 2 (0056) — dado puro de estrutura, junto do `Ciclo`. Re-exportados
+// acima; a fiação só os usa nas assinaturas.
 
 /// Pipeline do modo estrutura (prompt 0031, ampliado pelo 0034): obtém o
 /// grafo no escopo, opcionalmente filtra arestas `Uses` pelo `modo_uses`,
