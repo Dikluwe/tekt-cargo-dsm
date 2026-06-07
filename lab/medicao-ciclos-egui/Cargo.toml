@@ -13,7 +13,7 @@ name = "medicao-ciclos-egui"
 path = "src/main.rs"
 
 [dependencies]
-lente_core = { path = "../../01_core" }
-lente_estrutura = { path = "../../09_estrutura" }
+lente_core = { path = "../../01_core/core" }
+lente_estrutura = { path = "../../01_core/estrutura" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

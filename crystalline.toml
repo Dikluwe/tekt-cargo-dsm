@@ -1,13 +1,10 @@
 # crystalline.toml — config do crystalline-lint (tekt-linter v0.1.0) para o
-# tekt-cargo-dsm. Criado pelo prompt 0049 (verificação arquitetural).
+# tekt-cargo-dsm. Criado no prompt 0049; o L1 virou pasta-camada no 0050.
 #
-# CRUX REGISTRADO: o `[layers]` mapeia UM diretório por camada
-# (`pub layers: HashMap<String, String>` no linter). O projeto tem SEIS crates
-# L1 — 01_core, 05_investiga, 06_resolve, 07_filtro, 08_ranking, 09_estrutura —
-# e a lista NÃO é aceita. Só `01_core` é mapeado como L1; os crates 05–09 ficam
-# fora de qualquer camada → V8 (AlienFile, fatal). É o achado ESTRUTURAL: o
-# modelo de-um-diretório-por-camada do linter vs a estrutura multi-crate-L1 do
-# projeto. Não reestruturar sem decisão (prompt 0049).
+# `01_core` é a PASTA-CAMADA L1 (decisão do 0049: camada é diretório, cada crate
+# vive dentro do diretório da sua camada). Os SEIS crates L1 vivem dentro:
+#   01_core/{core, investiga, resolve, filtro, ranking, estrutura}
+# Com isso o V8 (AlienFile) zera — todos os arquivos pertencem a uma camada.
 
 [project]
 root = "."
@@ -15,7 +12,7 @@ root = "."
 [languages]
 rust = { grammar = "tree-sitter-rust", enabled = true }
 
-# Um diretório por camada (limitação do linter — ver CRUX acima).
+# Uma pasta-camada por camada. `01_core` cobre os seis crates L1 (0050).
 [layers]
 L0  = "00_nucleo"
 L1  = "01_core"
@@ -29,7 +26,7 @@ build = "target"
 vcs   = ".git"
 cargo = ".cargo"
 
-# Módulos internos do 01_core (L1) — usados pela resolução de `crate::`.
+# Módulos internos dos crates L1 — usados pela resolução de `crate::`.
 [module_layers]
 entities = "L1"
 domain   = "L1"
@@ -39,9 +36,23 @@ domain   = "L1"
 entities = "entities"
 domain   = "domain"
 
-# L1 puro: nenhum externo autorizado (princípio do projeto — V14 confirma).
+# Dependências INTRA-L1 autorizadas. `lente_core` é a fundação de dados pura
+# (cargo tree -p lente_core = só o crate); os outros crates L1 dependem dela
+# (e, em testes, de si mesmos) — dependência **intra-camada**, permitida no
+# Tekt. O linter resolve todo `use lente_*::` como camada Desconhecida
+# (rs_parser::resolve_layer só inspeciona `crate::`/`super::`), então não
+# distingue um crate L1 first-party de um pacote de terceiros — daí listá-los
+# aqui. NÃO inclui terceiros reais (serde, etc.) nem enums locais (o `use
+# Kind::*` continua falso positivo do V14, reportado, não silenciado).
 [l1_allowed_external]
-rust       = []
+rust = [
+    "lente_core",
+    "lente_investiga",
+    "lente_resolve",
+    "lente_filtro",
+    "lente_ranking",
+    "lente_estrutura",
+]
 typescript = []
 python     = []
 zig        = []

@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
-    "01_core",
+    "01_core/core",
+    "01_core/investiga",
+    "01_core/resolve",
+    "01_core/filtro",
+    "01_core/ranking",
+    "01_core/estrutura",
     "02_shell/catalogo",
     "02_shell/cli",
     "03_infra",
     "04_wiring",
-    "05_investiga",
-    "06_resolve",
-    "07_filtro",
-    "08_ranking",
-    "09_estrutura",
 ]
 exclude = ["03_infra/tests/fixtures/crate-amostra"]

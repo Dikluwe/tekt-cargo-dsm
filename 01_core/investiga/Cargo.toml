@@ -1,5 +1,5 @@
 [package]
-name = "lente_resolve"
+name = "lente_investiga"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.91"
@@ -9,4 +9,4 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
-lente_core = { path = "../01_core" }
+lente_core = { path = "../core" }
