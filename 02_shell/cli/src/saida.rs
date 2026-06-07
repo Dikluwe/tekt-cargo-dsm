@@ -13,11 +13,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
 use lente_core::entities::grafo::Path as PathGrafo;
-// Prompt 0055 (Estágio 1): os L1-origem vêm direto do crate L1; o vocabulário
-// L4-nativo (Escopo/EstruturaModulos/ModoUses) segue pela fachada (sai no Est. 2).
+// Estágio 1 (0055) + Estágio 2 (0056): todo este vocabulário vem agora do L1 —
+// a CLi não importa mais tipos da fachada `lente_wiring` aqui.
+use lente_core::domain::consulta::{Escopo, ModoUses};
 use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
+use lente_estrutura::EstruturaModulos;
 use lente_ranking::ItemRanking;
-use lente_wiring::{Escopo, EstruturaModulos, ModoUses};
 
 use crate::args::Vista;
 
@@ -972,8 +973,7 @@ mod tests {
 
     // ---- Modo estrutura (prompt 0031) ----------------------------------------
 
-    use lente_estrutura::Ciclo;
-    use lente_wiring::DependenciaModulo;
+    use lente_estrutura::{Ciclo, DependenciaModulo};
 
     fn estrutura_amostra() -> EstruturaModulos {
         EstruturaModulos {
