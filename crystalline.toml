@@ -36,23 +36,14 @@ domain   = "L1"
 entities = "entities"
 domain   = "domain"
 
-# Dependências INTRA-L1 autorizadas. `lente_core` é a fundação de dados pura
-# (cargo tree -p lente_core = só o crate); os outros crates L1 dependem dela
-# (e, em testes, de si mesmos) — dependência **intra-camada**, permitida no
-# Tekt. O linter resolve todo `use lente_*::` como camada Desconhecida
-# (rs_parser::resolve_layer só inspeciona `crate::`/`super::`), então não
-# distingue um crate L1 first-party de um pacote de terceiros — daí listá-los
-# aqui. NÃO inclui terceiros reais (serde, etc.) nem enums locais (o `use
-# Kind::*` continua falso positivo do V14, reportado, não silenciado).
+# L1 puro: nenhum externo de terceiros autorizado. A whitelist dos seis
+# `lente_*` (aberta no 0050 como contorno do falso positivo do V14) foi
+# **liquidada no 0053**: o conserto do linter (0052 — `classify_import` ciente
+# das dependências reais de cada crate) passou a resolver `use lente_*::` para a
+# camada do membro first-party, não mais para Desconhecida — então a dep
+# intra-L1 já não dispara V14 e não precisa de autorização manual.
 [l1_allowed_external]
-rust = [
-    "lente_core",
-    "lente_investiga",
-    "lente_resolve",
-    "lente_filtro",
-    "lente_ranking",
-    "lente_estrutura",
-]
+rust       = []
 typescript = []
 python     = []
 zig        = []
