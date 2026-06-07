@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0017-l3_invocador_fork.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-fork.md
+//! @prompt-hash 2df941dc
+//! @layer L3
+//! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0022-l3-invocador-bin-lib.md
 //!          porta --pacote fechada por prompt 00_nucleo/prompt/0023-l3-deteccao-alvo-metadata.md
 //! Camada:  L3 — Infraestrutura. Processo externo é I/O legítimo aqui.

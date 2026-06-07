@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0003-adaptador_l3.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-invocacao.md
+//! @prompt-hash 6152e1cb
+//! @layer L3
+//! @updated 2026-06-07
 //!           consolidado por prompt 00_nucleo/prompt/0018-consolidar-invocador.md
 //!           ampliado por prompt 00_nucleo/prompt/0022-l3-invocador-bin-lib.md
 //!           detecção migrada para metadata por prompt 0023-l3-deteccao-alvo-metadata.md
