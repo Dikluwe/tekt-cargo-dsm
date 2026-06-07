@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0046-ler_diff_e_mapear.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/mapeamento.md
+//! @prompt-hash 7f5f458c
+//! @layer L1
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.

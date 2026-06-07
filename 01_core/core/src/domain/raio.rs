@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0002-calculo_raio.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/raio.md
+//! @prompt-hash 93ba50cd
+//! @layer L1
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O.

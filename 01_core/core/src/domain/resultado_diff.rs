@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0047-resultado_diff_orquestracao_json.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/resultado-diff.md
+//! @prompt-hash 9855f2a5
+//! @layer L1
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. **Sem `serde`.**
 //!
