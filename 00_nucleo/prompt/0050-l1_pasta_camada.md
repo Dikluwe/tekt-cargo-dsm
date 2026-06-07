@@ -3,7 +3,7 @@
 **Camada**: transversal (layout do workspace) — reestrutura que preserva
 comportamento
 **Criado em**: 2026-06-06
-**Estado**: `PROPOSTO`
+**Estado**: `EXECUTADO` (laudo `00_nucleo/lessons/0050-l1_pasta_camada.md`)
 **Pré-requisito**: 0037→0048 commitados; 0049 executado (`crystalline.toml`
 existe).
 **Decisão (sua, no 0049)**: o linter está correto — camada é diretório, e cada

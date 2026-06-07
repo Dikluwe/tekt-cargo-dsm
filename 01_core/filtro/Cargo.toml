@@ -9,11 +9,11 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
-lente_core = { path = "../01_core" }
+lente_core = { path = "../core" }
 
 # `dev-dependencies` só atinge o test/example/bench target — não vaza para a
 # build do crate (a pureza do `lib` continua sendo lente_core stdlib-only).
 # Necessário para o E2E `#[ignore]` que extrai o grafo real do `lente_core`
 # (laudo 0025, Fase 2).
 [dev-dependencies]
-lente_infra = { path = "../03_infra" }
+lente_infra = { path = "../../03_infra" }

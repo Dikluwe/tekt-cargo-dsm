@@ -10,7 +10,7 @@ name = "lente"
 path = "src/main.rs"
 
 [dependencies]
-lente_core = { path = "../../01_core" }
+lente_core = { path = "../../01_core/core" }
 lente_wiring = { path = "../../04_wiring" }
 lente_catalogo = { path = "../catalogo" }
 clap = { version = "4", features = ["derive"] }

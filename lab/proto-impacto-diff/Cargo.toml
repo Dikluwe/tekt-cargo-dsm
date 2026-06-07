@@ -13,10 +13,10 @@ name = "proto-impacto-diff"
 path = "src/main.rs"
 
 [dependencies]
-lente_core = { path = "../../01_core" }
+lente_core = { path = "../../01_core/core" }
 lente_infra = { path = "../../03_infra" }
-lente_investiga = { path = "../../05_investiga" }
-lente_resolve = { path = "../../06_resolve" }
+lente_investiga = { path = "../../01_core/investiga" }
+lente_resolve = { path = "../../01_core/resolve" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

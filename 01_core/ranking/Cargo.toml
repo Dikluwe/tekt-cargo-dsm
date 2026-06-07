@@ -9,4 +9,4 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
-lente_core = { path = "../01_core" }
+lente_core = { path = "../core" }
