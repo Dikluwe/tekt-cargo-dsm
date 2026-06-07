@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0003-adaptador_l3.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra.md
+//! @prompt-hash b869b377
+//! @layer L3
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0001-fonte-do-grafo-fork-externo.md
 //!          00_nucleo/adr/0002-modelagem-do-grafo.md

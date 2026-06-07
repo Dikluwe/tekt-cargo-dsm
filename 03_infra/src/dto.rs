@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0003-adaptador_l3.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-dto.md
+//! @prompt-hash a18c2b83
+//! @layer L3
+//! @updated 2026-06-07
 //!
 //! Structs-espelho do JSON do fork. Só servem ao `serde_json`; campos como
 //! `kind`/`visibility`/`relation` ficam como `String` aqui e só viram os enums

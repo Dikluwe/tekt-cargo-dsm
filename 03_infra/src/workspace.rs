@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0044-infra_cache_e_membros.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-workspace.md
+//! @prompt-hash 87fe796d
+//! @layer L3
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0001-fonte-do-grafo-fork-externo.md
 //!          00_nucleo/adr/0003-workspace-cargo.md

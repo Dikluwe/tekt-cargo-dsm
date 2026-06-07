@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0006-id_no_core_infra.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-traducao.md
+//! @prompt-hash 382a4093
+//! @layer L3
+//! @updated 2026-06-07
 //!           (antes: prompt 00_nucleo/prompt/0003-adaptador_l3.md)
 //!
 //! Tradução dos DTOs do JSON para os tipos do `lente_core`, validando os enums

@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0046-ler_diff_e_mapear.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-diff.md
+//! @prompt-hash 509a4c17
+//! @layer L3
+//! @updated 2026-06-07
 //! Camada:  L3 — Infraestrutura. I/O (subprocesso `git`) permitido.
 //!
 //! A **entrada** do modo `--diff`: lê um diff e o estrutura na forma de dados

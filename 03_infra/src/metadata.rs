@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0023-l3-deteccao-alvo-metadata.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/infra-metadata.md
+//! @prompt-hash 93c70d4d
+//! @layer L3
+//! @updated 2026-06-07
 //!          diagnóstico de diretório por prompt 00_nucleo/prompt/0024-l3-diretorio-inexistente-diagnostico.md
 //! Camada:  L3 — Infraestrutura. Subprocesso é I/O legítimo aqui.
 //!
