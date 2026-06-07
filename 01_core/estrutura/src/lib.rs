@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0031-estrutura-modulo-ciclos.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/estrutura.md
+//! @prompt-hash a55760a6
+//! @layer L1
+//! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 //!

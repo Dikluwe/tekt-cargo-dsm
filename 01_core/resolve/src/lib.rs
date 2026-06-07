@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0010-lente_resolve-v2.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/resolve.md
+//! @prompt-hash aa3a1a65
+//! @layer L1
+//! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0042-resolve_escada_trait_ref.md
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0004-resolucao-colisoes-path.md
