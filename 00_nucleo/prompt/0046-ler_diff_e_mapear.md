@@ -3,7 +3,7 @@
 **Camada**: L3 — Infra (`lente_infra`, ler o diff) + L1 — Núcleo (`lente_core`, o
 mapeamento)
 **Criado em**: 2026-06-05
-**Estado**: `PROPOSTO`
+**Estado**: `EXECUTADO` (laudo `00_nucleo/lessons/0046-ler_diff_e_mapear.md`)
 **Decisões de origem**: laudo 0038 (mapear linhas→nós por `position` funciona para
 rastreados; untracked é cego em `git diff HEAD`); laudo 0043 (validação do
 untracked: corte **ligado/solto/não-fonte** via as `position.file` do grafo; hunk
