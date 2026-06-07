@@ -84,3 +84,48 @@ pub enum AlvoBusca {
     PorPath(Path),
     PorId(usize),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Contrato dos defaults (estabelecido no 0056): o escopo default é o grafo
+    /// completo (sysroot incluído) — a fiação conta com isso quando o usuário não
+    /// pede `--seu-codigo`.
+    #[test]
+    fn escopo_default_e_completo() {
+        assert_eq!(Escopo::default(), Escopo::Completo);
+    }
+
+    /// Contrato dos defaults (0056): o modo de `Uses` default inclui todas as
+    /// arestas — a vista do laudo 0031, antes de o usuário pedir `SoReferencia`.
+    #[test]
+    fn modo_uses_default_e_todas() {
+        assert_eq!(ModoUses::default(), ModoUses::Todas);
+    }
+
+    /// `FonteGrafo` não tem default (a fonte é sempre escolha explícita do L2);
+    /// trava a construção e a discriminação dos dois variantes.
+    #[test]
+    fn fonte_grafo_discrimina_json_e_pacote() {
+        assert!(matches!(FonteGrafo::Json("{}".into()), FonteGrafo::Json(_)));
+        assert!(matches!(
+            FonteGrafo::Pacote("egui".into()),
+            FonteGrafo::Pacote(_)
+        ));
+    }
+
+    /// `AlvoBusca` não tem default (o alvo é sempre apontado); trava a construção
+    /// por path e por id, e que o `usize` apontado é preservado.
+    #[test]
+    fn alvo_busca_por_path_e_por_id() {
+        assert!(matches!(
+            AlvoBusca::PorPath(Path::new("crate::a::b")),
+            AlvoBusca::PorPath(_)
+        ));
+        match AlvoBusca::PorId(42) {
+            AlvoBusca::PorId(id) => assert_eq!(id, 42),
+            _ => panic!("esperado PorId"),
+        }
+    }
+}
