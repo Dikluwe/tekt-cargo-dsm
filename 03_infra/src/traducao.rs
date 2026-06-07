@@ -15,7 +15,7 @@
 use std::collections::HashSet;
 
 use lente_core::entities::grafo::{
-    Aresta, Grafo, Kind, Modificadores, No, Path, Relation, UsesKind, Visibility,
+    Aresta, Grafo, Kind, Modificadores, No, Path, Posicao, Relation, UsesKind, Visibility,
 };
 
 use crate::ErroAdaptador;
@@ -49,6 +49,14 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
         // `lente_core` modela). `None` quando ausente.
         let cfg = no_dto.cfg.as_ref().map(|v| v.to_string());
 
+        // Prompt 0037: `position` propagada **verbatim** do DTO. Ausência
+        // (item embutido, JSON antigo) → `None`. Não é erro.
+        let position = no_dto.position.map(|p| Posicao {
+            file: p.file,
+            start_line: p.start_line,
+            end_line: p.end_line,
+        });
+
         nodes.push(No {
             id: no_dto.id,
             path,
@@ -65,6 +73,7 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
             cfg,
             macro_kind: no_dto.macro_kind,
             is_non_exhaustive: no_dto.is_non_exhaustive,
+            position,
         });
     }
 
@@ -140,6 +149,7 @@ mod tests {
             trait_ref: None,
             cfg: None,
             macro_kind: None,
+            position: None,
         }
     }
 
@@ -276,6 +286,141 @@ mod tests {
         .unwrap();
         assert_eq!(g.edges[0].relation, Relation::Owns);
         assert_eq!(g.edges[0].uses_kind, None);
+    }
+
+    // ---- prompt 0037: leitura de `position` ---------------------------------
+
+    use lente_core::entities::grafo::Posicao;
+
+    /// Nó com `position` preenchida no JSON → `No.position` carrega os três
+    /// campos verbatim (file absoluto, linhas 1-based).
+    #[test]
+    fn position_preenchida_no_json_e_lida_verbatim() {
+        let json = r#"{
+            "crate": "t",
+            "nodes": [
+                {
+                    "id": 1, "path": "t::a", "name": "a",
+                    "kind": "fn", "visibility": "pub",
+                    "position": {
+                        "file": "/abs/t/src/lib.rs",
+                        "start_line": 10,
+                        "end_line": 42
+                    }
+                }
+            ],
+            "edges": []
+        }"#;
+        let dto: GrafoDTO = serde_json::from_str(json).unwrap();
+        let g = traduzir(dto).unwrap();
+        let p = g.nodes[0].position.as_ref().expect("position presente");
+        assert_eq!(p.file, "/abs/t/src/lib.rs");
+        assert_eq!(p.start_line, 10);
+        assert_eq!(p.end_line, 42);
+    }
+
+    /// Nó sem `position` no JSON → `No.position == None`, sem erro. Caso
+    /// típico: item embutido (`core`/`alloc`).
+    #[test]
+    fn no_sem_position_no_json_vira_none() {
+        let json = r#"{
+            "crate": "t",
+            "nodes": [
+                { "id": 1, "path": "core::any", "name": "any", "kind": "mod", "visibility": "pub" }
+            ],
+            "edges": []
+        }"#;
+        let dto: GrafoDTO = serde_json::from_str(json).unwrap();
+        let g = traduzir(dto).unwrap();
+        assert_eq!(g.nodes[0].position, None);
+    }
+
+    /// JSON sem `position` em nenhum nó (simula fork antigo) → desserializa
+    /// sem erro, todos `position == None`. Tolerância aditiva preservada,
+    /// como o `uses_kind` do laudo 0034.
+    #[test]
+    fn fork_antigo_sem_position_em_nenhum_no_desserializa_sem_erro() {
+        let json = r#"{
+            "crate": "t",
+            "nodes": [
+                { "id": 1, "path": "t", "name": "t", "kind": "crate", "visibility": "pub" },
+                { "id": 2, "path": "t::a", "name": "a", "kind": "mod", "visibility": "pub" },
+                { "id": 3, "path": "t::a::f", "name": "f", "kind": "fn", "visibility": "pub" }
+            ],
+            "edges": []
+        }"#;
+        let dto: GrafoDTO = serde_json::from_str(json).unwrap();
+        let g = traduzir(dto).unwrap();
+        assert_eq!(g.nodes.len(), 3);
+        for n in &g.nodes {
+            assert_eq!(n.position, None, "fork antigo: nenhum nó tem position");
+        }
+    }
+
+    /// Mistura típica (egui pós-5ª-rodada): alguns nós com `position` (do
+    /// crate-alvo), outros sem (itens embutidos / stdlib).
+    #[test]
+    fn mistura_com_e_sem_position_e_resolvida_individualmente() {
+        let json = r#"{
+            "crate": "t",
+            "nodes": [
+                {
+                    "id": 1, "path": "t::a", "name": "a",
+                    "kind": "fn", "visibility": "pub",
+                    "position": {
+                        "file": "/abs/t/src/a.rs",
+                        "start_line": 1,
+                        "end_line": 5
+                    }
+                },
+                { "id": 2, "path": "core::any", "name": "any", "kind": "mod", "visibility": "pub" }
+            ],
+            "edges": []
+        }"#;
+        let dto: GrafoDTO = serde_json::from_str(json).unwrap();
+        let g = traduzir(dto).unwrap();
+        assert_eq!(
+            g.nodes[0].position,
+            Some(Posicao {
+                file: "/abs/t/src/a.rs".to_string(),
+                start_line: 1,
+                end_line: 5,
+            })
+        );
+        assert_eq!(g.nodes[1].position, None);
+    }
+
+    /// E2E `#[ignore]`: roda o fork no `lente_core` e confirma que **ao menos
+    /// um** nó traz `position` com `file` não-vazio e `start_line <=
+    /// end_line`. Fecha o ciclo "medir antes de afirmar" — se o fork em
+    /// PATH for antigo (anterior à 5ª rodada), o teste falha imediatamente.
+    #[test]
+    #[ignore]
+    fn e2e_lente_core_real_traz_position_em_pelo_menos_um_no() {
+        let alvo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("workspace root")
+            .join("01_core");
+        let g = crate::extrair_grafo(&alvo)
+            .expect("extração do lente_core deve funcionar");
+        let com_position = g.nodes.iter().filter(|n| n.position.is_some()).count();
+        assert!(
+            com_position > 0,
+            "fork instalado parece antigo: nenhum nó traz position"
+        );
+        // E coerência mínima das linhas para todos os preenchidos.
+        for n in &g.nodes {
+            if let Some(p) = &n.position {
+                assert!(!p.file.is_empty(), "file vazio em {}", n.path.as_str());
+                assert!(
+                    p.start_line <= p.end_line,
+                    "start_line > end_line em {} ({}..{})",
+                    n.path.as_str(),
+                    p.start_line,
+                    p.end_line
+                );
+            }
+        }
     }
 
     #[test]

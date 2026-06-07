@@ -131,6 +131,7 @@ mod tests {
             cfg: None,
             macro_kind: None,
             is_non_exhaustive: false,
+            position: None,
         }
     }
 
