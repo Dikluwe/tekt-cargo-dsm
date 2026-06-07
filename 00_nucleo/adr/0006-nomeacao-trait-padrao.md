@@ -98,3 +98,83 @@ M3 (superseded-by granular).
 - Laudos 0012/0013 — trait por nó no lente_core e lente_infra
 - Laudo 0014 — E2 em quarentena
 - `LESSONS.md` M3 — ciclo de vida de ADR (superseded-by granular)
+
+---
+
+## Ajuste (laudo 0042) — escada `trait_` → `trait_ref` → contador
+
+### Contexto
+
+A regra acima (nomeação por `trait_`, contador como piso) tem um buraco
+silencioso: quando todas as cópias colidentes compartilham o **mesmo**
+`trait_`, os nomes novos colidem entre si. Os testes unitários do
+`lente_resolve` só exercitavam `Display + Debug` (`trait_` distintos);
+o caso `From<T>` com múltiplas implementações genéricas nunca foi testado.
+A Arena do laudo 0041 expôs ao rodar contra grafos reais do próprio repo:
+
+- `lente_core::entities::grafo::Path::from`: 2 cópias, ambas
+  `trait_ = "From"`. O ADR original produzia `Path::<From>::from` ×2
+  (colidem); `trait_ref` real distingue (`From<&str>`, `From<String>`).
+- `lente_wiring::ErroLente::from`: 4 cópias, todas `trait_ = "From"`.
+  O ADR original produzia `ErroLente::<From>::from` ×4; `trait_ref`
+  distingue (`From<ErroFork>`, `From<ErroAdaptador>`, `From<ErroResolve>`,
+  `From<ErroRaio>`).
+
+Isso violava em silêncio o invariante "paths únicos após resolução" (laudo
+0010). A correção é uma **escada** — `trait_` → `trait_ref` → contador —
+parando no degrau mais curto que torna os nomes do conjunto colidente
+únicos.
+
+### Decisão (ajuste)
+
+A nomeação no caso `Distintos` passa a ser:
+
+1. **Degrau 1 — `<trait_>`**: nó com `trait_ = Some(t)` recebe
+   `Tipo::<t>::metodo`. Nó sem `trait_` (`None`) vai direto ao **degrau 3**
+   (métodos inerentes, macros — Limite 6).
+2. **Degrau 2 — `<trait_ref>`**: se 2 ou mais nós ficaram com o mesmo nome
+   no degrau 1 (mesmo `trait_`), reescrever **esses** por
+   `<trait_ref>` (a referência com argumentos: `From<&str>`). Usa
+   o **mesmo mecanismo** de inserção (`rsplit_once("::")` + `format!`)
+   — só muda o texto. `trait_ref` ausente nesses nós → cai no degrau 3.
+3. **Degrau 3 — contador `#N`** (piso, laudo 0010 D9): se ainda colidem
+   no degrau 2 (mesmo `trait_ref`, caso patológico não-Rust) ou se
+   `trait_ref = None` no grupo de `trait_` colididos, reescrever por
+   `#N` por **ordem de id no conjunto original** (não local) — preserva
+   o comportamento "id=1 ganha `<Display>`, id=2 sem trait → `#2`".
+
+O resultado: **todo path resolvido é único** (invariante restaurado).
+Não há regressão do caso `Display + Debug` (degrau 1 já distingue).
+
+### Por que emenda, não nova ADR
+
+A regra de fundo (trait por padrão, contador como piso, sem flag) **não
+muda**. O ajuste só amplia o "trait" do degrau 1 para uma escada
+de 3 degraus que sempre converge. É refinamento granular da mesma
+decisão, então fica registrado como emenda. (Caso M3 do `LESSONS.md`:
+ciclo de vida granular de ADR.)
+
+### Verificação no caso real
+
+`lab/proto-impacto-diff/` (Arena do laudo 0041) rodado pós-correção sobre
+o próprio repo:
+
+| Antes (0041) | Depois (0042) |
+|---|---|
+| 10 colisões: 8 distintos, **2 `DistintosPosRegraColide`** | 10 colisões: **10 distintos**, 0 colisões pós-regra |
+| `Path::<From>::from` ×2 (colidem) | `Path::<From<&str>>::from`, `Path::<From<String>>::from` |
+| `ErroLente::<From>::from` ×4 (colidem) | `ErroLente::<From<X>>::from` × 4 distintos |
+
+### Suíte
+
+11 testes do `lente_resolve` pré-0042 + 7 novos (`From<T>` 2 cópias,
+`From<T>` 4 cópias, `Display+Debug` não-regressão, `trait_ref` ausente
+caindo no contador, patológico `trait_ref` idênticos, mistura d1+d2,
+determinismo) = **18 testes** no `lente_resolve`, todos passando.
+Workspace: **220 verdes + 22 ignored** (= 213 + 7 novos).
+
+### Referências adicionais
+
+- Laudo 0041 — Arena expondo a violação latente em dados reais
+- Laudo 0042 — esta correção e suas evidências
+- Prompt 0042 — especificação da escada
