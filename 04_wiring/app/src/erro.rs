@@ -1,3 +1,9 @@
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/app-erro.md
+//! @prompt-hash 8f884580
+//! @layer L4
+//! @updated 2026-06-07
+//!
 //! Tradução de `lente_wiring::ErroLente` em mensagens de catálogo.
 //!
 //! O `Display` técnico do `ErroLente` e dos erros internos é **embutido

@@ -1,4 +1,8 @@
-//! Lineage: prompt 00_nucleo/prompt/0020-l2-cli.md
+//! Crystalline Lineage
+//! @prompt 00_nucleo/prompts/app-main.md
+//! @prompt-hash 41cdbe2d
+//! @layer L4
+//! @updated 2026-06-07
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
 //! Camada:  L4 — Fiação (app/ponto de composição). É o crate que **compõe** a
 //!          apresentação (`lente_cli`, L2) com a orquestração (`lente_wiring`,
