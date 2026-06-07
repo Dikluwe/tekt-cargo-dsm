@@ -203,7 +203,9 @@ dependencies = [
  "clap",
  "lente_catalogo",
  "lente_core",
+ "lente_estrutura",
  "lente_infra",
+ "lente_ranking",
  "lente_wiring",
  "serde_json",
 ]
