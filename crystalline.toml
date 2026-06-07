@@ -19,8 +19,19 @@ L1  = "01_core"
 L2  = "02_shell"
 L3  = "03_infra"
 L4  = "04_wiring"
-# `lab` NÃO é camada do lattice — é a Arena (código descartável, workspace
-# próprio; manifesto Tekt). Excluído da checagem (abaixo), não nucleado (0065).
+# `lab` (a Arena) NÃO é camada do lattice — é código descartável, workspace
+# próprio (manifesto Tekt). Aparece AQUI **e** em `[excluded]` por desígnio
+# (config (c), provada no 0066; decisão de armar o V10 no 0067):
+#   - em `[layers]` → dá ALVO ao V10 (QuarantineLeak): o registry deriva o layer
+#     do membro daqui, então SE um crate da Arena for ligado aos `[workspace].
+#     members` principais, um import produção→lab resolve para Layer::Lab e o V10
+#     dispara. Defesa em profundidade para esse caso futuro.
+#   - em `[excluded]` → poda o `lab/` do walk (V1 = 0): os arquivos da Arena não
+#     ganham cabeçalho de linhagem. O `[layers]` NÃO reintroduz V1 (o registry lê
+#     `[layers]` independentemente da poda do walk — provado em (c)).
+# Hoje a Arena é workspace SEPARADO (não é membro) → o V10 fica sem alvo de fato;
+# esta dupla presença é a arma carregada, não disparada.
+lab = "lab"
 
 [excluded]
 build      = "target"
