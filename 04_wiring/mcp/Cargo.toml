@@ -1,0 +1,21 @@
+[package]
+name = "lente_mcp"
+version = "0.1.0"
+edition = "2024"
+
+# Boca MCP (prompt 0070, Momento B da proposta §4): binário `lente-mcp` que serve
+# a lente a um agente por MCP/stdio. Ponto de entrada L4 (precedente 0057). As
+# deps externas do protocolo ficam SÓ aqui (política "deps externas só na boca").
+[[bin]]
+name = "lente-mcp"
+path = "src/main.rs"
+
+[dependencies]
+# Os pipelines (L4) e o vocabulário de pedido re-exportado.
+lente_wiring = { path = ".." }
+# Tipos de pedido do L1 (FonteGrafo/AlvoBusca/Escopo) e o newtype Path.
+lente_core = { path = "../../01_core/core" }
+# A montagem JSON existente (L2) — o MESMO contrato que a CLI emite (não duplicar).
+lente_cli = { path = "../../02_shell/cli" }
+# JSON-RPC à mão: só serde_json (já dep do workspace). Sem SDK/async — ver laudo 0070.
+serde_json = "1"

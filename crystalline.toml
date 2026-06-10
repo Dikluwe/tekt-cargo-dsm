@@ -64,6 +64,9 @@ cli_lib               = "02_shell/cli/src/lib.rs"
 # Arquivo de teste de integração (`tests/`): harness de verificação, não unidade
 # arquitetural — não se nucleia.
 filtro_e2e_test       = "01_core/filtro/tests/e2e_lente_core.rs"
+# E2E por stdio da boca MCP (tests/, 0070): sobe o binário real — harness, não
+# unidade de arquitetura.
+mcp_e2e_test          = "04_wiring/mcp/tests/e2e_stdio.rs"
 
 # Módulos internos dos crates L1 — usados pela resolução de `crate::`.
 [module_layers]
