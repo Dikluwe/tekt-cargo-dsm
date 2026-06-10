@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash c3f4d3c4
+//! @prompt-hash d8dd3948
 //! @layer L2
 //! @updated 2026-06-07
 //!
@@ -107,6 +107,17 @@ pub struct Cli {
     /// Saída em texto humano-legível (default é JSON).
     #[arg(long, help = lente_catalogo::HELP_TEXT)]
     pub text: bool,
+
+    /// Vista DSM em HTML autocontido (prompt 0071). Só vale com `--estrutura`;
+    /// gera um arquivo (ver `--saida`) e imprime o caminho. Ortogonal a
+    /// `--escopo`/`--so-referencia` (a vista respeita e declara o escopo).
+    #[arg(long, requires = "estrutura", conflicts_with = "text", help = lente_catalogo::HELP_HTML)]
+    pub html: bool,
+
+    /// Caminho do arquivo HTML no modo `--html` (default:
+    /// `lente-estrutura.html` no diretório atual).
+    #[arg(long, requires = "html", help = lente_catalogo::HELP_SAIDA)]
+    pub saida: Option<std::path::PathBuf>,
 
     /// Inclui lista completa de impactados.
     #[arg(long, help = lente_catalogo::HELP_VERBOSE)]

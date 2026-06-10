@@ -131,6 +131,24 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
     };
     match lente_wiring::analisar_estrutura(fonte, escopo, modo_uses) {
         Ok(estrut) => {
+            // Prompt 0071: vista HTML — grava o arquivo e devolve o caminho
+            // (stdout só leva a mensagem; o HTML vai pro disco).
+            if cli.html {
+                let html =
+                    saida::formatar_estrutura_html(&estrut, escopo, modo_uses, &rotulo_pacote(cli));
+                let caminho = cli
+                    .saida
+                    .clone()
+                    .unwrap_or_else(|| std::path::PathBuf::from(cat::DSM_SAIDA_PADRAO));
+                std::fs::write(&caminho, html).map_err(|e| SaidaErro {
+                    codigo: 1,
+                    mensagem: cat::DSM_ERRO_ESCRITA.render(&[
+                        ("caminho", &caminho.display().to_string()),
+                        ("detalhe", &e.to_string()),
+                    ]),
+                })?;
+                return Ok(cat::DSM_ESCRITO.render(&[("caminho", &caminho.display().to_string())]));
+            }
             let modo = saida::Modo {
                 text: cli.text,
                 verbose: cli.verbose,
@@ -142,6 +160,20 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
             mensagem: erro::traduzir(&e, &contexto),
         }),
     }
+}
+
+/// Rótulo do pacote para o cabeçalho da vista HTML: o `--pacote` se houver,
+/// senão o nome-base do `--grafo`, senão um genérico.
+fn rotulo_pacote(cli: &args::Cli) -> String {
+    if let Some(p) = &cli.pacote {
+        return p.clone();
+    }
+    if let Some(g) = &cli.grafo {
+        if let Some(stem) = g.file_stem().and_then(|s| s.to_str()) {
+            return stem.to_string();
+        }
+    }
+    "estrutura".to_string()
 }
 
 /// Pipeline do modo ranking. Erros do wiring viram `SaidaErro` pela mesma
@@ -280,6 +312,8 @@ mod tests {
             repo: None,
             vista: None,
             text: false,
+            html: false,
+            saida: None,
             verbose: false,
         }
     }
@@ -353,6 +387,8 @@ mod tests {
             repo: None,
             vista: None,
             text: false,
+            html: false,
+            saida: None,
             verbose: false,
         };
         cli.alvo = Some("foo".to_string());
@@ -378,6 +414,8 @@ mod tests {
             repo: None,
             vista: None,
             text: false,
+            html: false,
+            saida: None,
             verbose: false,
         };
         let err = run(cli).unwrap_err();
@@ -404,6 +442,8 @@ mod tests {
             repo: None,
             vista: None,
             text: true,
+            html: false,
+            saida: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E deve funcionar");
@@ -579,11 +619,57 @@ mod tests {
             repo: None,
             vista: None,
             text: true,
+            html: false,
+            saida: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E estrutura deve funcionar");
         assert!(s.contains("Estrutura de módulos"));
         assert!(s.contains("nenhum ciclo"));
+    }
+
+    /// E2E real (prompt 0071): `--estrutura --html` grava um HTML autocontido
+    /// com a grade do dado real do `lente_core` (DADOS embutido, peso, pacote).
+    /// Confirma o caminho CLI → wiring → montagem HTML → arquivo.
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_lente_core_html() {
+        let saida = std::env::temp_dir().join("lente-e2e-estrutura-0071.html");
+        let _ = std::fs::remove_file(&saida);
+        let cli = args::Cli {
+            grafo: None,
+            pacote: Some("lente_core".to_string()),
+            alvo: None,
+            alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: true,
+            so_referencia: false,
+            diff: false,
+            repo: None,
+            vista: None,
+            text: false,
+            html: true,
+            saida: Some(saida.clone()),
+            verbose: false,
+        };
+        let msg = run(cli).expect("E2E --html deve funcionar");
+        assert!(
+            msg.contains(saida.to_str().unwrap()),
+            "a mensagem deve informar o caminho: {}",
+            msg
+        );
+        let html = std::fs::read_to_string(&saida).expect("HTML gravado");
+        assert!(html.contains("const DADOS ="), "dado embutido");
+        assert!(html.contains("\"pacote\":\"lente_core\""));
+        assert!(
+            html.contains("lente_core::entities::grafo"),
+            "a grade do dado real"
+        );
+        assert!(html.contains("\"peso\":"), "peso de acoplamento");
+        assert!(!html.contains("fetch("), "autocontido, sem rede");
+        let _ = std::fs::remove_file(&saida);
     }
 
     /// E2E real: roda o ranking ponta-a-ponta contra o `lente_core` no
@@ -607,6 +693,8 @@ mod tests {
             repo: None,
             vista: None,
             text: true,
+            html: false,
+            saida: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E ranking deve funcionar");
