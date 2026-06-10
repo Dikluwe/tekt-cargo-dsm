@@ -405,6 +405,16 @@ pub fn formatar_estrutura_html(
         cat::JSON_LIMITE.to_string(),
         serde_json::Value::String(cat::DSM_LIMITE_HTML.to_string()),
     );
+    // Prompt 0072: quando o escopo filtrado (seu-codigo) está ativo — o default
+    // da vista — o cabeçalho destaca o recorte e como desfazê-lo.
+    let dica = match escopo {
+        Escopo::SeuCodigo => cat::DSM_ESCOPO_DICA,
+        Escopo::Completo => "",
+    };
+    map.insert(
+        cat::JSON_ESCOPO_DICA.to_string(),
+        serde_json::Value::String(dica.to_string()),
+    );
     let dados = serde_json::Value::Object(map).to_string();
     // Injeção única (a tela lê tudo de `DADOS`). Placeholder textual no template.
     include_str!("dsm_template.html").replace("__DADOS_JSON__", &dados)
@@ -1095,6 +1105,8 @@ mod tests {
         assert!(!s.contains("fetch("));
         assert!(!s.contains("src=\"http"));
         assert!(!s.contains("href=\"http"));
+        // Escopo completo → sem dica de recorte.
+        assert!(s.contains("\"escopo_dica\":\"\""));
         // Determinístico.
         let s2 = formatar_estrutura_html(
             &estrutura_amostra(),
@@ -1103,6 +1115,21 @@ mod tests {
             "meu_pacote",
         );
         assert_eq!(s, s2);
+    }
+
+    #[test]
+    fn html_seu_codigo_declara_dica_de_recorte() {
+        // Prompt 0072: no escopo seu-codigo (default da vista), o cabeçalho
+        // declara o recorte e como obter o completo.
+        let s = formatar_estrutura_html(
+            &estrutura_amostra(),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+            "k",
+        );
+        assert!(s.contains("\"escopo\":\"seu-codigo\""));
+        assert!(s.contains(cat::DSM_ESCOPO_DICA));
+        assert!(s.contains("--completo"));
     }
 
     #[test]

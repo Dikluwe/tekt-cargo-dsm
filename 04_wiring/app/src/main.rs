@@ -125,6 +125,18 @@ fn run(cli: args::Cli) -> Result<String, SaidaErro> {
 /// (a vista é global); erros do wiring viram `SaidaErro` pela mesma
 /// tradução do per-nó.
 fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<String, SaidaErro> {
+    // Prompt 0072: a vista HTML (superfície de consumo do humano) inverte o
+    // default — `seu-codigo`, salvo `--completo`. A CLI `--text`/`--json` segue
+    // o escopo recebido (contrato inalterado). A saída sempre declara o escopo.
+    let escopo = if cli.html {
+        if cli.completo {
+            Escopo::Completo
+        } else {
+            Escopo::SeuCodigo
+        }
+    } else {
+        escopo
+    };
     let modo_uses = escolher_modo_uses(cli);
     let contexto = erro::ContextoErro {
         alvo_informado: String::new(),
@@ -314,6 +326,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         }
     }
@@ -389,6 +402,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         };
         cli.alvo = Some("foo".to_string());
@@ -416,6 +430,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         };
         let err = run(cli).unwrap_err();
@@ -444,6 +459,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         };
         let s = run(cli).expect("E2E deve funcionar");
@@ -621,6 +637,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         };
         let s = run(cli).expect("E2E estrutura deve funcionar");
@@ -652,6 +669,7 @@ mod tests {
             text: false,
             html: true,
             saida: Some(saida.clone()),
+            completo: false,
             verbose: false,
         };
         let msg = run(cli).expect("E2E --html deve funcionar");
@@ -669,6 +687,47 @@ mod tests {
         );
         assert!(html.contains("\"peso\":"), "peso de acoplamento");
         assert!(!html.contains("fetch("), "autocontido, sem rede");
+        // Prompt 0072: a vista sem flag tem default seu-codigo — sysroot fora,
+        // e o cabeçalho declara o recorte.
+        assert!(
+            html.contains("\"escopo\":\"seu-codigo\""),
+            "default da vista é seu-codigo"
+        );
+        assert!(!html.contains("\"core::fmt\""), "sysroot fora do recorte");
+        assert!(html.contains("--completo"), "cabeçalho diz como obter o completo");
+        let _ = std::fs::remove_file(&saida);
+    }
+
+    /// Prompt 0072: `--html --completo` restaura o escopo completo (sysroot
+    /// volta), provando que o caminho de volta existe.
+    #[test]
+    #[ignore]
+    fn e2e_estrutura_lente_core_html_completo() {
+        let saida = std::env::temp_dir().join("lente-e2e-estrutura-0072-completo.html");
+        let _ = std::fs::remove_file(&saida);
+        let cli = args::Cli {
+            grafo: None,
+            pacote: Some("lente_core".to_string()),
+            alvo: None,
+            alvo_id: None,
+            ranking: false,
+            top: 10,
+            filtrar_stdlib: false,
+            estrutura: true,
+            so_referencia: false,
+            diff: false,
+            repo: None,
+            vista: None,
+            text: false,
+            html: true,
+            saida: Some(saida.clone()),
+            completo: true,
+            verbose: false,
+        };
+        run(cli).expect("E2E --html --completo deve funcionar");
+        let html = std::fs::read_to_string(&saida).expect("HTML gravado");
+        assert!(html.contains("\"escopo\":\"completo\""), "escopo completo");
+        assert!(html.contains("core::fmt"), "sysroot de volta no completo");
         let _ = std::fs::remove_file(&saida);
     }
 
@@ -695,6 +754,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            completo: false,
             verbose: false,
         };
         let s = run(cli).expect("E2E ranking deve funcionar");

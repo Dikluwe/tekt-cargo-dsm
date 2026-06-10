@@ -115,7 +115,8 @@ fn lista_ferramentas() -> Value {
                     `Uses` do grafo de dependências — quem está no raio de impacto. NÃO afirma \
                     que vai quebrar nem vê impacto comportamental; o humano julga. Devolve o \
                     mesmo JSON do `lente --diff` (tocados com raio, raio combinado, censo, \
-                    fantasmas).",
+                    fantasmas). Escopo: `completo` (inclui sysroot/stdlib no raio) — o recorte \
+                    `seu-codigo` ainda não tem parâmetro aqui (ver laudo 0072).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -136,7 +137,7 @@ fn lista_ferramentas() -> Value {
                         "grafo": { "type": "string", "description": "Caminho de um grafo.json pronto. Use isto OU `pacote`." },
                         "alvo": { "type": "string", "description": "Path canônico do alvo (ex.: crate::mod::Item). Use isto OU `alvo_id`." },
                         "alvo_id": { "type": "integer", "description": "Id do alvo no grafo. Use isto OU `alvo`." },
-                        "escopo": { "type": "string", "enum": ["completo", "seu-codigo"], "description": "completo (default): inclui stdlib. seu-codigo: esconde sysroot." }
+                        "escopo": { "type": "string", "enum": ["completo", "seu-codigo"], "description": "seu-codigo (DEFAULT — esconde sysroot/stdlib) | completo (inclui stdlib). Passe \"completo\" para o grafo cru." }
                     }
                 }
             },
@@ -151,7 +152,7 @@ fn lista_ferramentas() -> Value {
                         "pacote": { "type": "string", "description": "Nome do pacote — invoca o fork. Use isto OU `grafo`." },
                         "grafo": { "type": "string", "description": "Caminho de um grafo.json pronto. Use isto OU `pacote`." },
                         "top": { "type": "integer", "description": "N do top-N. Default 10." },
-                        "escopo": { "type": "string", "enum": ["completo", "seu-codigo"], "description": "completo (default) | seu-codigo." }
+                        "escopo": { "type": "string", "enum": ["completo", "seu-codigo"], "description": "seu-codigo (DEFAULT — esconde sysroot/stdlib) | completo (inclui stdlib)." }
                     }
                 }
             }
@@ -235,9 +236,12 @@ fn construir_fonte(args: &Value) -> Result<FonteGrafo, String> {
 }
 
 fn parse_escopo(args: &Value) -> Result<Escopo, String> {
+    // Prompt 0072: superfície de consumo do agente — o default sem `escopo`
+    // virou `seu-codigo` (sysroot fora; o 0070 mediu o jusante afogado em stdlib).
+    // `completo` continua a um parâmetro de distância.
     match args.get("escopo").and_then(|v| v.as_str()) {
-        None | Some("completo") => Ok(Escopo::Completo),
-        Some("seu-codigo") => Ok(Escopo::SeuCodigo),
+        None | Some("seu-codigo") => Ok(Escopo::SeuCodigo),
+        Some("completo") => Ok(Escopo::Completo),
         Some(outro) => Err(format!(
             "escopo inválido: `{}` (use `completo` ou `seu-codigo`)",
             outro
@@ -335,7 +339,13 @@ mod tests {
 
     #[test]
     fn escopo_default_e_invalido() {
-        assert!(matches!(parse_escopo(&json!({})), Ok(Escopo::Completo)));
+        // Re-ancorado pelo prompt 0072: o DEFAULT (sem `escopo`) virou seu-codigo
+        // nesta superfície de consumo. `completo` segue a um parâmetro de distância.
+        assert!(matches!(parse_escopo(&json!({})), Ok(Escopo::SeuCodigo)));
+        assert!(matches!(
+            parse_escopo(&json!({"escopo":"completo"})),
+            Ok(Escopo::Completo)
+        ));
         assert!(matches!(
             parse_escopo(&json!({"escopo":"seu-codigo"})),
             Ok(Escopo::SeuCodigo)
