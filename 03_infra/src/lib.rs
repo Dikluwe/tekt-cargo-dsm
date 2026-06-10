@@ -263,7 +263,8 @@ mod tests {
         let alvo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .expect("workspace root")
-            .join("01_core");
+            .join("01_core")
+            .join("core");
 
         let g = extrair_grafo(&alvo).expect("extração de lente_core deve funcionar agora");
 

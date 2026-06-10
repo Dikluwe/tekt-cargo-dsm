@@ -17,7 +17,7 @@ fn extrair_lente_core() -> Grafo {
     let raiz = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("workspace root")
-        .join("01_core");
+        .join("core");
     lente_infra::extrair_grafo(&raiz)
         .expect("extração do lente_core real deve funcionar")
 }
@@ -44,17 +44,20 @@ fn filtra_lente_core_remove_sysroot_preserva_alvo() {
         );
     }
 
-    // Contagem esperada (ancorada na Fase 1 do laudo 0025): 108 antes, 91
-    // depois. Se variar com versão do fork, ajustar com registro no laudo.
+    // Contagem esperada — re-ancorada em 2026-06-10 (prompt 0070, Fase 0):
+    // 200 antes, 178 depois (= alvo). O laudo 0025 ancorou 108/91 sobre o
+    // crate `lente_core` MONOLÍTICO pré-0050; a reestrutura 0050 e a expansão
+    // do domínio (uniao/mapeamento/consulta/resultado_diff) ~dobraram o crate.
+    // Banda larga (~±15%): afirma a ordem de grandeza, não o número exato.
     assert!(
-        nodes_antes >= 100 && nodes_antes <= 130,
-        "nodes_antes fora da banda esperada: {}",
+        nodes_antes >= 170 && nodes_antes <= 230,
+        "nodes_antes fora da banda esperada (re-âncora 0070: ~200): {}",
         nodes_antes
     );
     let alvo = f.nodes.iter().filter(|n| n.crate_name == "lente_core").count();
     assert!(
-        alvo >= 80 && alvo <= 110,
-        "alvo fora da banda esperada (laudo 0025: ~91): {}",
+        alvo >= 150 && alvo <= 205,
+        "alvo fora da banda esperada (re-âncora 0070: ~178): {}",
         alvo
     );
 }
