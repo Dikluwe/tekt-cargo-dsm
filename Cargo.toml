@@ -12,5 +12,6 @@ members = [
     "03_infra",
     "04_wiring",
     "04_wiring/app",
+    "04_wiring/mcp",
 ]
 exclude = ["03_infra/tests/fixtures/crate-amostra"]

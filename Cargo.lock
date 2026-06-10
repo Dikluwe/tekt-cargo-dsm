@@ -258,6 +258,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lente_mcp"
+version = "0.1.0"
+dependencies = [
+ "lente_cli",
+ "lente_core",
+ "lente_wiring",
+ "serde_json",
+]
+
+[[package]]
 name = "lente_ranking"
 version = "0.0.0"
 dependencies = [
