@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash d8dd3948
+//! @prompt-hash 6fac218f
 //! @layer L2
 //! @updated 2026-06-07
 //!
@@ -118,6 +118,12 @@ pub struct Cli {
     /// `lente-estrutura.html` no diretório atual).
     #[arg(long, requires = "html", help = lente_catalogo::HELP_SAIDA)]
     pub saida: Option<std::path::PathBuf>,
+
+    /// Restaura o escopo `completo` (com sysroot) na vista `--html`, cujo
+    /// default virou `seu-codigo` no prompt 0072. Na CLI `--text`/`--json` o
+    /// default segue `completo` (esta flag não tem efeito lá).
+    #[arg(long, requires = "html", help = lente_catalogo::HELP_COMPLETO)]
+    pub completo: bool,
 
     /// Inclui lista completa de impactados.
     #[arg(long, help = lente_catalogo::HELP_VERBOSE)]

@@ -142,6 +142,12 @@ pub const HELP_VERBOSE: &str = "Inclui lista completa de itens impactados";
 pub const HELP_HTML: &str =
     "Gera a DSM de estrutura como HTML autocontido e imprime o caminho (só com --estrutura)";
 pub const HELP_SAIDA: &str = "Caminho do HTML (--html). Default: lente-estrutura.html no cwd";
+/// Prompt 0072: a vista `--html` tem default `seu-codigo`; esta flag restaura o `completo`.
+pub const HELP_COMPLETO: &str =
+    "Inclui sysroot/stdlib na vista --html (restaura o escopo completo; default da vista é seu-codigo)";
+/// Dica de escopo no cabeçalho da vista quando o recorte filtrado está ativo (0072).
+pub const DSM_ESCOPO_DICA: &str =
+    " (sysroot/stdlib ocultos — use --completo para o escopo completo)";
 /// Nome de arquivo default do `--html` (cwd).
 pub const DSM_SAIDA_PADRAO: &str = "lente-estrutura.html";
 /// Mensagem impressa após gravar a vista (stdout do modo `--html`).
@@ -242,6 +248,7 @@ pub const JSON_BLOCOS: &str = "blocos";
 // Prompt 0071 — vista DSM em HTML (campos extras do dado embutido na tela).
 pub const JSON_PACOTE: &str = "pacote";
 pub const JSON_LIMITE: &str = "limite";
+pub const JSON_ESCOPO_DICA: &str = "escopo_dica";
 /// Declaração de limite (proposta §3) embutida no cabeçalho da vista HTML — a
 /// honestidade é parte da interface, como nas descrições do MCP (0070). HTML
 /// curto (renderizado dentro de `<p class="limite">`).
