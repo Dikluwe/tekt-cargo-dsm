@@ -4,7 +4,7 @@
 (pipeline `comparar`) + L2 (saída texto + JSON). Os pipelines existentes
 **não mudam**; a extração de cada lado é a que já existe (`--estrutura`).
 **Criado em**: 2026-06-10
-**Estado**: `PROPOSTO`
+**Estado**: `EXECUTADO` (laudo `00_nucleo/lessons/0074-paridade_como_dado.md`)
 **Decisões de origem**:
 - **Requisito do autor** (2026-06-10): "poder ver um projeto e sua
   refatoração lado a lado para conseguir ver como está a paridade". Os

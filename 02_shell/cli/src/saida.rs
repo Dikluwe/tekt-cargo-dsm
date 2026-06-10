@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash e6ce77c7
+//! @prompt-hash d791eafe
 //! @layer L2
 //! @updated 2026-06-07
 //!
@@ -23,7 +23,8 @@ use lente_core::entities::grafo::Path as PathGrafo;
 // a CLi não importa mais tipos da fachada `lente_wiring` aqui.
 use lente_core::domain::consulta::{Escopo, ModoUses};
 use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
-use lente_estrutura::{EstruturaModulos, RaioModulo};
+use lente_estrutura::{DependenciaModulo, EstruturaModulos, RaioModulo};
+use lente_comparacao::{ArestaComparada, Comparacao};
 use lente_ranking::ItemRanking;
 
 use crate::args::Vista;
@@ -858,6 +859,189 @@ fn nome_curto(path: &str, crate_nome: &str) -> String {
         .to_string()
 }
 
+// =============================================================================
+// Modo paridade (`--comparar`) — prompt 0074
+// =============================================================================
+
+/// Formata a [`Comparacao`] (prompt 0074): texto humano ou `--json` (contrato da
+/// tela lado a lado). O escopo/modo são os MESMOS dos dois lados; o cabeçalho os
+/// declara uma vez, junto do **limite do pareamento** (honestidade na saída).
+pub fn formatar_comparacao(
+    comp: &Comparacao,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    modo: &Modo,
+) -> String {
+    if modo.text {
+        formatar_comparacao_texto(comp, escopo, modo_uses)
+    } else {
+        formatar_comparacao_json(comp, escopo, modo_uses)
+    }
+}
+
+fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUses) -> String {
+    let mut s = String::new();
+    s.push_str(&cat::COMPARAR_CABECALHO.render(&[
+        ("antes", &comp.nome_antes),
+        ("depois", &comp.nome_depois),
+        ("escopo", escopo_texto(escopo)),
+        ("uses", modo_uses_texto(modo_uses)),
+    ]));
+    s.push('\n');
+    s.push_str(cat::COMPARAR_LIMITE);
+    s.push_str("\n\n");
+
+    s.push_str(cat::COMPARAR_TIT_RESUMO);
+    s.push('\n');
+    s.push_str(&format!(
+        "  pareados: {}  ·  só-antes: {}  ·  só-depois: {}\n",
+        comp.pareados.len(),
+        comp.sem_par_antes.len(),
+        comp.sem_par_depois.len()
+    ));
+    s.push_str(&format!(
+        "  arestas: comuns {}  ·  sumiram {}  ·  apareceram {}\n",
+        comp.arestas_comuns.len(),
+        comp.arestas_so_antes.len(),
+        comp.arestas_so_depois.len()
+    ));
+
+    let lista = |s: &mut String, titulo: &str, paths: &[PathGrafo]| {
+        if !paths.is_empty() {
+            s.push('\n');
+            s.push_str(titulo);
+            s.push('\n');
+            for p in paths {
+                s.push_str(&format!("  {}\n", p.as_str()));
+            }
+        }
+    };
+    lista(&mut s, cat::COMPARAR_TIT_SEM_PAR_ANTES, &comp.sem_par_antes);
+    lista(&mut s, cat::COMPARAR_TIT_SEM_PAR_DEPOIS, &comp.sem_par_depois);
+
+    let arestas = |s: &mut String, titulo: &str, ar: &[DependenciaModulo]| {
+        if !ar.is_empty() {
+            s.push('\n');
+            s.push_str(titulo);
+            s.push('\n');
+            for d in ar {
+                s.push_str(&format!("  {} → {} (peso {})\n", d.de.as_str(), d.para.as_str(), d.peso));
+            }
+        }
+    };
+    arestas(&mut s, cat::COMPARAR_TIT_ARESTAS_SO_ANTES, &comp.arestas_so_antes);
+    arestas(&mut s, cat::COMPARAR_TIT_ARESTAS_SO_DEPOIS, &comp.arestas_so_depois);
+
+    // Maiores deltas de peso entre as arestas comuns (|depois - antes|), top 10.
+    let mut deltas: Vec<&ArestaComparada> = comp.arestas_comuns.iter().collect();
+    deltas.sort_by(|a, b| {
+        let da = (b.peso_depois as i64 - b.peso_antes as i64).abs();
+        let db = (a.peso_depois as i64 - a.peso_antes as i64).abs();
+        da.cmp(&db)
+    });
+    let deltas: Vec<&&ArestaComparada> = deltas
+        .iter()
+        .filter(|d| d.peso_antes != d.peso_depois)
+        .take(10)
+        .collect();
+    if !deltas.is_empty() {
+        s.push('\n');
+        s.push_str(cat::COMPARAR_TIT_DELTAS_PESO);
+        s.push('\n');
+        for d in deltas {
+            s.push_str(&format!(
+                "  {} → {} : {} → {}\n",
+                d.de.as_str(),
+                d.para.as_str(),
+                d.peso_antes,
+                d.peso_depois
+            ));
+        }
+    }
+
+    s.push('\n');
+    s.push_str(cat::COMPARAR_TIT_CICLOS);
+    s.push('\n');
+    s.push_str(&format!(
+        "  antes:  {} ciclo(s), maior SCC {}\n",
+        comp.ciclos_antes.quantidade, comp.ciclos_antes.maior
+    ));
+    s.push_str(&format!(
+        "  depois: {} ciclo(s), maior SCC {}\n",
+        comp.ciclos_depois.quantidade, comp.ciclos_depois.maior
+    ));
+    s
+}
+
+fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUses) -> String {
+    use serde_json::Value;
+    let s = |v: &str| Value::String(v.to_string());
+    let n = |v: usize| Value::Number(v.into());
+    let mut root = serde_json::Map::new();
+    root.insert(cat::JSON_ESCOPO.to_string(), s(escopo_texto(escopo)));
+    root.insert(cat::JSON_MODO_USES.to_string(), s(modo_uses_texto(modo_uses)));
+    root.insert(cat::JSON_LIMITE_PAREAMENTO.to_string(), s(cat::COMPARAR_LIMITE));
+    root.insert(cat::JSON_NOME_ANTES.to_string(), s(&comp.nome_antes));
+    root.insert(cat::JSON_NOME_DEPOIS.to_string(), s(&comp.nome_depois));
+
+    let pareados: Vec<Value> = comp
+        .pareados
+        .iter()
+        .map(|(a, b)| {
+            let mut o = serde_json::Map::new();
+            o.insert(cat::JSON_DE.to_string(), s(a.as_str()));
+            o.insert(cat::JSON_PARA.to_string(), s(b.as_str()));
+            Value::Object(o)
+        })
+        .collect();
+    root.insert(cat::JSON_PAREADOS.to_string(), Value::Array(pareados));
+
+    let paths = |v: &[PathGrafo]| Value::Array(v.iter().map(|p| s(p.as_str())).collect());
+    root.insert(cat::JSON_SEM_PAR_ANTES.to_string(), paths(&comp.sem_par_antes));
+    root.insert(cat::JSON_SEM_PAR_DEPOIS.to_string(), paths(&comp.sem_par_depois));
+
+    let comuns: Vec<Value> = comp
+        .arestas_comuns
+        .iter()
+        .map(|a| {
+            let mut o = serde_json::Map::new();
+            o.insert(cat::JSON_DE.to_string(), s(a.de.as_str()));
+            o.insert(cat::JSON_PARA.to_string(), s(a.para.as_str()));
+            o.insert(cat::JSON_PESO_ANTES.to_string(), n(a.peso_antes));
+            o.insert(cat::JSON_PESO_DEPOIS.to_string(), n(a.peso_depois));
+            Value::Object(o)
+        })
+        .collect();
+    root.insert(cat::JSON_ARESTAS_COMUNS.to_string(), Value::Array(comuns));
+
+    let deps = |v: &[DependenciaModulo]| {
+        Value::Array(
+            v.iter()
+                .map(|d| {
+                    let mut o = serde_json::Map::new();
+                    o.insert(cat::JSON_DE.to_string(), s(d.de.as_str()));
+                    o.insert(cat::JSON_PARA.to_string(), s(d.para.as_str()));
+                    o.insert(cat::JSON_PESO.to_string(), n(d.peso));
+                    Value::Object(o)
+                })
+                .collect(),
+        )
+    };
+    root.insert(cat::JSON_ARESTAS_SO_ANTES.to_string(), deps(&comp.arestas_so_antes));
+    root.insert(cat::JSON_ARESTAS_SO_DEPOIS.to_string(), deps(&comp.arestas_so_depois));
+
+    let ciclos = |c: &lente_comparacao::ResumoCiclos| {
+        let mut o = serde_json::Map::new();
+        o.insert(cat::JSON_QUANTIDADE.to_string(), n(c.quantidade));
+        o.insert(cat::JSON_MAIOR.to_string(), n(c.maior));
+        Value::Object(o)
+    };
+    root.insert(cat::JSON_CICLOS_ANTES.to_string(), ciclos(&comp.ciclos_antes));
+    root.insert(cat::JSON_CICLOS_DEPOIS.to_string(), ciclos(&comp.ciclos_depois));
+
+    Value::Object(root).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1190,6 +1374,67 @@ mod tests {
             "meu_pacote",
         );
         assert_eq!(s, s2);
+    }
+
+    fn comparacao_amostra() -> Comparacao {
+        Comparacao {
+            nome_antes: "velho".to_string(),
+            nome_depois: "novo".to_string(),
+            pareados: vec![(Path::from("velho::a"), Path::from("novo::a"))],
+            sem_par_antes: vec![Path::from("velho::sumiu")],
+            sem_par_depois: vec![Path::from("novo::apareceu")],
+            arestas_comuns: vec![ArestaComparada {
+                de: Path::from("velho::a"),
+                para: Path::from("velho::b"),
+                peso_antes: 2,
+                peso_depois: 7,
+            }],
+            arestas_so_antes: vec![DependenciaModulo {
+                de: Path::from("velho::a"),
+                para: Path::from("velho::c"),
+                peso: 1,
+            }],
+            arestas_so_depois: vec![],
+            ciclos_antes: lente_comparacao::ResumoCiclos { quantidade: 1, maior: 5 },
+            ciclos_depois: lente_comparacao::ResumoCiclos { quantidade: 0, maior: 0 },
+        }
+    }
+
+    #[test]
+    fn comparacao_texto_traz_cabecalho_limite_e_secoes() {
+        let s = formatar_comparacao(
+            &comparacao_amostra(),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+            &Modo { text: true, verbose: false },
+        );
+        assert!(s.contains("velho") && s.contains("novo"));
+        assert!(s.contains("escopo=seu-codigo"));
+        assert!(s.contains(cat::COMPARAR_LIMITE)); // limite do pareamento na saída
+        assert!(s.contains("velho::sumiu"));
+        assert!(s.contains("novo::apareceu"));
+        assert!(s.contains("velho::c")); // aresta que sumiu
+        assert!(s.contains("2 → 7")); // delta de peso
+        assert!(s.contains("antes:  1 ciclo") && s.contains("depois: 0 ciclo"));
+    }
+
+    #[test]
+    fn comparacao_json_tem_o_contrato() {
+        let s = formatar_comparacao(
+            &comparacao_amostra(),
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+            &Modo { text: false, verbose: false },
+        );
+        assert!(s.contains("\"nome_antes\":\"velho\""));
+        assert!(s.contains("\"pareados\":[{\"de\":\"velho::a\",\"para\":\"novo::a\"}]"));
+        assert!(s.contains("\"sem_par_antes\":[\"velho::sumiu\"]"));
+        assert!(s.contains("\"peso_antes\":2") && s.contains("\"peso_depois\":7"));
+        assert!(s.contains("\"arestas_so_antes\":[{\"de\":\"velho::a\",\"para\":\"velho::c\",\"peso\":1}]"));
+        // serde_json::Map ordena as chaves (BTreeMap): maior < quantidade.
+        assert!(s.contains("\"ciclos_antes\":{\"maior\":5,\"quantidade\":1}"));
+        assert!(s.contains("\"limite_pareamento\":"));
+        assert!(s.contains("\"escopo\":\"seu-codigo\""));
     }
 
     #[test]

@@ -88,6 +88,11 @@ fn run(cli: args::Cli) -> Result<String, SaidaErro> {
     if cli.diff {
         return run_diff(&cli);
     }
+    // Modo paridade (prompt 0074): opera em DUAS raízes, não usa `--grafo`/
+    // `--pacote`. Roteado antes de `construir_fonte`.
+    if cli.comparar {
+        return run_comparar(&cli);
+    }
 
     let fonte = construir_fonte(&cli)?;
     let escopo = escolher_escopo(&cli);
@@ -171,6 +176,52 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
             codigo: 1,
             mensagem: erro::traduzir(&e, &contexto),
         }),
+    }
+}
+
+/// Pipeline do modo paridade (prompt 0074): compara duas raízes com escopo/modo
+/// **idênticos** (default `seu-codigo`, procedência 0072; `--completo` restaura).
+/// O erro identifica o **lado** que falhou (mensagem do catálogo).
+fn run_comparar(cli: &args::Cli) -> Result<String, SaidaErro> {
+    let (antes, depois) = match (&cli.antes, &cli.depois) {
+        (Some(a), Some(d)) => (a, d),
+        _ => {
+            return Err(SaidaErro {
+                codigo: 2,
+                mensagem: cat::COMPARAR_FALTA_RAIZ.to_string(),
+            });
+        }
+    };
+    let escopo = if cli.completo {
+        Escopo::Completo
+    } else {
+        Escopo::SeuCodigo
+    };
+    let modo_uses = escolher_modo_uses(cli);
+    match lente_wiring::comparar(antes, depois, escopo, modo_uses) {
+        Ok(comp) => {
+            let modo = saida::Modo {
+                text: cli.text,
+                verbose: cli.verbose,
+            };
+            Ok(saida::formatar_comparacao(&comp, escopo, modo_uses, &modo))
+        }
+        Err(e) => {
+            let lado = match e.lado {
+                lente_wiring::Lado::Antes => cat::COMPARAR_LADO_ANTES,
+                lente_wiring::Lado::Depois => cat::COMPARAR_LADO_DEPOIS,
+            };
+            let ctx = erro::ContextoErro {
+                alvo_informado: String::new(),
+            };
+            Err(SaidaErro {
+                codigo: 1,
+                mensagem: cat::COMPARAR_ERRO_LADO.render(&[
+                    ("lado", lado),
+                    ("detalhe", &erro::traduzir(&e.erro, &ctx)),
+                ]),
+            })
+        }
     }
 }
 
@@ -327,6 +378,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         }
     }
@@ -403,6 +457,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         cli.alvo = Some("foo".to_string());
@@ -431,6 +488,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         let err = run(cli).unwrap_err();
@@ -460,6 +520,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E deve funcionar");
@@ -638,6 +701,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E estrutura deve funcionar");
@@ -670,6 +736,9 @@ mod tests {
             html: true,
             saida: Some(saida.clone()),
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         let msg = run(cli).expect("E2E --html deve funcionar");
@@ -705,6 +774,76 @@ mod tests {
         let _ = std::fs::remove_file(&saida);
     }
 
+    /// Prompt 0074: helper p/ os E2E de comparar — a raiz do crate `lente_core`.
+    fn raiz_lente_core() -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|p| p.parent())
+            .expect("workspace root")
+            .join("01_core")
+            .join("core")
+    }
+
+    fn cli_comparar(antes: std::path::PathBuf, depois: std::path::PathBuf) -> args::Cli {
+        let mut c = cli_padrao(std::path::PathBuf::new());
+        c.grafo = None;
+        c.comparar = true;
+        c.antes = Some(antes);
+        c.depois = Some(depois);
+        c.text = true;
+        c
+    }
+
+    /// E2E (prompt 0074): `lente_core` contra **ele mesmo** — paridade total:
+    /// zero sem-par dos dois lados, ciclos idênticos.
+    #[test]
+    #[ignore]
+    fn e2e_comparar_lente_core_vs_si_mesmo() {
+        let raiz = raiz_lente_core();
+        let s = run(cli_comparar(raiz.clone(), raiz)).expect("comparar vs si mesmo");
+        assert!(s.contains("só-antes: 0"), "paridade total — sem só-antes:\n{}", s);
+        assert!(s.contains("só-depois: 0"), "paridade total — sem só-depois");
+        assert!(!s.contains("pareados: 0"), "deve haver pareados");
+    }
+
+    /// E2E (prompt 0074): `lente_core` contra uma **cópia com um módulo a mais** —
+    /// o módulo extra aparece como sem-par do lado depois; o resto pareia.
+    #[test]
+    #[ignore]
+    fn e2e_comparar_copia_com_modulo_extra() {
+        use std::process::Command;
+        let orig = raiz_lente_core();
+        let copia = std::env::temp_dir().join("lente-core-0074-adulterado");
+        let _ = std::fs::remove_dir_all(&copia);
+        // cópia recursiva (std não tem copy_dir).
+        let ok = Command::new("cp")
+            .arg("-r")
+            .arg(&orig)
+            .arg(&copia)
+            .status()
+            .expect("cp")
+            .success();
+        assert!(ok, "cópia do crate falhou");
+        // adultera: módulo novo declarado + arquivo trivial (mantém compilável).
+        let lib = copia.join("src").join("lib.rs");
+        let mut conteudo = std::fs::read_to_string(&lib).unwrap();
+        conteudo.push_str("\npub mod modulo_extra_0074;\n");
+        std::fs::write(&lib, conteudo).unwrap();
+        std::fs::write(
+            copia.join("src").join("modulo_extra_0074.rs"),
+            "//! módulo de teste do prompt 0074.\npub fn marca() {}\n",
+        )
+        .unwrap();
+
+        let s = run(cli_comparar(orig, copia.clone())).expect("comparar vs cópia");
+        assert!(
+            s.contains("modulo_extra_0074"),
+            "o módulo extra deve aparecer sem-par no depois:\n{}",
+            s
+        );
+        let _ = std::fs::remove_dir_all(&copia);
+    }
+
     /// Prompt 0072: `--html --completo` restaura o escopo completo (sysroot
     /// volta), provando que o caminho de volta existe.
     #[test]
@@ -729,6 +868,9 @@ mod tests {
             html: true,
             saida: Some(saida.clone()),
             completo: true,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         run(cli).expect("E2E --html --completo deve funcionar");
@@ -762,6 +904,9 @@ mod tests {
             html: false,
             saida: None,
             completo: false,
+            comparar: false,
+            antes: None,
+            depois: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E ranking deve funcionar");

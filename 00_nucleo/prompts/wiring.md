@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_wiring` — a fiação (L4)
-Hash do Código: 4b7fea1e
+Hash do Código: 80cfa53f
 
 **Camada**: L4 — Fiação (composição). Importa L1/L2/L3 (é o topo, compõe tudo).
 **Unidade**: `04_wiring/src/lib.rs` (crate `lente_wiring`).
@@ -60,7 +60,7 @@ Dado um ErroFork Quando ? num pipeline Então ErroLente::Fork (agregação via F
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas"]}],"reexports":["lente_core::domain::resultado_diff::{\n    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking"]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"},{"name":"comparar","params":["&std::path::Path","&std::path::Path","Escopo","ModoUses"],"return_type":"Result<Comparacao, ErroComparar>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas"]},{"name":"ErroComparar","kind":"struct","members":["lado","erro"]}],"reexports":["lente_core::domain::resultado_diff::{\n    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking","lente_comparacao::{ArestaComparada, Comparacao, Lado, ResumoCiclos}"]} -->
 
 ## Histórico de Revisões
 

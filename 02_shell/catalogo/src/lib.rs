@@ -253,6 +253,52 @@ pub const JSON_ESCOPO_DICA: &str = "escopo_dica";
 /// `{m:[índices montante], j:[índices jusante]}`. Índices (compacto), não paths.
 pub const JSON_RAIOS: &str = "raios";
 pub const JSON_RAIO_SEMANTICA: &str = "raio_semantica";
+
+// Prompt 0074 — modo paridade (`--comparar`).
+pub const HELP_COMPARAR: &str =
+    "Compara a estrutura de duas raízes (--antes/--depois): projeto vs refatoração";
+pub const HELP_ANTES: &str = "Raiz do lado antes (--comparar): diretório de crate";
+pub const HELP_DEPOIS: &str = "Raiz do lado depois (--comparar): diretório de crate";
+/// Faltam --antes e/ou --depois no modo comparar.
+pub const COMPARAR_FALTA_RAIZ: &str =
+    "informe as duas raízes: --antes <dir> e --depois <dir>";
+/// Cabeçalho do texto da comparação.
+pub const COMPARAR_CABECALHO: Template = Template(
+    "Paridade: {antes} (antes) × {depois} (depois) — escopo={escopo}, uses={uses}",
+);
+/// O limite honesto do pareamento (sai na saída, não escondido — prompt 0074).
+pub const COMPARAR_LIMITE: &str = "Pareamento por path normalizado na raiz do crate \
+    (crate renomeado pareia; módulo movido aparece sem-par dos dois lados — não há \
+    detecção de movido por similaridade). Sem nota única: conjuntos e contagens; quem \
+    julga é você.";
+/// Erro identificando o lado que falhou.
+pub const COMPARAR_ERRO_LADO: Template = Template("lado {lado}: {detalhe}");
+pub const COMPARAR_LADO_ANTES: &str = "antes";
+pub const COMPARAR_LADO_DEPOIS: &str = "depois";
+// Títulos das seções do texto.
+pub const COMPARAR_TIT_RESUMO: &str = "Resumo:";
+pub const COMPARAR_TIT_SEM_PAR_ANTES: &str = "Só no antes (sem par):";
+pub const COMPARAR_TIT_SEM_PAR_DEPOIS: &str = "Só no depois (sem par):";
+pub const COMPARAR_TIT_ARESTAS_SO_ANTES: &str = "Dependências que sumiram:";
+pub const COMPARAR_TIT_ARESTAS_SO_DEPOIS: &str = "Dependências que apareceram:";
+pub const COMPARAR_TIT_DELTAS_PESO: &str = "Maiores mudanças de acoplamento (peso):";
+pub const COMPARAR_TIT_CICLOS: &str = "Ciclos (lado a lado):";
+// Chaves do JSON da comparação.
+pub const JSON_NOME_ANTES: &str = "nome_antes";
+pub const JSON_NOME_DEPOIS: &str = "nome_depois";
+pub const JSON_PAREADOS: &str = "pareados";
+pub const JSON_SEM_PAR_ANTES: &str = "sem_par_antes";
+pub const JSON_SEM_PAR_DEPOIS: &str = "sem_par_depois";
+pub const JSON_ARESTAS_COMUNS: &str = "arestas_comuns";
+pub const JSON_ARESTAS_SO_ANTES: &str = "arestas_so_antes";
+pub const JSON_ARESTAS_SO_DEPOIS: &str = "arestas_so_depois";
+pub const JSON_PESO_ANTES: &str = "peso_antes";
+pub const JSON_PESO_DEPOIS: &str = "peso_depois";
+pub const JSON_CICLOS_ANTES: &str = "ciclos_antes";
+pub const JSON_CICLOS_DEPOIS: &str = "ciclos_depois";
+pub const JSON_QUANTIDADE: &str = "quantidade";
+pub const JSON_MAIOR: &str = "maior";
+pub const JSON_LIMITE_PAREAMENTO: &str = "limite_pareamento";
 /// Rótulo do painel de raio na vista (semântica + limite §3 — honestidade na interface).
 pub const DSM_RAIO_SEMANTICA: &str = "Raio estrutural (alcançabilidade por item, projetada a \
     módulos): montante = quem depende deste (sente a mudança); jusante = do que este depende. \

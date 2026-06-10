@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: edfc0dce
+Hash do Código: efec12e0
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -50,7 +50,7 @@ Dado diff só-arquivo-novo Então a vista resumo lidera com o jusante (ênfase a
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"formatar","params":["&Raio","&AlvoPedido","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_ranking","params":["&[ItemRanking]","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_estrutura","params":["&EstruturaModulos","Escopo","ModoUses","&Modo"],"return_type":"String"},{"name":"formatar_estrutura_html","params":["&EstruturaModulos","Escopo","ModoUses","&str"],"return_type":"String"},{"name":"formatar_diff","params":["&ResultadoDiff"],"return_type":"String"},{"name":"formatar_diff_vista","params":["&ResultadoDiff","Vista"],"return_type":"String"}],"types":[{"name":"AlvoPedido","kind":"enum","members":["Path","Id"]},{"name":"Modo","kind":"struct","members":["text","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"formatar","params":["&Raio","&AlvoPedido","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_ranking","params":["&[ItemRanking]","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_estrutura","params":["&EstruturaModulos","Escopo","ModoUses","&Modo"],"return_type":"String"},{"name":"formatar_estrutura_html","params":["&EstruturaModulos","Escopo","ModoUses","&str"],"return_type":"String"},{"name":"formatar_diff","params":["&ResultadoDiff"],"return_type":"String"},{"name":"formatar_diff_vista","params":["&ResultadoDiff","Vista"],"return_type":"String"},{"name":"formatar_comparacao","params":["&Comparacao","Escopo","ModoUses","&Modo"],"return_type":"String"}],"types":[{"name":"AlvoPedido","kind":"enum","members":["Path","Id"]},{"name":"Modo","kind":"struct","members":["text","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 
