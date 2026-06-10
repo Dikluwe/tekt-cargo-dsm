@@ -704,7 +704,7 @@ mod tests {
             .to_path_buf();
         let membro = MembroWorkspace {
             nome: "lente_core".to_string(),
-            dir: raiz.join("01_core"),
+            dir: raiz.join("01_core").join("core"),
         };
         let tc = versao_toolchain().unwrap();
         let chave = chave_cache(&membro, &raiz, &tc).unwrap();
@@ -727,7 +727,7 @@ mod tests {
             .to_path_buf();
         let membro = MembroWorkspace {
             nome: "lente_core".to_string(),
-            dir: raiz.join("01_core"),
+            dir: raiz.join("01_core").join("core"),
         };
         let tc = versao_toolchain().unwrap();
         let chave = chave_cache(&membro, &raiz, &tc).unwrap();

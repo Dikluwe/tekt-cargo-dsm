@@ -404,7 +404,8 @@ mod tests {
         let alvo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .expect("workspace root")
-            .join("01_core");
+            .join("01_core")
+            .join("core");
         let g = crate::extrair_grafo(&alvo)
             .expect("extração do lente_core deve funcionar");
         let com_position = g.nodes.iter().filter(|n| n.position.is_some()).count();
