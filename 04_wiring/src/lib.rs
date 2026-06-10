@@ -37,7 +37,7 @@ use lente_core::domain::mapeamento::{MapeamentoDiff, mapear_diff};
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
 use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
 use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
-use lente_estrutura::{agregar_por_modulo, detectar_ciclos, ordenar_dsm};
+use lente_estrutura::{agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo};
 use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
@@ -355,6 +355,9 @@ pub fn analisar_estrutura(
     let ciclos = detectar_ciclos(&agg);
     // Prompt 0035: ordem da DSM (módulos + blocos) sobre o agregado.
     let dsm = ordenar_dsm(&agg);
+    // Prompt 0071: peso de acoplamento por par módulo→módulo (Achado 1 do 0036).
+    // Contado sobre o grafo de itens (não o agregado, que já colapsou as arestas).
+    let pesos = pesos_modulo_a_modulo(&grafo);
 
     let mut modulos: Vec<Path> = agg.nodes.iter().map(|n| n.path.clone()).collect();
     modulos.sort_by(|a, b| a.as_str().cmp(b.as_str()));
@@ -366,6 +369,9 @@ pub fn analisar_estrutura(
         .map(|a| DependenciaModulo {
             de: a.from.clone(),
             para: a.to.clone(),
+            // Toda aresta do agregado veio de ≥1 aresta-de-item, então o mapa
+            // sempre tem a chave; `1` é piso defensivo, não caminho normal.
+            peso: pesos.get(&(a.id_from, a.id_to)).copied().unwrap_or(1),
         })
         .collect();
     dependencias.sort_by(|a, b| {

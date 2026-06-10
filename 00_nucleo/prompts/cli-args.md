@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::args` — os argumentos da CLI (L2)
-Hash do Código: f8b3c9e3
+Hash do Código: 81615e0c
 
 **Camada**: L2 — Casca (apresentação pura). Os textos de ajuda vêm do
 `lente_catalogo` (ADR-0002).
@@ -45,7 +45,7 @@ Dado --vista camadas Então Vista::Camadas
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 

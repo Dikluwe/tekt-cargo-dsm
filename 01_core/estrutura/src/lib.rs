@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash a55760a6
+//! @prompt-hash 8fea657d
 //! @layer L1
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -60,6 +60,12 @@ pub struct Ciclo {
 pub struct DependenciaModulo {
     pub de: Path,
     pub para: Path,
+    /// **Peso de acoplamento** (prompt 0071; Achado 1 do laudo 0036): quantas
+    /// arestas-de-item `Uses` colapsaram nesta aresta módulo→módulo. `1` significa
+    /// um único uso; valores altos, acoplamento forte. Contagem que
+    /// [`agregar_por_modulo`] descartava — agora emitida por
+    /// [`pesos_modulo_a_modulo`]. Densidade ≠ presença.
+    pub peso: usize,
 }
 
 /// Resultado do modo estrutura (prompt 0031, ampliado pelo 0035): a lista
@@ -212,6 +218,35 @@ pub fn agregar_por_modulo(grafo: &Grafo) -> Grafo {
         nodes,
         edges: arestas,
     }
+}
+
+/// **Peso de acoplamento** por aresta módulo→módulo (prompt 0071; Achado 1 do
+/// laudo 0036): para cada par `(mod_from, mod_to)`, quantas arestas-de-item
+/// `Uses` colapsam nela. É a contagem que [`agregar_por_modulo`] descarta no
+/// `chaves.insert` (a 1ª aresta cria a aresta-de-módulo; as demais somem) —
+/// aqui ela é preservada.
+///
+/// Mesma política do agregador: itens sem módulo contenedor e `uses`
+/// intra-módulo (`mod_from == mod_to`) **não** contam. Chave por
+/// `(id_mod_from, id_mod_to)` — casa com `id_from`/`id_to` das arestas do
+/// agregado. Pura: só stdlib, determinística.
+pub fn pesos_modulo_a_modulo(grafo: &Grafo) -> HashMap<(usize, usize), usize> {
+    let modulo_de = mapa_modulo_contenedor(grafo);
+    let mut pesos: HashMap<(usize, usize), usize> = HashMap::new();
+    for a in &grafo.edges {
+        if a.relation != Relation::Uses {
+            continue;
+        }
+        let (from, to) = match (modulo_de.get(&a.id_from), modulo_de.get(&a.id_to)) {
+            (Some(&f), Some(&t)) => (f, t),
+            _ => continue,
+        };
+        if from == to {
+            continue; // uses intra-módulo é absorvido (não vira aresta nem peso)
+        }
+        *pesos.entry((from, to)).or_insert(0) += 1;
+    }
+    pesos
 }
 
 /// Detecta os ciclos (SCCs de tamanho ≥ 2) no grafo, **sobre as arestas
@@ -595,6 +630,39 @@ mod tests {
         let m = mapa_modulo_contenedor(&g);
         // método deve subir struct → módulo.
         assert_eq!(m.get(&12), Some(&10));
+    }
+
+    // ---- pesos_modulo_a_modulo (prompt 0071, Achado 1 do 0036) --------------
+
+    #[test]
+    fn peso_conta_arestas_de_item_por_par_de_modulo() {
+        // a tem f(11) e g(13); b tem h(21). Três Uses cross-módulo e um
+        // intra-módulo (absorvido): a→b = 2, b→a = 1.
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(10, "k::a", Kind::Mod),
+            no(11, "k::a::f", Kind::Fn),
+            no(13, "k::a::g", Kind::Fn),
+            no(20, "k::b", Kind::Mod),
+            no(21, "k::b::h", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(10, "k::a", 11, "k::a::f", Relation::Owns),
+            aresta(10, "k::a", 13, "k::a::g", Relation::Owns),
+            aresta(20, "k::b", 21, "k::b::h", Relation::Owns),
+            // dois usos a→b (de itens diferentes de a para o mesmo item de b)
+            aresta(11, "k::a::f", 21, "k::b::h", Relation::Uses),
+            aresta(13, "k::a::g", 21, "k::b::h", Relation::Uses),
+            // um uso b→a
+            aresta(21, "k::b::h", 11, "k::a::f", Relation::Uses),
+            // uso intra-módulo a→a: NÃO conta
+            aresta(11, "k::a::f", 13, "k::a::g", Relation::Uses),
+        ];
+        let pesos = pesos_modulo_a_modulo(&g);
+        assert_eq!(pesos.get(&(10, 20)), Some(&2), "a→b deve ter peso 2");
+        assert_eq!(pesos.get(&(20, 10)), Some(&1), "b→a deve ter peso 1");
+        assert_eq!(pesos.get(&(10, 10)), None, "intra-módulo não entra");
+        assert_eq!(pesos.len(), 2);
     }
 
     #[test]

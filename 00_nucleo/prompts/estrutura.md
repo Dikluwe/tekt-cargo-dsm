@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_estrutura` — vista de módulos, ciclos e DSM
-Hash do Código: cf7366b2
+Hash do Código: 7d4439b9
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/estrutura/src/lib.rs` (crate `lente_estrutura`, arquivo único).
@@ -45,7 +45,7 @@ Dado uma condensação Quando ordenar_dsm Então ordem topológica + blocos dos 
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"agregar_por_modulo","params":["&Grafo"],"return_type":"Grafo"},{"name":"detectar_ciclos","params":["&Grafo"],"return_type":"Vec<Ciclo>"},{"name":"ordenar_dsm","params":["&Grafo"],"return_type":"OrdemDsm"}],"types":[{"name":"Ciclo","kind":"struct","members":["modulos"]},{"name":"DependenciaModulo","kind":"struct","members":["de","para"]},{"name":"EstruturaModulos","kind":"struct","members":["modulos","dependencias","ciclos","ordem","blocos"]},{"name":"OrdemDsm","kind":"struct","members":["ordem","blocos"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"agregar_por_modulo","params":["&Grafo"],"return_type":"Grafo"},{"name":"pesos_modulo_a_modulo","params":["&Grafo"],"return_type":"HashMap<(usize, usize), usize>"},{"name":"detectar_ciclos","params":["&Grafo"],"return_type":"Vec<Ciclo>"},{"name":"ordenar_dsm","params":["&Grafo"],"return_type":"OrdemDsm"}],"types":[{"name":"Ciclo","kind":"struct","members":["modulos"]},{"name":"DependenciaModulo","kind":"struct","members":["de","para","peso"]},{"name":"EstruturaModulos","kind":"struct","members":["modulos","dependencias","ciclos","ordem","blocos"]},{"name":"OrdemDsm","kind":"struct","members":["ordem","blocos"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 

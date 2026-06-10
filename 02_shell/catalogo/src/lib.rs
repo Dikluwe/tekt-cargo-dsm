@@ -138,6 +138,17 @@ pub const HELP_ALVO: &str = "Path do alvo no grafo (ex.: 'ErroRaio::<Display>::f
 pub const HELP_ALVO_ID: &str = "Id do alvo no grafo (alternativa ao --alvo)";
 pub const HELP_TEXT: &str = "Saída em texto humano-legível (default é JSON)";
 pub const HELP_VERBOSE: &str = "Inclui lista completa de itens impactados";
+// Prompt 0071 — vista DSM em HTML.
+pub const HELP_HTML: &str =
+    "Gera a DSM de estrutura como HTML autocontido e imprime o caminho (só com --estrutura)";
+pub const HELP_SAIDA: &str = "Caminho do HTML (--html). Default: lente-estrutura.html no cwd";
+/// Nome de arquivo default do `--html` (cwd).
+pub const DSM_SAIDA_PADRAO: &str = "lente-estrutura.html";
+/// Mensagem impressa após gravar a vista (stdout do modo `--html`).
+pub const DSM_ESCRITO: Template = Template("Vista DSM escrita em {caminho} — abra no navegador.");
+/// Falha de I/O ao gravar o HTML.
+pub const DSM_ERRO_ESCRITA: Template =
+    Template("não consegui gravar a vista em {caminho}: {detalhe}");
 pub const HELP_RANKING: &str =
     "Top-N por impacto no pacote. Conflita com --alvo/--alvo-id.";
 pub const HELP_TOP: &str = "Quantos itens no top-N do ranking (default 10)";
@@ -217,6 +228,9 @@ pub const JSON_DEPENDENCIAS: &str = "dependencias";
 pub const JSON_CICLOS: &str = "ciclos";
 pub const JSON_DE: &str = "de";
 pub const JSON_PARA: &str = "para";
+/// Peso de acoplamento da aresta módulo→módulo (prompt 0071): nº de arestas-de-item
+/// `Uses` que colapsaram nela. Campo aditivo no `--estrutura --json`.
+pub const JSON_PESO: &str = "peso";
 pub const JSON_MODO_USES: &str = "modo_uses";
 pub const MODO_USES_TODAS: &str = "todas";
 pub const MODO_USES_SO_REFERENCIA: &str = "so-referencia";
@@ -224,6 +238,17 @@ pub const MODO_USES_SO_REFERENCIA: &str = "so-referencia";
 // Prompt 0035 — ordenamento da DSM (matriz como dado).
 pub const JSON_ORDEM: &str = "ordem";
 pub const JSON_BLOCOS: &str = "blocos";
+
+// Prompt 0071 — vista DSM em HTML (campos extras do dado embutido na tela).
+pub const JSON_PACOTE: &str = "pacote";
+pub const JSON_LIMITE: &str = "limite";
+/// Declaração de limite (proposta §3) embutida no cabeçalho da vista HTML — a
+/// honestidade é parte da interface, como nas descrições do MCP (0070). HTML
+/// curto (renderizado dentro de `<p class="limite">`).
+pub const DSM_LIMITE_HTML: &str = "<strong>O que esta tela mostra:</strong> a forma \
+    <strong>estática e estrutural</strong> — quem depende de quem (arestas <code>Uses</code>), \
+    a ordem topológica e os ciclos. <strong>Não</strong> mostra impacto comportamental nem \
+    afirma que algo vai quebrar: mostra a forma; quem decide é você.";
 pub const ESTRUTURA_ORDEM_TITULO: &str = "Ordem da DSM (topológica + blocos):";
 pub const ESTRUTURA_ORDEM_LINHA_LIVRE: &str = "  ";
 pub const ESTRUTURA_ORDEM_LINHA_BLOCO: &str = "  ◆";

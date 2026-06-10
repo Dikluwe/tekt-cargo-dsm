@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash fde449dd
+//! @prompt-hash e6ce77c7
 //! @layer L2
 //! @updated 2026-06-07
 //!
@@ -286,6 +286,16 @@ fn formatar_estrutura_json(
     escopo: Escopo,
     modo_uses: ModoUses,
 ) -> String {
+    serde_json::Value::Object(estrutura_json_map(estrut, escopo, modo_uses)).to_string()
+}
+
+/// Monta o **mapa JSON** da estrutura (compartilhado entre `--json` e `--html`).
+/// O `--html` acrescenta `pacote`/`limite` sobre este mesmo dado — uma forma.
+fn estrutura_json_map(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> serde_json::Map<String, serde_json::Value> {
     let mut root = serde_json::Map::new();
     root.insert(
         cat::JSON_ESCOPO.to_string(),
@@ -317,6 +327,12 @@ fn formatar_estrutura_json(
             o.insert(
                 cat::JSON_PARA.to_string(),
                 serde_json::Value::String(d.para.as_str().to_string()),
+            );
+            // Prompt 0071: peso de acoplamento (aditivo — consumidores antigos
+            // ignoram o campo novo).
+            o.insert(
+                cat::JSON_PESO.to_string(),
+                serde_json::Value::Number(d.peso.into()),
             );
             serde_json::Value::Object(o)
         })
@@ -367,7 +383,31 @@ fn formatar_estrutura_json(
         cat::JSON_BLOCOS.to_string(),
         serde_json::Value::Array(blocos),
     );
-    serde_json::Value::Object(root).to_string()
+    root
+}
+
+/// Vista DSM em **HTML autocontido** (prompt 0071): injeta o MESMO dado do
+/// `--json` (mais `pacote`/`limite`) no template embutido (`include_str!`). Um
+/// arquivo, sem rede/CDN/deps de runtime. A tela é vista: o cálculo (ordem,
+/// ciclos, peso) já veio do L1.
+pub fn formatar_estrutura_html(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    pacote: &str,
+) -> String {
+    let mut map = estrutura_json_map(estrut, escopo, modo_uses);
+    map.insert(
+        cat::JSON_PACOTE.to_string(),
+        serde_json::Value::String(pacote.to_string()),
+    );
+    map.insert(
+        cat::JSON_LIMITE.to_string(),
+        serde_json::Value::String(cat::DSM_LIMITE_HTML.to_string()),
+    );
+    let dados = serde_json::Value::Object(map).to_string();
+    // Injeção única (a tela lê tudo de `DADOS`). Placeholder textual no template.
+    include_str!("dsm_template.html").replace("__DADOS_JSON__", &dados)
 }
 
 fn formatar_estrutura_texto(
@@ -992,10 +1032,12 @@ mod tests {
                 DependenciaModulo {
                     de: Path::from("k::a"),
                     para: Path::from("k::b"),
+                    peso: 3,
                 },
                 DependenciaModulo {
                     de: Path::from("k::b"),
                     para: Path::from("k::a"),
+                    peso: 1,
                 },
             ],
             ciclos: vec![Ciclo {
@@ -1025,7 +1067,42 @@ mod tests {
         assert!(s.contains("\"modulos\":[\"k\",\"k::a\",\"k::b\"]"));
         assert!(s.contains("\"de\":\"k::a\""));
         assert!(s.contains("\"para\":\"k::b\""));
+        assert!(s.contains("\"peso\":3")); // prompt 0071: peso aditivo
         assert!(s.contains("\"ciclos\":[[\"k::a\",\"k::b\"]]"));
+    }
+
+    #[test]
+    fn html_estrutura_embute_dado_cabecalho_e_limite() {
+        let s = formatar_estrutura_html(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            "meu_pacote",
+        );
+        // O placeholder foi substituído (dado embutido, sem fetch).
+        assert!(!s.contains("__DADOS_JSON__"), "placeholder não substituído");
+        // O dado vai inline na const DADOS.
+        assert!(s.contains("const DADOS ="));
+        assert!(s.contains("\"pacote\":\"meu_pacote\""));
+        assert!(s.contains("\"escopo\":\"completo\""));
+        assert!(s.contains("\"peso\":3"));
+        assert!(s.contains("\"ordem\":["));
+        // Cabeçalho honesto: a declaração de limite (§3) vem do catálogo.
+        assert!(s.contains("estrutural"));
+        assert!(s.contains(cat::DSM_LIMITE_HTML));
+        // Autocontido: sem fetch nem carga de recurso externo (o namespace SVG
+        // `http://www.w3.org/2000/svg` é identificador, não rede — não conta).
+        assert!(!s.contains("fetch("));
+        assert!(!s.contains("src=\"http"));
+        assert!(!s.contains("href=\"http"));
+        // Determinístico.
+        let s2 = formatar_estrutura_html(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            "meu_pacote",
+        );
+        assert_eq!(s, s2);
     }
 
     #[test]
