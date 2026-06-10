@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_filtro` — esconder o ruído (filtros do grafo)
-Hash do Código: 990c2b6b
+Hash do Código: 50954d02
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/filtro/src/lib.rs` (crate `lente_filtro`, arquivo único).
@@ -40,7 +40,7 @@ Dado arestas Uses Import e Reference Quando filtrar_so_referencia Então só as 
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"filtrar_stdlib","params":["&Grafo"],"return_type":"Grafo"},{"name":"filtrar_so_referencia","params":["&Grafo"],"return_type":"Grafo"}],"types":[],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"filtrar_stdlib","params":["&Grafo"],"return_type":"Grafo"},{"name":"filtrar_nao_membros","params":["&Grafo","&[String]"],"return_type":"Grafo"},{"name":"filtrar_so_referencia","params":["&Grafo"],"return_type":"Grafo"}],"types":[],"reexports":[]} -->
 
 ## Histórico de Revisões
 

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/filtro.md
-//! @prompt-hash 59f298bd
+//! @prompt-hash 3f8a55d4
 //! @layer L1
 //! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0034-modo-uses-estrutura.md
@@ -63,6 +63,55 @@ pub fn filtrar_stdlib(grafo: &Grafo) -> Grafo {
             ids_removidos.insert(n.id);
         } else {
             nodes_novos.push(n.clone());
+        }
+    }
+    let edges_novos: Vec<_> = grafo
+        .edges
+        .iter()
+        .filter(|a| !ids_removidos.contains(&a.id_from) && !ids_removidos.contains(&a.id_to))
+        .cloned()
+        .collect();
+    Grafo {
+        crate_name: grafo.crate_name.clone(),
+        nodes: nodes_novos,
+        edges: edges_novos,
+    }
+}
+
+/// Primeiro segmento de um path, normalizado para underscore (prompt 0076).
+/// Os nomes de membro vêm do `Cargo.toml` com hífen (`typst-macros`); os paths
+/// do fork usam underscore (`typst_macros`) — normalizar casa os dois.
+fn primeiro_segmento_norm(path: &Path) -> String {
+    let s = path.as_str();
+    let primeiro = match s.find("::") {
+        Some(i) => &s[..i],
+        None => s,
+    };
+    primeiro.replace('-', "_")
+}
+
+/// **Filtra third-party num lado-workspace** (prompt 0076): remove os nós cujo
+/// crate-dono (1º segmento do path) **não** é um membro do workspace, e as
+/// arestas que os tocam. Num grafo de workspace, "seu código" são os membros;
+/// sysroot e deps externas (`comemo`, `ecow`, …) saem do censo.
+///
+/// `membros` são os nomes de pacote (hífen ou underscore — normalizados aqui).
+/// **Limite 2 seguro por construção** (laudos 0025/0027): o fork nomeia o impl
+/// do alvo pelo lado do alvo (`lente_core::…::fmt`, não `core::…::fmt`), então um
+/// impl de membro para trait externo tem path de **membro** e fica. **Fantasmas
+/// ficam** (0045): o representante de fantasma tem dono-membro (1º segmento
+/// membro); só os representantes externos (não-membro) saem.
+///
+/// `Grafo.crate_name` e os `id` preservados; 0 arestas soltas; idempotente.
+pub fn filtrar_nao_membros(grafo: &Grafo, membros: &[String]) -> Grafo {
+    let set: HashSet<String> = membros.iter().map(|m| m.replace('-', "_")).collect();
+    let mut ids_removidos: HashSet<usize> = HashSet::new();
+    let mut nodes_novos = Vec::with_capacity(grafo.nodes.len());
+    for n in &grafo.nodes {
+        if set.contains(&primeiro_segmento_norm(&n.path)) {
+            nodes_novos.push(n.clone());
+        } else {
+            ids_removidos.insert(n.id);
         }
     }
     let edges_novos: Vec<_> = grafo
@@ -447,6 +496,71 @@ mod tests {
         let g = grafo_uses_misto();
         let f1 = filtrar_so_referencia(&g);
         let f2 = filtrar_so_referencia(&f1);
+        assert_eq!(f1, f2);
+    }
+
+    // ---- filtrar_nao_membros (prompt 0076) ----
+
+    /// Contrato: nó de third-party (`ecow::x`) e a aresta que o toca saem; os de
+    /// membro (`m::a`, `m::b`) ficam; 0 arestas soltas.
+    #[test]
+    fn nao_membro_e_arestas_que_o_tocam_saem() {
+        let mut g = Grafo::new("m");
+        g.nodes = vec![
+            no(1, "m", Kind::Crate),
+            no(2, "m::a", Kind::Mod),
+            no(3, "m::b", Kind::Mod),
+            no(4, "ecow::x", Kind::Struct),
+        ];
+        g.edges = vec![
+            aresta(2, "m::a", 4, "ecow::x", Relation::Uses), // toca third-party
+            aresta(2, "m::a", 3, "m::b", Relation::Uses),    // entre membros
+        ];
+        let f = filtrar_nao_membros(&g, &["m".to_string()]);
+        let paths: Vec<&str> = f.nodes.iter().map(|n| n.path.as_str()).collect();
+        assert!(paths.contains(&"m::a") && paths.contains(&"m::b") && paths.contains(&"m"));
+        assert!(!paths.contains(&"ecow::x"), "third-party deve sair");
+        assert_eq!(f.edges.len(), 1, "a aresta que tocava ecow::x sai");
+        // 0 soltas: toda aresta tem as duas pontas em nós presentes.
+        let ids: HashSet<usize> = f.nodes.iter().map(|n| n.id).collect();
+        assert!(f.edges.iter().all(|a| ids.contains(&a.id_from) && ids.contains(&a.id_to)));
+    }
+
+    /// Normalização: membro `typst-macros` (hífen no Cargo.toml) casa o path
+    /// `typst_macros::kw` (underscore do fork).
+    #[test]
+    fn membro_com_hifen_casa_path_com_underscore() {
+        let mut g = Grafo::new("typst_macros");
+        g.nodes = vec![
+            no(1, "typst_macros", Kind::Crate),
+            no(2, "typst_macros::kw", Kind::Mod),
+            no(3, "serde::de", Kind::Mod),
+        ];
+        let f = filtrar_nao_membros(&g, &["typst-macros".to_string()]);
+        let paths: Vec<&str> = f.nodes.iter().map(|n| n.path.as_str()).collect();
+        assert!(paths.contains(&"typst_macros::kw"), "membro fica apesar do hífen");
+        assert!(!paths.contains(&"serde::de"), "third-party sai");
+    }
+
+    /// Fantasma de dono-membro (0045): o representante tem 1º segmento membro →
+    /// **fica** (o filtro não toca fantasmas; eles são trilha do resolvedor).
+    #[test]
+    fn fantasma_de_dono_membro_fica() {
+        let mut g = Grafo::new("m");
+        // `m::sumiu` é referenciado por `m::a` mas o representante é dono-membro.
+        g.nodes = vec![no(1, "m::a", Kind::Mod), no(2, "m::sumiu", Kind::Mod)];
+        g.edges = vec![aresta(1, "m::a", 2, "m::sumiu", Relation::Uses)];
+        let f = filtrar_nao_membros(&g, &["m".to_string()]);
+        assert_eq!(f.nodes.len(), 2, "fantasma de membro permanece");
+        assert_eq!(f.edges.len(), 1);
+    }
+
+    #[test]
+    fn filtrar_nao_membros_e_idempotente() {
+        let mut g = Grafo::new("m");
+        g.nodes = vec![no(1, "m::a", Kind::Mod), no(2, "ext::b", Kind::Mod)];
+        let f1 = filtrar_nao_membros(&g, &["m".to_string()]);
+        let f2 = filtrar_nao_membros(&f1, &["m".to_string()]);
         assert_eq!(f1, f2);
     }
 }

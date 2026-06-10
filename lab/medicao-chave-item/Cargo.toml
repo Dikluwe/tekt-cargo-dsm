@@ -1,0 +1,22 @@
+# [workspace] vazio: isolado do workspace pai (padrão dos labs — 0032).
+# Arena descartável (prompt 0077): mede a discriminância de chaves de identidade
+# de item no par typst. Consome a lente como biblioteca (path deps); zero toques
+# no produto.
+[workspace]
+
+[package]
+name = "medicao_chave_item"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[[bin]]
+name = "medicao-chave-item"
+path = "src/main.rs"
+
+[dependencies]
+lente_core = { path = "../../01_core/core" }
+lente_filtro = { path = "../../01_core/filtro" }
+lente_infra = { path = "../../03_infra" }
+lente_wiring = { path = "../../04_wiring" }

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash 0c2b075f
+//! @prompt-hash a6255b04
 //! @layer L4
 //! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
@@ -40,8 +40,9 @@ use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
 use lente_estrutura::{
     agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
 };
-use lente_comparacao::comparar_estruturas;
-use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
+use lente_comparacao::{ChavePareamento, Proveniencia, comparar_estruturas, comparar_itens};
+use lente_infra::NaturezaRaiz;
+use lente_filtro::{filtrar_nao_membros, filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
 use lente_infra::fork::ErroFork;
@@ -61,7 +62,10 @@ pub use lente_core::domain::uniao::Fantasma;
 pub use lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm};
 pub use lente_ranking::ItemRanking;
 // Prompt 0074: o contrato da comparação, para a saída (L2) e o agente.
-pub use lente_comparacao::{ArestaComparada, Comparacao, Lado, ResumoCiclos};
+pub use lente_comparacao::{
+    ArestaComparada, Comparacao, ComparacaoItens, ItemAmbiguo, ItemPareado, ItemSemPar, Lado,
+    ResumoCiclos,
+};
 
 // O vocabulário de pedido — `FonteGrafo`/`Escopo`/`ModoUses`/`AlvoBusca` — desceu
 // ao L1 no Estágio 2 (0056): `lente_core::domain::consulta`, re-exportado acima.
@@ -177,12 +181,23 @@ pub fn calcular_raio_de_alvo(
     Ok(raio)
 }
 
-/// O grafo de workspace montado: o grafo unificado de todos os membros e os
-/// fantasmas detectados na união (esperado vazio neste repo — laudo 0041).
+/// Um crate que **não** entrou no grafo de workspace (prompt 0075): a extração
+/// ou a resolução de colisão falhou. É **sinal**, como os fantasmas (0045) — não
+/// erro fatal: o crate é pulado, os demais entram, e isto é reportado.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FalhaCrate {
+    pub crate_name: String,
+    pub motivo: String,
+}
+
+/// O grafo de workspace montado: o grafo unificado dos membros que extraíram, os
+/// fantasmas da união (esperado vazio neste repo — laudo 0041), e os crates que
+/// **falharam** (prompt 0075 — resiliência: 1 crate irresolúvel não aborta tudo).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GrafoWorkspace {
     pub grafo: Grafo,
     pub fantasmas: Vec<Fantasma>,
+    pub falhas: Vec<FalhaCrate>,
 }
 
 /// Monta o grafo de workspace (prompt 0045): a fundação do motor da trilha
@@ -203,16 +218,33 @@ pub fn montar_grafo_workspace(raiz: &std::path::Path) -> Result<GrafoWorkspace, 
     let membros = lente_infra::enumerar_membros(raiz)?;
     let versao = lente_infra::versao_toolchain()?;
     let mut grafos: Vec<GrafoCrate> = Vec::with_capacity(membros.len());
+    let mut falhas: Vec<FalhaCrate> = Vec::new();
     for membro in &membros {
-        let grafo = lente_infra::extrair_grafo_cacheado(membro, raiz, &versao)?;
-        let grafo = resolver_colisoes(grafo)?;
-        grafos.push(GrafoCrate {
-            crate_name: membro.nome.clone(),
-            grafo,
-        });
+        // Prompt 0075: resiliente — extração/resolução de um crate que falha é
+        // **pulada e reportada** (sinal, não erro fatal). Em código real (typst)
+        // o resolvedor de colisão (0019) encontra sobreposição parcial que a
+        // Estratégia 1 não decide e a 2 (quarentenada, 0014) não cobre; abortar
+        // tudo por 1 crate esconderia o número dos outros.
+        let resultado = lente_infra::extrair_grafo_cacheado(membro, raiz, &versao)
+            .map_err(ErroLente::Workspace)
+            .and_then(resolver_colisoes);
+        match resultado {
+            Ok(grafo) => grafos.push(GrafoCrate {
+                crate_name: membro.nome.clone(),
+                grafo,
+            }),
+            Err(e) => falhas.push(FalhaCrate {
+                crate_name: membro.nome.clone(),
+                motivo: e.to_string(),
+            }),
+        }
     }
     let ResultadoUniao { grafo, fantasmas } = unir_grafos(grafos);
-    Ok(GrafoWorkspace { grafo, fantasmas })
+    Ok(GrafoWorkspace {
+        grafo,
+        fantasmas,
+        falhas,
+    })
 }
 
 /// Analisa um diff contra o grafo de workspace (prompt 0047): o pipeline
@@ -242,7 +274,11 @@ pub fn analisar_diff(raiz: &std::path::Path) -> Result<ResultadoDiff, ErroLente>
     let raiz = raiz.as_path();
 
     let diff = ler_diff(raiz)?;
-    let GrafoWorkspace { grafo, fantasmas } = montar_grafo_workspace(raiz)?;
+    // O `--diff` ignora as falhas por crate (prompt 0075): antes abortava por
+    // 1 crate irresolúvel; agora segue com os que extraíram (melhoria silenciosa).
+    let GrafoWorkspace {
+        grafo, fantasmas, ..
+    } = montar_grafo_workspace(raiz)?;
     let membros_dirs: Vec<std::path::PathBuf> = lente_infra::enumerar_membros(raiz)?
         .into_iter()
         .map(|m| m.dir)
@@ -418,41 +454,177 @@ pub struct ErroComparar {
     pub erro: ErroLente,
 }
 
-/// **Paridade** (prompt 0074): extrai a estrutura de duas raízes com os
-/// **mesmos** parâmetros (escopo/modo forçados iguais) e compara. Cada raiz é um
-/// diretório de crate; a receita branch→`git worktree` é documentação, não
-/// código. Erros identificam o lado.
+/// **Paridade** (prompts 0074/0075): extrai a estrutura de duas raízes com os
+/// **mesmos** parâmetros (escopo/modo forçados iguais) e compara. Cada raiz pode
+/// ser um **diretório de crate** ou um **workspace** (detecção automática por
+/// lado, 0075); a receita branch→`git worktree` é documentação, não código.
+/// Erros identificam o lado. A chave de pareamento é **path completo** se algum
+/// lado é workspace (a normalizada deixaria de ser injetiva).
 pub fn comparar(
     raiz_antes: &std::path::Path,
     raiz_depois: &std::path::Path,
     escopo: Escopo,
     modo_uses: ModoUses,
 ) -> Result<Comparacao, ErroComparar> {
-    let (antes, nome_a) = estrutura_de_raiz(raiz_antes, escopo, modo_uses)
+    let a = extrair_lado(raiz_antes, escopo, modo_uses)
         .map_err(|erro| ErroComparar { lado: Lado::Antes, erro })?;
-    let (depois, nome_b) = estrutura_de_raiz(raiz_depois, escopo, modo_uses)
+    let b = extrair_lado(raiz_depois, escopo, modo_uses)
         .map_err(|erro| ErroComparar { lado: Lado::Depois, erro })?;
-    Ok(comparar_estruturas(&antes, &depois, &nome_a, &nome_b))
+    // Prompt 0075: workspace em qualquer lado → chave de path completo.
+    let chave = if a.modo == NaturezaRaiz::Workspace || b.modo == NaturezaRaiz::Workspace {
+        ChavePareamento::PathCompleto
+    } else {
+        ChavePareamento::Normalizada
+    };
+    // Prompt 0078: nível de item (chave K4) sobre os grafos já filtrados; os
+    // representantes de fantasma (proveniência) saem do censo de itens.
+    let fant_a: std::collections::BTreeSet<String> =
+        a.fantasmas.iter().map(|p| p.as_str().to_string()).collect();
+    let fant_b: std::collections::BTreeSet<String> =
+        b.fantasmas.iter().map(|p| p.as_str().to_string()).collect();
+    let itens = comparar_itens(&a.grafo, &fant_a, &b.grafo, &fant_b);
+    let proveniencia = Proveniencia {
+        modo_antes: modo_texto(a.modo).to_string(),
+        modo_depois: modo_texto(b.modo).to_string(),
+        crates_antes: a.crates,
+        crates_depois: b.crates,
+        fantasmas_antes: a.fantasmas,
+        fantasmas_depois: b.fantasmas,
+        falhas_antes: a.falhas,
+        falhas_depois: b.falhas,
+        third_party_antes: a.third_party,
+        third_party_depois: b.third_party,
+    };
+    Ok(comparar_estruturas(
+        &a.est,
+        &b.est,
+        &a.nome,
+        &b.nome,
+        chave,
+        proveniencia,
+        itens,
+    ))
 }
 
-/// Extrai a estrutura de uma raiz-de-crate **por diretório** (fork dir-aware),
-/// devolvendo também o nome do crate (rótulo do cabeçalho). Mesma cadeia de
-/// [`analisar_estrutura`] (resolver colisões → escopo → estrutura), mas a partir
-/// de um dir em vez de `FonteGrafo`.
-fn estrutura_de_raiz(
+fn modo_texto(n: NaturezaRaiz) -> &'static str {
+    match n {
+        NaturezaRaiz::Crate => "crate",
+        NaturezaRaiz::Workspace => "workspace",
+    }
+}
+
+/// Um lado extraído da comparação (prompt 0075): a estrutura + a proveniência
+/// (rótulo, modo, nº de crates, fantasmas).
+struct LadoExtraido {
+    est: EstruturaModulos,
+    nome: String,
+    modo: NaturezaRaiz,
+    crates: usize,
+    fantasmas: Vec<Path>,
+    /// Crates não extraídos (prompt 0075): `nome — motivo`.
+    falhas: Vec<String>,
+    /// Nós de third-party removidos do censo (prompt 0076; só lado-workspace
+    /// em escopo seu-codigo).
+    third_party: usize,
+    /// O grafo já filtrado deste lado (prompt 0078): insumo do censo de itens.
+    grafo: Grafo,
+}
+
+/// Extrai um lado por **diretório**, detectando crate vs workspace (0075):
+/// - crate: `extrair_grafo` (fork dir-aware) → resolver → escopo → estrutura.
+/// - workspace: `montar_grafo_workspace` (0045: enumera, extrai cacheado,
+///   resolve por crate, une) → escopo → estrutura; reporta crates e fantasmas.
+fn extrair_lado(
     raiz: &std::path::Path,
     escopo: Escopo,
     modo_uses: ModoUses,
-) -> Result<(EstruturaModulos, String), ErroLente> {
-    let grafo = lente_infra::extrair_grafo(raiz).map_err(ErroLente::Adaptador)?;
-    let nome = grafo.crate_name.clone();
-    let grafo = resolver_colisoes(grafo)?;
-    let grafo = match escopo {
+) -> Result<LadoExtraido, ErroLente> {
+    // Prompt 0075 (lição do 0047): canonicalizar a raiz — a detecção de alvo casa
+    // o `Cargo.toml` do membro contra os `manifest_path` (absolutos) do `cargo
+    // metadata`; com raiz relativa (ex.: `--antes lab/...`), os dirs dos membros
+    // ficariam relativos e nada casaria.
+    let raiz = raiz
+        .canonicalize()
+        .map_err(|e| ErroLente::Workspace(lente_infra::ErroWorkspace::Io(e)))?;
+    let raiz = raiz.as_path();
+    let modo = lente_infra::natureza_raiz(raiz).map_err(ErroLente::Workspace)?;
+    match modo {
+        NaturezaRaiz::Crate => {
+            let grafo = lente_infra::extrair_grafo(raiz).map_err(ErroLente::Adaptador)?;
+            let nome = grafo.crate_name.clone();
+            let grafo = resolver_colisoes(grafo)?;
+            let grafo = aplicar_escopo_grafo(grafo, escopo);
+            let est = estrutura_de_grafo(grafo.clone(), modo_uses)?;
+            Ok(LadoExtraido {
+                est,
+                nome,
+                modo,
+                crates: 1,
+                fantasmas: Vec::new(),
+                falhas: Vec::new(),
+                third_party: 0,
+                grafo,
+            })
+        }
+        NaturezaRaiz::Workspace => {
+            let GrafoWorkspace {
+                grafo,
+                fantasmas,
+                falhas,
+            } = montar_grafo_workspace(raiz)?;
+            let membros = lente_infra::enumerar_membros(raiz).unwrap_or_default();
+            let n_crates = membros.len();
+            let nomes: Vec<String> = membros.iter().map(|m| m.nome.clone()).collect();
+            let fant: Vec<Path> = fantasmas.iter().map(|f| f.path.clone()).collect();
+            let falhas_txt: Vec<String> = falhas
+                .iter()
+                .map(|f| format!("{} — {}", f.crate_name, f.motivo))
+                .collect();
+            // Prompt 0076: no escopo seu-codigo de um lado-workspace, "seu código"
+            // são os membros — filtra sysroot (filtrar_stdlib) E third-party
+            // (filtrar_nao_membros). O nº removido por third-party é declarado.
+            let (grafo, third_party) = match escopo {
+                Escopo::SeuCodigo => {
+                    let sem_sysroot = filtrar_stdlib(&grafo);
+                    let antes = sem_sysroot.nodes.len();
+                    let so_membros = filtrar_nao_membros(&sem_sysroot, &nomes);
+                    let removidos = antes - so_membros.nodes.len();
+                    (so_membros, removidos)
+                }
+                Escopo::Completo => (grafo, 0),
+            };
+            let est = estrutura_de_grafo(grafo.clone(), modo_uses)?;
+            Ok(LadoExtraido {
+                est,
+                nome: rotulo_raiz(raiz),
+                modo,
+                crates: n_crates,
+                fantasmas: fant,
+                falhas: falhas_txt,
+                third_party,
+                grafo,
+            })
+        }
+    }
+}
+
+/// Aplica o escopo (filtra stdlib se `SeuCodigo`) a um grafo já resolvido.
+fn aplicar_escopo_grafo(grafo: Grafo, escopo: Escopo) -> Grafo {
+    match escopo {
         Escopo::SeuCodigo => filtrar_stdlib(&grafo),
         Escopo::Completo => grafo,
-    };
-    let est = estrutura_de_grafo(grafo, modo_uses)?;
-    Ok((est, nome))
+    }
+}
+
+/// Rótulo de uma raiz-workspace (sem `crate_name` único): o nome do diretório.
+fn rotulo_raiz(raiz: &std::path::Path) -> String {
+    raiz.canonicalize()
+        .ok()
+        .as_deref()
+        .and_then(|p| p.file_name())
+        .and_then(|s| s.to_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "workspace".to_string())
 }
 
 /// Helper único da aplicação do escopo (prompt 0030): obtém o grafo

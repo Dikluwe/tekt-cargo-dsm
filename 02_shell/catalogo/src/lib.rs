@@ -299,6 +299,48 @@ pub const JSON_CICLOS_DEPOIS: &str = "ciclos_depois";
 pub const JSON_QUANTIDADE: &str = "quantidade";
 pub const JSON_MAIOR: &str = "maior";
 pub const JSON_LIMITE_PAREAMENTO: &str = "limite_pareamento";
+// Prompt 0075 — proveniência declarada (modo/chave/crates/fantasmas por lado).
+pub const JSON_CHAVE: &str = "chave";
+pub const JSON_MODO_ANTES: &str = "modo_antes";
+pub const JSON_MODO_DEPOIS: &str = "modo_depois";
+pub const JSON_CRATES_ANTES: &str = "crates_antes";
+pub const JSON_CRATES_DEPOIS: &str = "crates_depois";
+pub const JSON_FANTASMAS_ANTES: &str = "fantasmas_antes";
+pub const JSON_FANTASMAS_DEPOIS: &str = "fantasmas_depois";
+// Prompt 0075 — crates não extraídos (resiliência: pulados e reportados).
+pub const JSON_FALHAS_ANTES: &str = "falhas_antes";
+pub const JSON_FALHAS_DEPOIS: &str = "falhas_depois";
+pub const COMPARAR_TIT_FALHAS: &str =
+    "Crates não extraídos (pulados — não entram no censo):";
+// Prompt 0076 — third-party removido do censo (lado-workspace, seu-codigo).
+pub const JSON_THIRD_PARTY_ANTES: &str = "third_party_antes";
+pub const JSON_THIRD_PARTY_DEPOIS: &str = "third_party_depois";
+pub const COMPARAR_THIRD_PARTY: Template = Template(
+    "Third-party fora do censo (só membros): antes {antes} nós · depois {depois} nós",
+);
+// Prompt 0078 — nível de item (chave K4).
+pub const JSON_ITENS: &str = "itens";
+pub const JSON_ITENS_PAREADOS: &str = "pareados";
+pub const JSON_ITENS_AMBIGUOS: &str = "ambiguos";
+pub const JSON_ITENS_SEM_PAR_ANTES: &str = "sem_par_antes";
+pub const JSON_ITENS_SEM_PAR_DEPOIS: &str = "sem_par_depois";
+pub const JSON_KIND: &str = "kind";
+pub const JSON_TRAIT: &str = "trait";
+pub const JSON_NOME: &str = "nome";
+pub const JSON_CANDIDATOS_ANTES: &str = "candidatos_antes";
+pub const JSON_CANDIDATOS_DEPOIS: &str = "candidatos_depois";
+pub const COMPARAR_TIT_ITENS: &str = "Itens (chave de identidade K4 — kind, trait, pai-tipo::nome):";
+pub const COMPARAR_ITENS_RESUMO: Template = Template(
+    "  pareados: {pareados}  ·  ambíguos: {ambiguos} chaves  ·  sem-par antes: {sp_antes}  ·  sem-par depois: {sp_depois}",
+);
+pub const COMPARAR_TIT_ITENS_KIND: &str = "  por kind:";
+pub const COMPARAR_TIT_SEM_PAR_CRATE: &str = "  sem-par por crate (1º segmento):";
+/// Linha do texto que declara modo/crates/fantasmas/chave de cada lado (0075).
+pub const COMPARAR_PROVENIENCIA: Template = Template(
+    "Lados: antes={modo_antes} ({crates_antes} crate(s), {fantasmas_antes} fantasma(s)) · \
+     depois={modo_depois} ({crates_depois} crate(s), {fantasmas_depois} fantasma(s)) · \
+     chave={chave}",
+);
 /// Rótulo do painel de raio na vista (semântica + limite §3 — honestidade na interface).
 pub const DSM_RAIO_SEMANTICA: &str = "Raio estrutural (alcançabilidade por item, projetada a \
     módulos): montante = quem depende deste (sente a mudança); jusante = do que este depende. \

@@ -888,6 +888,39 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
         ("uses", modo_uses_texto(modo_uses)),
     ]));
     s.push('\n');
+    // Prompt 0075: declara modo/crates/fantasmas/chave de cada lado.
+    s.push_str(&cat::COMPARAR_PROVENIENCIA.render(&[
+        ("modo_antes", &comp.proveniencia.modo_antes),
+        ("modo_depois", &comp.proveniencia.modo_depois),
+        ("crates_antes", &comp.proveniencia.crates_antes.to_string()),
+        ("crates_depois", &comp.proveniencia.crates_depois.to_string()),
+        ("fantasmas_antes", &comp.proveniencia.fantasmas_antes.len().to_string()),
+        ("fantasmas_depois", &comp.proveniencia.fantasmas_depois.len().to_string()),
+        ("chave", &comp.chave),
+    ]));
+    s.push('\n');
+    // Prompt 0076: third-party removido do censo (se houve) — visível, não mascarado.
+    if comp.proveniencia.third_party_antes > 0 || comp.proveniencia.third_party_depois > 0 {
+        s.push_str(&cat::COMPARAR_THIRD_PARTY.render(&[
+            ("antes", &comp.proveniencia.third_party_antes.to_string()),
+            ("depois", &comp.proveniencia.third_party_depois.to_string()),
+        ]));
+        s.push('\n');
+    }
+    // Prompt 0075: crates não extraídos (pulados) — declarados, não escondidos.
+    let falhas: Vec<&String> = comp
+        .proveniencia
+        .falhas_antes
+        .iter()
+        .chain(comp.proveniencia.falhas_depois.iter())
+        .collect();
+    if !falhas.is_empty() {
+        s.push_str(cat::COMPARAR_TIT_FALHAS);
+        s.push('\n');
+        for f in &falhas {
+            s.push_str(&format!("  {}\n", f));
+        }
+    }
     s.push_str(cat::COMPARAR_LIMITE);
     s.push_str("\n\n");
 
@@ -970,6 +1003,45 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
         "  depois: {} ciclo(s), maior SCC {}\n",
         comp.ciclos_depois.quantidade, comp.ciclos_depois.maior
     ));
+
+    // Prompt 0078: nível de item (agregado — listas cruas vão no JSON).
+    let it = &comp.itens;
+    s.push('\n');
+    s.push_str(cat::COMPARAR_TIT_ITENS);
+    s.push('\n');
+    s.push_str(&cat::COMPARAR_ITENS_RESUMO.render(&[
+        ("pareados", &it.pareados.len().to_string()),
+        ("ambiguos", &it.ambiguos.len().to_string()),
+        ("sp_antes", &it.sem_par_antes.len().to_string()),
+        ("sp_depois", &it.sem_par_depois.len().to_string()),
+    ]));
+    s.push('\n');
+    let mut por_kind: BTreeMap<&str, usize> = BTreeMap::new();
+    for p in &it.pareados {
+        *por_kind.entry(p.kind.as_str()).or_insert(0) += 1;
+    }
+    if !por_kind.is_empty() {
+        s.push_str(cat::COMPARAR_TIT_ITENS_KIND);
+        s.push_str(" (pareados)\n");
+        for (k, n) in &por_kind {
+            s.push_str(&format!("    {} {}\n", k, n));
+        }
+    }
+    // Sem-par agregado por crate (1º segmento do path) — "o que falta migrar".
+    let mut por_crate: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    for i in &it.sem_par_antes {
+        por_crate.entry(crate_de(&i.path).to_string()).or_default().0 += 1;
+    }
+    for i in &it.sem_par_depois {
+        por_crate.entry(crate_de(&i.path).to_string()).or_default().1 += 1;
+    }
+    if !por_crate.is_empty() {
+        s.push_str(cat::COMPARAR_TIT_SEM_PAR_CRATE);
+        s.push('\n');
+        for (c, (a, d)) in &por_crate {
+            s.push_str(&format!("    {}: antes {} · depois {}\n", c, a, d));
+        }
+    }
     s
 }
 
@@ -983,6 +1055,21 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
     root.insert(cat::JSON_LIMITE_PAREAMENTO.to_string(), s(cat::COMPARAR_LIMITE));
     root.insert(cat::JSON_NOME_ANTES.to_string(), s(&comp.nome_antes));
     root.insert(cat::JSON_NOME_DEPOIS.to_string(), s(&comp.nome_depois));
+    // Prompt 0075: proveniência declarada (aditivo ao esquema do 0074).
+    let pv = &comp.proveniencia;
+    root.insert(cat::JSON_CHAVE.to_string(), s(&comp.chave));
+    root.insert(cat::JSON_MODO_ANTES.to_string(), s(&pv.modo_antes));
+    root.insert(cat::JSON_MODO_DEPOIS.to_string(), s(&pv.modo_depois));
+    root.insert(cat::JSON_CRATES_ANTES.to_string(), n(pv.crates_antes));
+    root.insert(cat::JSON_CRATES_DEPOIS.to_string(), n(pv.crates_depois));
+    let paths_de = |v: &[PathGrafo]| Value::Array(v.iter().map(|p| s(p.as_str())).collect());
+    root.insert(cat::JSON_FANTASMAS_ANTES.to_string(), paths_de(&pv.fantasmas_antes));
+    root.insert(cat::JSON_FANTASMAS_DEPOIS.to_string(), paths_de(&pv.fantasmas_depois));
+    let strs_de = |v: &[String]| Value::Array(v.iter().map(|x| s(x)).collect());
+    root.insert(cat::JSON_FALHAS_ANTES.to_string(), strs_de(&pv.falhas_antes));
+    root.insert(cat::JSON_FALHAS_DEPOIS.to_string(), strs_de(&pv.falhas_depois));
+    root.insert(cat::JSON_THIRD_PARTY_ANTES.to_string(), n(pv.third_party_antes));
+    root.insert(cat::JSON_THIRD_PARTY_DEPOIS.to_string(), n(pv.third_party_depois));
 
     let pareados: Vec<Value> = comp
         .pareados
@@ -1039,7 +1126,63 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
     root.insert(cat::JSON_CICLOS_ANTES.to_string(), ciclos(&comp.ciclos_antes));
     root.insert(cat::JSON_CICLOS_DEPOIS.to_string(), ciclos(&comp.ciclos_depois));
 
+    // Prompt 0078: o nível de item completo (insumo da tela e do agente).
+    root.insert(cat::JSON_ITENS.to_string(), itens_json(&comp.itens));
+
     Value::Object(root).to_string()
+}
+
+/// Serializa o nível de item (prompt 0078): as quatro categorias com paths.
+fn itens_json(it: &lente_comparacao::ComparacaoItens) -> serde_json::Value {
+    use serde_json::Value;
+    let s = |v: &str| Value::String(v.to_string());
+    let arr = |v: &[String]| Value::Array(v.iter().map(|x| s(x)).collect());
+    let pareados: Vec<Value> = it
+        .pareados
+        .iter()
+        .map(|p| {
+            let mut o = serde_json::Map::new();
+            o.insert(cat::JSON_KIND.to_string(), s(&p.kind));
+            o.insert(cat::JSON_TRAIT.to_string(), s(&p.trait_));
+            o.insert(cat::JSON_NOME.to_string(), s(&p.nome_qualificado));
+            o.insert(cat::JSON_DE.to_string(), s(&p.path_antes));
+            o.insert(cat::JSON_PARA.to_string(), s(&p.path_depois));
+            Value::Object(o)
+        })
+        .collect();
+    let ambiguos: Vec<Value> = it
+        .ambiguos
+        .iter()
+        .map(|a| {
+            let mut o = serde_json::Map::new();
+            o.insert(cat::JSON_KIND.to_string(), s(&a.kind));
+            o.insert(cat::JSON_TRAIT.to_string(), s(&a.trait_));
+            o.insert(cat::JSON_NOME.to_string(), s(&a.nome_qualificado));
+            o.insert(cat::JSON_CANDIDATOS_ANTES.to_string(), arr(&a.candidatos_antes));
+            o.insert(cat::JSON_CANDIDATOS_DEPOIS.to_string(), arr(&a.candidatos_depois));
+            Value::Object(o)
+        })
+        .collect();
+    let sem_par = |v: &[lente_comparacao::ItemSemPar]| -> Value {
+        Value::Array(
+            v.iter()
+                .map(|i| {
+                    let mut o = serde_json::Map::new();
+                    o.insert(cat::JSON_KIND.to_string(), s(&i.kind));
+                    o.insert(cat::JSON_TRAIT.to_string(), s(&i.trait_));
+                    o.insert(cat::JSON_NOME.to_string(), s(&i.nome_qualificado));
+                    o.insert(cat::JSON_PATH.to_string(), s(&i.path));
+                    Value::Object(o)
+                })
+                .collect(),
+        )
+    };
+    let mut o = serde_json::Map::new();
+    o.insert(cat::JSON_ITENS_PAREADOS.to_string(), Value::Array(pareados));
+    o.insert(cat::JSON_ITENS_AMBIGUOS.to_string(), Value::Array(ambiguos));
+    o.insert(cat::JSON_ITENS_SEM_PAR_ANTES.to_string(), sem_par(&it.sem_par_antes));
+    o.insert(cat::JSON_ITENS_SEM_PAR_DEPOIS.to_string(), sem_par(&it.sem_par_depois));
+    Value::Object(o)
 }
 
 #[cfg(test)]
@@ -1397,6 +1540,42 @@ mod tests {
             arestas_so_depois: vec![],
             ciclos_antes: lente_comparacao::ResumoCiclos { quantidade: 1, maior: 5 },
             ciclos_depois: lente_comparacao::ResumoCiclos { quantidade: 0, maior: 0 },
+            chave: "path_completo".to_string(),
+            proveniencia: lente_comparacao::Proveniencia {
+                modo_antes: "workspace".to_string(),
+                modo_depois: "crate".to_string(),
+                crates_antes: 3,
+                crates_depois: 1,
+                fantasmas_antes: vec![Path::from("ext::Coisa")],
+                fantasmas_depois: vec![],
+                falhas_antes: vec!["crate_ruim — colisão irresolúvel".to_string()],
+                falhas_depois: vec![],
+                third_party_antes: 42,
+                third_party_depois: 0,
+            },
+            itens: lente_comparacao::ComparacaoItens {
+                pareados: vec![lente_comparacao::ItemPareado {
+                    kind: "struct".to_string(),
+                    trait_: String::new(),
+                    nome_qualificado: "Counter".to_string(),
+                    path_antes: "velho::a::Counter".to_string(),
+                    path_depois: "novo::b::Counter".to_string(),
+                }],
+                ambiguos: vec![lente_comparacao::ItemAmbiguo {
+                    kind: "fn".to_string(),
+                    trait_: String::new(),
+                    nome_qualificado: "new".to_string(),
+                    candidatos_antes: vec!["velho::a::X::new".to_string(), "velho::a::Y::new".to_string()],
+                    candidatos_depois: vec!["novo::b::X::new".to_string()],
+                }],
+                sem_par_antes: vec![lente_comparacao::ItemSemPar {
+                    kind: "fn".to_string(),
+                    trait_: String::new(),
+                    nome_qualificado: "sumiu".to_string(),
+                    path: "velho::a::sumiu".to_string(),
+                }],
+                sem_par_depois: vec![],
+            },
         }
     }
 
@@ -1416,6 +1595,19 @@ mod tests {
         assert!(s.contains("velho::c")); // aresta que sumiu
         assert!(s.contains("2 → 7")); // delta de peso
         assert!(s.contains("antes:  1 ciclo") && s.contains("depois: 0 ciclo"));
+        // Prompt 0075: a proveniência declarada no texto.
+        assert!(s.contains("antes=workspace") && s.contains("depois=crate"));
+        assert!(s.contains("chave=path_completo"));
+        assert!(s.contains("3 crate(s)") && s.contains("1 fantasma(s)"));
+        // Prompt 0075: crates não extraídos declarados no texto.
+        assert!(s.contains("Crates não extraídos"));
+        assert!(s.contains("crate_ruim — colisão irresolúvel"));
+        // Prompt 0076: third-party removido declarado no texto.
+        assert!(s.contains("Third-party fora do censo") && s.contains("antes 42 nós"));
+        // Prompt 0078: nível de item agregado no texto.
+        assert!(s.contains("Itens (chave de identidade K4"));
+        assert!(s.contains("pareados: 1") && s.contains("ambíguos: 1 chaves"));
+        assert!(s.contains("sem-par por crate") && s.contains("velho: antes 1"));
     }
 
     #[test]
@@ -1435,6 +1627,22 @@ mod tests {
         assert!(s.contains("\"ciclos_antes\":{\"maior\":5,\"quantidade\":1}"));
         assert!(s.contains("\"limite_pareamento\":"));
         assert!(s.contains("\"escopo\":\"seu-codigo\""));
+        // Prompt 0075: proveniência aditiva no JSON.
+        assert!(s.contains("\"chave\":\"path_completo\""));
+        assert!(s.contains("\"modo_antes\":\"workspace\""));
+        assert!(s.contains("\"crates_antes\":3"));
+        assert!(s.contains("\"fantasmas_antes\":[\"ext::Coisa\"]"));
+        // Prompt 0075: falhas por lado, aditivo.
+        assert!(s.contains("\"falhas_antes\":[\"crate_ruim — colisão irresolúvel\"]"));
+        assert!(s.contains("\"falhas_depois\":[]"));
+        // Prompt 0076: third-party aditivo no JSON.
+        assert!(s.contains("\"third_party_antes\":42"));
+        assert!(s.contains("\"third_party_depois\":0"));
+        // Prompt 0078: nível de item no JSON (pareado com os dois paths).
+        assert!(s.contains("\"itens\":{"));
+        assert!(s.contains("\"nome\":\"Counter\""));
+        assert!(s.contains("\"de\":\"velho::a::Counter\"") && s.contains("\"para\":\"novo::b::Counter\""));
+        assert!(s.contains("\"candidatos_antes\":["));
     }
 
     #[test]

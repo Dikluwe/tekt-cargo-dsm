@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::workspace` — membros + extração cacheada (L3)
-Hash do Código: 1c4b5e5a
+Hash do Código: e3a86698
 
 **Camada**: L3 — Infraestrutura. Filesystem, subprocesso (`rustc`), cache em disco.
 **Unidade**: `03_infra/src/workspace.rs` (crate `lente_infra`).
@@ -45,7 +45,7 @@ Dado cache quente Quando extrair_grafo_cacheado Então lê sem rodar o fork
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"enumerar_membros","params":["&Path"],"return_type":"Result<Vec<MembroWorkspace>, ErroWorkspace>"},{"name":"versao_toolchain","params":[],"return_type":"Result<String, ErroWorkspace>"},{"name":"chave_cache","params":["&MembroWorkspace","&Path","&str"],"return_type":"Result<String, ErroWorkspace>"},{"name":"extrair_grafo_cacheado","params":["&MembroWorkspace","&Path","&str"],"return_type":"Result<Grafo, ErroWorkspace>"}],"types":[{"name":"MembroWorkspace","kind":"struct","members":["nome","dir"]},{"name":"ErroWorkspace","kind":"enum","members":["Io","Manifesto","Fork","Adaptador","Toolchain"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"natureza_raiz","params":["&Path"],"return_type":"Result<NaturezaRaiz, ErroWorkspace>"},{"name":"enumerar_membros","params":["&Path"],"return_type":"Result<Vec<MembroWorkspace>, ErroWorkspace>"},{"name":"versao_toolchain","params":[],"return_type":"Result<String, ErroWorkspace>"},{"name":"chave_cache","params":["&MembroWorkspace","&Path","&str"],"return_type":"Result<String, ErroWorkspace>"},{"name":"extrair_grafo_cacheado","params":["&MembroWorkspace","&Path","&str"],"return_type":"Result<Grafo, ErroWorkspace>"}],"types":[{"name":"MembroWorkspace","kind":"struct","members":["nome","dir"]},{"name":"ErroWorkspace","kind":"enum","members":["Io","Manifesto","Fork","Adaptador","Toolchain"]},{"name":"NaturezaRaiz","kind":"enum","members":["Crate","Workspace"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 

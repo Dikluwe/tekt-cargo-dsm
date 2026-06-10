@@ -795,7 +795,8 @@ mod tests {
     }
 
     /// E2E (prompt 0074): `lente_core` contra **ele mesmo** — paridade total:
-    /// zero sem-par dos dois lados, ciclos idênticos.
+    /// zero sem-par dos dois lados, ciclos idênticos. Modo crate × crate
+    /// (retrocompat: chave normalizada, como no 0074).
     #[test]
     #[ignore]
     fn e2e_comparar_lente_core_vs_si_mesmo() {
@@ -804,6 +805,30 @@ mod tests {
         assert!(s.contains("só-antes: 0"), "paridade total — sem só-antes:\n{}", s);
         assert!(s.contains("só-depois: 0"), "paridade total — sem só-depois");
         assert!(!s.contains("pareados: 0"), "deve haver pareados");
+        assert!(s.contains("antes=crate"), "modo crate declarado");
+        assert!(s.contains("chave=normalizada"), "crate×crate usa chave normalizada");
+    }
+
+    /// E2E (prompt 0075): o **workspace** da lente contra ele mesmo — detecção de
+    /// workspace, `montar_grafo_workspace`, chave de path completo: paridade
+    /// total, e **0 fantasmas** dos dois lados (laudo 0045).
+    #[test]
+    #[ignore]
+    fn e2e_comparar_workspace_lente_vs_si_mesmo() {
+        let raiz = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|p| p.parent())
+            .expect("workspace root")
+            .to_path_buf();
+        let s = run(cli_comparar(raiz.clone(), raiz)).expect("comparar workspace vs si");
+        assert!(s.contains("antes=workspace"), "modo workspace declarado:\n{}", s);
+        assert!(s.contains("chave=path_completo"), "workspace usa path completo");
+        assert!(s.contains("só-antes: 0") && s.contains("só-depois: 0"), "paridade total");
+        assert!(!s.contains("pareados: 0"), "deve haver pareados");
+        assert!(s.contains("0 fantasma(s)) · depois=workspace (") , "0 fantasmas (0045):\n{}", s);
+        // Prompt 0078: nível de item — contra si mesmo, item sem-par é vazio.
+        assert!(s.contains("Itens (chave de identidade K4"), "seção de itens");
+        assert!(s.contains("sem-par antes: 0  ·  sem-par depois: 0"), "itens: paridade total");
     }
 
     /// E2E (prompt 0074): `lente_core` contra uma **cópia com um módulo a mais** —
