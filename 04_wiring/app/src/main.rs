@@ -695,6 +695,13 @@ mod tests {
         );
         assert!(!html.contains("\"core::fmt\""), "sysroot fora do recorte");
         assert!(html.contains("--completo"), "cabeçalho diz como obter o completo");
+        // Prompt 0073: raio por módulo embutido (índices na ordem) e coerente —
+        // `entities::grafo` é dependido por vários (montante não-vazio).
+        assert!(html.contains("\"raios\":["), "raios embutidos");
+        assert!(
+            html.contains("\"raio_semantica\""),
+            "semântica do raio declarada"
+        );
         let _ = std::fs::remove_file(&saida);
     }
 

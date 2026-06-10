@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash 8fea657d
+//! @prompt-hash 7d319e02
 //! @layer L1
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -68,6 +68,25 @@ pub struct DependenciaModulo {
     pub peso: usize,
 }
 
+/// **Raio de impacto de um módulo** (prompt 0073): montante e jusante
+/// **transitivos**, na convenção do [`crate::Raio`] por item:
+///
+/// - `montante`: módulos que **dependem deste** (quem sente — alcançabilidade
+///   reversa sobre `Uses` de item, projetada a módulos).
+/// - `jusante`: módulos **de que este depende** (alcançabilidade direta).
+///
+/// **Semântica exata** (definição 2 do prompt 0073): BFS no grafo de **itens**,
+/// projetado a módulos — **não** o fecho do grafo agregado, que superestima
+/// (`a∈A→b∈B`, `b'∈B→c∈C` sem caminho `a⇝c` daria `A⇝C` no agregado, mas a
+/// exata não). O próprio módulo nunca aparece nas suas listas. Determinístico
+/// (paths ordenados).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RaioModulo {
+    pub modulo: Path,
+    pub montante: Vec<Path>,
+    pub jusante: Vec<Path>,
+}
+
 /// Resultado do modo estrutura (prompt 0031, ampliado pelo 0035): a lista
 /// de **módulos** do crate, as **dependências** módulo→módulo agregadas,
 /// os **ciclos** detectados (SCCs ≥ 2), e o **ordenamento** da DSM
@@ -90,6 +109,10 @@ pub struct EstruturaModulos {
     /// SCCs ≥ 2 na ordem em que aparecem em `ordem` (prompt 0035). Cada
     /// bloco é um intervalo contíguo de `ordem`.
     pub blocos: Vec<Vec<Path>>,
+    /// Raio (montante/jusante transitivos) de **cada módulo** (prompt 0073),
+    /// na mesma ordem de `modulos`. Para a interação "clicar um módulo e ver o
+    /// que ele alcança" na vista HTML. Vazio se não computado.
+    pub raios: Vec<RaioModulo>,
 }
 
 /// Ordenamento dos módulos para a DSM (prompt 0035): a sequência em que os
@@ -247,6 +270,98 @@ pub fn pesos_modulo_a_modulo(grafo: &Grafo) -> HashMap<(usize, usize), usize> {
         *pesos.entry((from, to)).or_insert(0) += 1;
     }
     pesos
+}
+
+/// **Raio por módulo** (prompt 0073) — montante/jusante transitivos de cada
+/// módulo, na **definição exata** (alcançabilidade no grafo de itens projetada
+/// a módulos; ver [`RaioModulo`]). Determinístico: módulos por `path`, listas
+/// por `path`.
+///
+/// Custo: por módulo, dois BFS no grafo de itens — O(módulos · (itens +
+/// arestas)). Linear; medido barato (laudo 0073).
+pub fn raios_por_modulo(grafo: &Grafo) -> Vec<RaioModulo> {
+    let modulo_de = mapa_modulo_contenedor(grafo);
+
+    // Adjacência item→item sobre `Uses` (direta e reversa).
+    let mut fwd: HashMap<usize, Vec<usize>> = HashMap::new();
+    let mut rev: HashMap<usize, Vec<usize>> = HashMap::new();
+    for a in &grafo.edges {
+        if a.relation == Relation::Uses {
+            fwd.entry(a.id_from).or_default().push(a.id_to);
+            rev.entry(a.id_to).or_default().push(a.id_from);
+        }
+    }
+
+    // Itens (todos os nós) de cada módulo, pela cadeia `Owns` (mapa_modulo_contenedor).
+    let mut itens_de: HashMap<usize, Vec<usize>> = HashMap::new();
+    for n in &grafo.nodes {
+        if let Some(&m) = modulo_de.get(&n.id) {
+            itens_de.entry(m).or_default().push(n.id);
+        }
+    }
+    let path_de_mod: HashMap<usize, Path> = grafo
+        .nodes
+        .iter()
+        .filter(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
+        .map(|n| (n.id, n.path.clone()))
+        .collect();
+
+    let mut modulos: Vec<&No> = grafo
+        .nodes
+        .iter()
+        .filter(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
+        .collect();
+    modulos.sort_by(|a, b| a.path.as_str().cmp(b.path.as_str()));
+
+    modulos
+        .into_iter()
+        .map(|m| {
+            let fontes = itens_de.get(&m.id).cloned().unwrap_or_default();
+            RaioModulo {
+                modulo: m.path.clone(),
+                montante: projetar(&alcanca(&fontes, &rev, &modulo_de, m.id), &path_de_mod),
+                jusante: projetar(&alcanca(&fontes, &fwd, &modulo_de, m.id), &path_de_mod),
+            }
+        })
+        .collect()
+}
+
+/// BFS multi-fonte sobre uma adjacência de itens; devolve o conjunto de
+/// **módulos** dos itens alcançados, exceto o próprio (`self_mod`).
+fn alcanca(
+    fontes: &[usize],
+    adj: &HashMap<usize, Vec<usize>>,
+    modulo_de: &HashMap<usize, usize>,
+    self_mod: usize,
+) -> BTreeSet<usize> {
+    let mut visto: HashSet<usize> = fontes.iter().copied().collect();
+    let mut fila: std::collections::VecDeque<usize> = fontes.iter().copied().collect();
+    let mut mods: BTreeSet<usize> = BTreeSet::new();
+    while let Some(x) = fila.pop_front() {
+        if let Some(vizinhos) = adj.get(&x) {
+            for &y in vizinhos {
+                if let Some(&m) = modulo_de.get(&y) {
+                    if m != self_mod {
+                        mods.insert(m);
+                    }
+                }
+                if visto.insert(y) {
+                    fila.push_back(y);
+                }
+            }
+        }
+    }
+    mods
+}
+
+/// Converte um conjunto de ids-de-módulo em paths ordenados.
+fn projetar(mods: &BTreeSet<usize>, path_de_mod: &HashMap<usize, Path>) -> Vec<Path> {
+    let mut v: Vec<Path> = mods
+        .iter()
+        .filter_map(|id| path_de_mod.get(id).cloned())
+        .collect();
+    v.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+    v
 }
 
 /// Detecta os ciclos (SCCs de tamanho ≥ 2) no grafo, **sobre as arestas
@@ -663,6 +778,49 @@ mod tests {
         assert_eq!(pesos.get(&(20, 10)), Some(&1), "b→a deve ter peso 1");
         assert_eq!(pesos.get(&(10, 10)), None, "intra-módulo não entra");
         assert_eq!(pesos.len(), 2);
+    }
+
+    // ---- raios_por_modulo (prompt 0073, semântica EXATA — teste-contrato) ----
+
+    /// O contrato da definição 2: `a∈A → b∈B`, `b'∈B → c∈C`, **sem** caminho de
+    /// item `a ⇝ c`. O fecho do grafo AGREGADO diria `A ⇝ C` (A→B→C); a exata
+    /// **não** — não há item de A que alcance um item de C. Se alguém trocar a
+    /// definição pela agregada, este teste grita.
+    #[test]
+    fn raio_exato_nao_superestima_pela_agregacao() {
+        let mut g = Grafo::new("k");
+        g.nodes = vec![
+            no(100, "k::a", Kind::Mod),
+            no(1, "k::a::f", Kind::Fn),
+            no(200, "k::b", Kind::Mod),
+            no(2, "k::b::g", Kind::Fn),
+            no(3, "k::b::h", Kind::Fn),
+            no(300, "k::c", Kind::Mod),
+            no(4, "k::c::i", Kind::Fn),
+        ];
+        g.edges = vec![
+            aresta(100, "k::a", 1, "k::a::f", Relation::Owns),
+            aresta(200, "k::b", 2, "k::b::g", Relation::Owns),
+            aresta(200, "k::b", 3, "k::b::h", Relation::Owns),
+            aresta(300, "k::c", 4, "k::c::i", Relation::Owns),
+            aresta(1, "k::a::f", 2, "k::b::g", Relation::Uses), // a → b
+            aresta(3, "k::b::h", 4, "k::c::i", Relation::Uses), // b' → c
+        ];
+        let raios = raios_por_modulo(&g);
+        let de = |p: &str| raios.iter().find(|r| r.modulo.as_str() == p).unwrap();
+
+        let a = de("k::a");
+        // jusante (do que A depende, forward): só B — C fica de fora (exata).
+        assert_eq!(a.jusante, vec![Path::from("k::b")], "A depende só de B, não de C");
+        assert!(a.montante.is_empty(), "ninguém depende de A");
+
+        let b = de("k::b");
+        assert_eq!(b.jusante, vec![Path::from("k::c")], "B depende de C (b'→c)");
+        assert_eq!(b.montante, vec![Path::from("k::a")], "A depende de B");
+
+        let c = de("k::c");
+        assert!(c.jusante.is_empty());
+        assert_eq!(c.montante, vec![Path::from("k::b")], "B depende de C");
     }
 
     #[test]

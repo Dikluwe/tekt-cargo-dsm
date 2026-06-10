@@ -4,7 +4,7 @@
 montante/jusante transitivos) + L4 (preencher) + L2 (a interação na vista
 HTML). O motor do raio por item e o pipeline existentes **não mudam**.
 **Criado em**: 2026-06-10
-**Estado**: `PROPOSTO`
+**Estado**: `EXECUTADO` (laudo `00_nucleo/lessons/0073-raio_na_tela.md`)
 **Decisões de origem**:
 - Laudo 0071, fila — "o humano, vendo a DSM, vai querer clicar um módulo e
   ver seu raio. Próxima trilha provável." Confirmado pelo autor (2026-06-10).

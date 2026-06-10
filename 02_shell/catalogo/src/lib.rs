@@ -249,6 +249,14 @@ pub const JSON_BLOCOS: &str = "blocos";
 pub const JSON_PACOTE: &str = "pacote";
 pub const JSON_LIMITE: &str = "limite";
 pub const JSON_ESCOPO_DICA: &str = "escopo_dica";
+/// Raio por módulo embutido na vista HTML (prompt 0073): por posição na `ordem`,
+/// `{m:[índices montante], j:[índices jusante]}`. Índices (compacto), não paths.
+pub const JSON_RAIOS: &str = "raios";
+pub const JSON_RAIO_SEMANTICA: &str = "raio_semantica";
+/// Rótulo do painel de raio na vista (semântica + limite §3 — honestidade na interface).
+pub const DSM_RAIO_SEMANTICA: &str = "Raio estrutural (alcançabilidade por item, projetada a \
+    módulos): montante = quem depende deste (sente a mudança); jusante = do que este depende. \
+    Estar no raio é estar na forma — não significa que vai quebrar.";
 /// Declaração de limite (proposta §3) embutida no cabeçalho da vista HTML — a
 /// honestidade é parte da interface, como nas descrições do MCP (0070). HTML
 /// curto (renderizado dentro de `<p class="limite">`).

@@ -23,7 +23,7 @@ use lente_core::entities::grafo::Path as PathGrafo;
 // a CLi não importa mais tipos da fachada `lente_wiring` aqui.
 use lente_core::domain::consulta::{Escopo, ModoUses};
 use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
-use lente_estrutura::EstruturaModulos;
+use lente_estrutura::{EstruturaModulos, RaioModulo};
 use lente_ranking::ItemRanking;
 
 use crate::args::Vista;
@@ -386,10 +386,53 @@ fn estrutura_json_map(
     root
 }
 
+/// Converte os raios por módulo (paths, do L1) em **índices na `ordem`**, na
+/// posição de cada módulo em `ordem` (prompt 0073): `raios[i] = {m, j}` onde
+/// `m`/`j` são listas de índices. Compacto — a tela resolve índice → path pela
+/// própria `ordem`.
+fn raios_para_indices(estrut: &EstruturaModulos) -> serde_json::Value {
+    use std::collections::HashMap;
+    let idx: HashMap<&str, usize> = estrut
+        .ordem
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.as_str(), i))
+        .collect();
+    let raio_de: HashMap<&str, &RaioModulo> =
+        estrut.raios.iter().map(|r| (r.modulo.as_str(), r)).collect();
+    let to_idx = |ps: &[PathGrafo]| -> serde_json::Value {
+        serde_json::Value::Array(
+            ps.iter()
+                .filter_map(|p| idx.get(p.as_str()))
+                .map(|&i| serde_json::Value::Number(i.into()))
+                .collect(),
+        )
+    };
+    let arr: Vec<serde_json::Value> = estrut
+        .ordem
+        .iter()
+        .map(|p| {
+            let mut o = serde_json::Map::new();
+            match raio_de.get(p.as_str()) {
+                Some(r) => {
+                    o.insert("m".to_string(), to_idx(&r.montante));
+                    o.insert("j".to_string(), to_idx(&r.jusante));
+                }
+                None => {
+                    o.insert("m".to_string(), serde_json::Value::Array(vec![]));
+                    o.insert("j".to_string(), serde_json::Value::Array(vec![]));
+                }
+            }
+            serde_json::Value::Object(o)
+        })
+        .collect();
+    serde_json::Value::Array(arr)
+}
+
 /// Vista DSM em **HTML autocontido** (prompt 0071): injeta o MESMO dado do
 /// `--json` (mais `pacote`/`limite`) no template embutido (`include_str!`). Um
 /// arquivo, sem rede/CDN/deps de runtime. A tela é vista: o cálculo (ordem,
-/// ciclos, peso) já veio do L1.
+/// ciclos, peso, raio) já veio do L1.
 pub fn formatar_estrutura_html(
     estrut: &EstruturaModulos,
     escopo: Escopo,
@@ -414,6 +457,17 @@ pub fn formatar_estrutura_html(
     map.insert(
         cat::JSON_ESCOPO_DICA.to_string(),
         serde_json::Value::String(dica.to_string()),
+    );
+    // Prompt 0073: raio por módulo embutido como ÍNDICES na `ordem` (compacto —
+    // a tela já tem `ordem`; paths cheios dobrariam o arquivo). Paralelo a
+    // `ordem`: raios[i] = {m:[...], j:[...]} para o módulo em ordem[i].
+    map.insert(
+        cat::JSON_RAIOS.to_string(),
+        raios_para_indices(estrut),
+    );
+    map.insert(
+        cat::JSON_RAIO_SEMANTICA.to_string(),
+        serde_json::Value::String(cat::DSM_RAIO_SEMANTICA.to_string()),
     );
     let dados = serde_json::Value::Object(map).to_string();
     // Injeção única (a tela lê tudo de `DADOS`). Placeholder textual no template.
@@ -1053,6 +1107,23 @@ mod tests {
             ciclos: vec![Ciclo {
                 modulos: vec![Path::from("k::a"), Path::from("k::b")],
             }],
+            raios: vec![
+                RaioModulo {
+                    modulo: Path::from("k"),
+                    montante: vec![],
+                    jusante: vec![Path::from("k::a"), Path::from("k::b")],
+                },
+                RaioModulo {
+                    modulo: Path::from("k::a"),
+                    montante: vec![Path::from("k::b")],
+                    jusante: vec![Path::from("k::b")],
+                },
+                RaioModulo {
+                    modulo: Path::from("k::b"),
+                    montante: vec![Path::from("k::a")],
+                    jusante: vec![Path::from("k::a")],
+                },
+            ],
             // Prompt 0035: amostra de ordem + bloco para os testes de saída.
             // Ordem da DSM: k (crate, sem deps) → {k::a, k::b} (bloco).
             ordem: vec![
@@ -1097,6 +1168,10 @@ mod tests {
         assert!(s.contains("\"escopo\":\"completo\""));
         assert!(s.contains("\"peso\":3"));
         assert!(s.contains("\"ordem\":["));
+        // Prompt 0073: raio por módulo embutido (índices na ordem) + semântica.
+        assert!(s.contains("\"raios\":["));
+        assert!(s.contains("\"m\":") && s.contains("\"j\":"));
+        assert!(s.contains(cat::DSM_RAIO_SEMANTICA));
         // Cabeçalho honesto: a declaração de limite (§3) vem do catálogo.
         assert!(s.contains("estrutural"));
         assert!(s.contains(cat::DSM_LIMITE_HTML));
