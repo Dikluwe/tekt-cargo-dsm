@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-workspace.md
-//! @prompt-hash 87fe796d
+//! @prompt-hash 8466abe0
 //! @layer L3
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -96,6 +96,48 @@ impl Error for ErroWorkspace {
 #[derive(Debug, Deserialize)]
 struct RaizManifesto {
     workspace: Option<SecaoWorkspace>,
+}
+
+/// Natureza de uma raiz para o `--comparar` (prompt 0075): um diretório-de-crate
+/// (tem `[package]`) ou um workspace virtual (só `[workspace]`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NaturezaRaiz {
+    Crate,
+    Workspace,
+}
+
+/// Manifesto mínimo só para detectar a natureza da raiz: presença de `[package]`
+/// e/ou `[workspace]`. (Um crate pode ter ambos — é tratado como crate.)
+#[derive(Debug, Deserialize)]
+struct ManifestoNatureza {
+    package: Option<toml::Value>,
+    workspace: Option<toml::Value>,
+}
+
+/// Detecta a natureza de uma raiz lendo o `Cargo.toml` (prompt 0075): tem
+/// `[package]` → [`NaturezaRaiz::Crate`]; só `[workspace]` → `Workspace`; nenhum
+/// (ou `Cargo.toml` ausente) → erro claro citando a raiz. Decisão **estrutural**
+/// (presença de tabela), não casamento de string de erro frágil.
+pub fn natureza_raiz(raiz: &Path) -> Result<NaturezaRaiz, ErroWorkspace> {
+    let manifesto = raiz.join("Cargo.toml");
+    let txt = std::fs::read_to_string(&manifesto).map_err(|_| {
+        ErroWorkspace::Manifesto(format!(
+            "{}: Cargo.toml ausente ou ilegível (a raiz é um diretório de crate ou workspace?)",
+            manifesto.display()
+        ))
+    })?;
+    let man: ManifestoNatureza = toml::from_str(&txt)
+        .map_err(|e| ErroWorkspace::Manifesto(format!("{}: {}", manifesto.display(), e)))?;
+    if man.package.is_some() {
+        Ok(NaturezaRaiz::Crate)
+    } else if man.workspace.is_some() {
+        Ok(NaturezaRaiz::Workspace)
+    } else {
+        Err(ErroWorkspace::Manifesto(format!(
+            "{} não tem [package] nem [workspace]",
+            manifesto.display()
+        )))
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -345,7 +387,12 @@ pub fn extrair_grafo_cacheado(
         Err(_) => {} // NotFound → cache miss, segue para o fork
     }
 
-    let json = crate::fork::invocar_fork(&membro.nome).map_err(ErroWorkspace::Fork)?;
+    // Prompt 0075: invoca o fork no **diretório do membro**, não pelo nome no
+    // CWD. O `invocar_fork(nome)` resolve o alvo via `cargo metadata` rodado no
+    // CWD do processo — só acha o membro quando o CWD é o mesmo workspace
+    // (verdade no `--diff`, falso ao `--comparar` um workspace noutro caminho).
+    // `invocacao::invocar(dir)` resolve no próprio diretório → CWD-independente.
+    let json = crate::invocacao::invocar(&membro.dir).map_err(ErroWorkspace::Adaptador)?;
     std::fs::create_dir_all(&dir).map_err(ErroWorkspace::Io)?;
     escrever_atomico(&destino, json.as_bytes())?;
     crate::desserializar_grafo(&json).map_err(ErroWorkspace::Adaptador)
@@ -418,6 +465,43 @@ fn escrever_atomico(destino: &Path, conteudo: &[u8]) -> Result<(), ErroWorkspace
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ---- natureza_raiz (prompt 0075) ----
+
+    fn escrever_cargo(tag: &str, cargo: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("__lente_nat_{}_{}__", tag, std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::write(d.join("Cargo.toml"), cargo).unwrap();
+        d
+    }
+
+    #[test]
+    fn natureza_raiz_detecta_crate_workspace_e_erro() {
+        let crate_dir = escrever_cargo("crate", "[package]\nname=\"x\"\nversion=\"0.0.0\"\nedition=\"2024\"\n");
+        assert_eq!(natureza_raiz(&crate_dir).unwrap(), NaturezaRaiz::Crate);
+
+        let ws_dir = escrever_cargo("ws", "[workspace]\nmembers=[\"a\"]\n");
+        assert_eq!(natureza_raiz(&ws_dir).unwrap(), NaturezaRaiz::Workspace);
+
+        // package + workspace (crate que também é raiz de workspace) → crate.
+        let ambos = escrever_cargo("ambos", "[workspace]\n\n[package]\nname=\"y\"\nversion=\"0\"\nedition=\"2024\"\n");
+        assert_eq!(natureza_raiz(&ambos).unwrap(), NaturezaRaiz::Crate);
+
+        // sem nenhuma das tabelas → erro claro.
+        let nenhum = escrever_cargo("nenhum", "[dependencies]\n");
+        assert!(natureza_raiz(&nenhum).is_err());
+
+        // Cargo.toml ausente → erro claro citando a raiz.
+        let vazio = std::env::temp_dir().join(format!("__lente_nat_vazio_{}__", std::process::id()));
+        let _ = std::fs::remove_dir_all(&vazio);
+        std::fs::create_dir_all(&vazio).unwrap();
+        assert!(natureza_raiz(&vazio).is_err());
+
+        for d in [crate_dir, ws_dir, ambos, nenhum, vazio] {
+            let _ = std::fs::remove_dir_all(d);
+        }
+    }
 
     /// Cria um diretório temporário único para o teste (sem dep externa).
     fn temp_dir(tag: &str) -> PathBuf {

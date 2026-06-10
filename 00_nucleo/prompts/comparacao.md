@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_comparacao` — paridade entre duas estruturas (L1)
-Hash do Código: 855c22fc
+Hash do Código: 06186d23
 
 **Camada**: L1 — Núcleo (puro). Importa `lente_core` e `lente_estrutura`.
 **Unidade**: `01_core/comparacao/src/lib.rs` (crate `lente_comparacao`).
@@ -45,7 +45,7 @@ Dado um ciclo desfeito Então ciclos_depois.quantidade < ciclos_antes.quantidade
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"comparar_estruturas","params":["&EstruturaModulos","&EstruturaModulos","&str","&str"],"return_type":"Comparacao"}],"types":[{"name":"ArestaComparada","kind":"struct","members":["de","para","peso_antes","peso_depois"]},{"name":"ResumoCiclos","kind":"struct","members":["quantidade","maior"]},{"name":"Lado","kind":"enum","members":["Antes","Depois"]},{"name":"Comparacao","kind":"struct","members":["nome_antes","nome_depois","pareados","sem_par_antes","sem_par_depois","arestas_comuns","arestas_so_antes","arestas_so_depois","ciclos_antes","ciclos_depois"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"comparar_estruturas","params":["&EstruturaModulos","&EstruturaModulos","&str","&str","ChavePareamento","Proveniencia","ComparacaoItens"],"return_type":"Comparacao"},{"name":"comparar_itens","params":["&Grafo","&BTreeSet<String>","&Grafo","&BTreeSet<String>"],"return_type":"ComparacaoItens"}],"types":[{"name":"ArestaComparada","kind":"struct","members":["de","para","peso_antes","peso_depois"]},{"name":"ResumoCiclos","kind":"struct","members":["quantidade","maior"]},{"name":"Lado","kind":"enum","members":["Antes","Depois"]},{"name":"ChavePareamento","kind":"enum","members":["Normalizada","PathCompleto"]},{"name":"Proveniencia","kind":"struct","members":["modo_antes","modo_depois","crates_antes","crates_depois","fantasmas_antes","fantasmas_depois","falhas_antes","falhas_depois","third_party_antes","third_party_depois"]},{"name":"ItemPareado","kind":"struct","members":["kind","trait_","nome_qualificado","path_antes","path_depois"]},{"name":"ItemAmbiguo","kind":"struct","members":["kind","trait_","nome_qualificado","candidatos_antes","candidatos_depois"]},{"name":"ItemSemPar","kind":"struct","members":["kind","trait_","nome_qualificado","path"]},{"name":"ComparacaoItens","kind":"struct","members":["pareados","ambiguos","sem_par_antes","sem_par_depois"]},{"name":"Comparacao","kind":"struct","members":["nome_antes","nome_depois","pareados","sem_par_antes","sem_par_depois","arestas_comuns","arestas_so_antes","arestas_so_depois","ciclos_antes","ciclos_depois","chave","proveniencia","itens"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 

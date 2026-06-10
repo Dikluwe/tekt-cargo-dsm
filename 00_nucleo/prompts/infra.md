@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra` — o adaptador da fonte (L3)
-Hash do Código: 4892cdb8
+Hash do Código: 042c8d92
 
 **Camada**: L3 — Infraestrutura. I/O e deps externas permitidos.
 **Unidade**: `03_infra/src/lib.rs` (crate `lente_infra`, fachada).
@@ -46,7 +46,7 @@ Dado dois nós com mesmo id Então Err(IdDuplicado) (invariante)
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"extrair_grafo","params":["&std::path::Path"],"return_type":"Result<Grafo, ErroAdaptador>"},{"name":"desserializar_grafo","params":["&str"],"return_type":"Result<Grafo, ErroAdaptador>"}],"types":[{"name":"ErroAdaptador","kind":"enum","members":["BinarioNaoEncontrado","FalhaSubprocesso","SubprocessoFalhou","SaidaNaoUtf8","JsonInvalido","ValorDesconhecido","IdDuplicado","IdReferenciado","DeteccaoAlvo"]}],"reexports":["diff::{ErroDiff, ler_diff}","metadata::ErroMetadata","workspace::{\n    ErroWorkspace, MembroWorkspace, chave_cache, enumerar_membros, extrair_grafo_cacheado,\n    versao_toolchain,\n}"]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"extrair_grafo","params":["&std::path::Path"],"return_type":"Result<Grafo, ErroAdaptador>"},{"name":"desserializar_grafo","params":["&str"],"return_type":"Result<Grafo, ErroAdaptador>"}],"types":[{"name":"ErroAdaptador","kind":"enum","members":["BinarioNaoEncontrado","FalhaSubprocesso","SubprocessoFalhou","SaidaNaoUtf8","JsonInvalido","ValorDesconhecido","IdDuplicado","IdReferenciado","DeteccaoAlvo"]}],"reexports":["diff::{ErroDiff, ler_diff}","metadata::ErroMetadata","workspace::{\n    ErroWorkspace, MembroWorkspace, NaturezaRaiz, chave_cache, enumerar_membros,\n    extrair_grafo_cacheado, natureza_raiz, versao_toolchain,\n}"]} -->
 
 ## Histórico de Revisões
 

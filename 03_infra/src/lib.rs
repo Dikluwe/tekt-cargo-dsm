@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra.md
-//! @prompt-hash b869b377
+//! @prompt-hash aa45b288
 //! @layer L3
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -35,8 +35,8 @@ pub mod fork;
 pub use diff::{ErroDiff, ler_diff};
 pub use metadata::ErroMetadata;
 pub use workspace::{
-    ErroWorkspace, MembroWorkspace, chave_cache, enumerar_membros, extrair_grafo_cacheado,
-    versao_toolchain,
+    ErroWorkspace, MembroWorkspace, NaturezaRaiz, chave_cache, enumerar_membros,
+    extrair_grafo_cacheado, natureza_raiz, versao_toolchain,
 };
 
 /// Modos de falha do adaptador.
