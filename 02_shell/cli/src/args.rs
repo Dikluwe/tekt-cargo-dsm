@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash 6fac218f
+//! @prompt-hash e9472355
 //! @layer L2
 //! @updated 2026-06-07
 //!
@@ -119,11 +119,29 @@ pub struct Cli {
     #[arg(long, requires = "html", help = lente_catalogo::HELP_SAIDA)]
     pub saida: Option<std::path::PathBuf>,
 
-    /// Restaura o escopo `completo` (com sysroot) na vista `--html`, cujo
-    /// default virou `seu-codigo` no prompt 0072. Na CLI `--text`/`--json` o
-    /// default segue `completo` (esta flag não tem efeito lá).
-    #[arg(long, requires = "html", help = lente_catalogo::HELP_COMPLETO)]
+    /// Restaura o escopo `completo` (com sysroot) nas superfícies de consumo
+    /// cujo default virou `seu-codigo` (prompt 0072): `--html` e `--comparar`.
+    /// Na CLI `--text`/`--json` o default segue `completo` (no-op lá).
+    #[arg(long, help = lente_catalogo::HELP_COMPLETO)]
     pub completo: bool,
+
+    /// Modo paridade (prompt 0074): compara a estrutura de DUAS raízes
+    /// (`--antes`/`--depois`) — projeto vs refatoração. Parâmetros idênticos nos
+    /// dois lados; default `seu-codigo`. Mutuamente exclusivo com os outros modos.
+    #[arg(
+        long,
+        conflicts_with_all = ["alvo", "alvo_id", "ranking", "estrutura", "diff", "grafo", "pacote"],
+        help = lente_catalogo::HELP_COMPARAR,
+    )]
+    pub comparar: bool,
+
+    /// Raiz do lado **antes** no modo `--comparar` (diretório de crate).
+    #[arg(long, requires = "comparar", help = lente_catalogo::HELP_ANTES)]
+    pub antes: Option<std::path::PathBuf>,
+
+    /// Raiz do lado **depois** no modo `--comparar` (diretório de crate).
+    #[arg(long, requires = "comparar", help = lente_catalogo::HELP_DEPOIS)]
+    pub depois: Option<std::path::PathBuf>,
 
     /// Inclui lista completa de impactados.
     #[arg(long, help = lente_catalogo::HELP_VERBOSE)]

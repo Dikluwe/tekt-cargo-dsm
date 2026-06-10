@@ -13,6 +13,7 @@ publish = false
 lente_core = { path = "../../01_core/core" }
 lente_ranking = { path = "../../01_core/ranking" }
 lente_estrutura = { path = "../../01_core/estrutura" }
+lente_comparacao = { path = "../../01_core/comparacao" }
 lente_catalogo = { path = "../catalogo" }
 clap = { version = "4", features = ["derive"] }
 serde_json = "1"

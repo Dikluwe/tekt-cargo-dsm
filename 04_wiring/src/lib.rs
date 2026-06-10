@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash f66f9e0b
+//! @prompt-hash 0c2b075f
 //! @layer L4
 //! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
@@ -40,6 +40,7 @@ use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
 use lente_estrutura::{
     agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
 };
+use lente_comparacao::comparar_estruturas;
 use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
@@ -59,6 +60,8 @@ pub use lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
 pub use lente_core::domain::uniao::Fantasma;
 pub use lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm};
 pub use lente_ranking::ItemRanking;
+// Prompt 0074: o contrato da comparação, para a saída (L2) e o agente.
+pub use lente_comparacao::{ArestaComparada, Comparacao, Lado, ResumoCiclos};
 
 // O vocabulário de pedido — `FonteGrafo`/`Escopo`/`ModoUses`/`AlvoBusca` — desceu
 // ao L1 no Estágio 2 (0056): `lente_core::domain::consulta`, re-exportado acima.
@@ -331,6 +334,15 @@ pub fn analisar_estrutura(
     modo_uses: ModoUses,
 ) -> Result<EstruturaModulos, ErroLente> {
     let grafo = obter_grafo(fonte, escopo)?;
+    estrutura_de_grafo(grafo, modo_uses)
+}
+
+/// A construção da [`EstruturaModulos`] a partir de um grafo **já resolvido e
+/// escopado** (prompt 0074): aplica o modo de uses, agrega, detecta ciclos,
+/// ordena a DSM, conta pesos e raios. Fatorada de [`analisar_estrutura`] para
+/// ser reusada pela comparação ([`comparar`]), que extrai cada lado por
+/// diretório em vez de `FonteGrafo`.
+fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModulos, ErroLente> {
     let grafo = match modo_uses {
         ModoUses::Todas => grafo,
         ModoUses::SoReferencia => {
@@ -395,6 +407,52 @@ pub fn analisar_estrutura(
         blocos: dsm.blocos,
         raios,
     })
+}
+
+/// Erro da comparação, identificando **qual lado** falhou (prompt 0074) — para
+/// a tradução do `app` dizer "lado antes/depois" antes da mensagem do `ErroLente`.
+/// `Lado` vem do L1 (`lente_comparacao`) — o fio não declara o enum.
+#[derive(Debug)]
+pub struct ErroComparar {
+    pub lado: Lado,
+    pub erro: ErroLente,
+}
+
+/// **Paridade** (prompt 0074): extrai a estrutura de duas raízes com os
+/// **mesmos** parâmetros (escopo/modo forçados iguais) e compara. Cada raiz é um
+/// diretório de crate; a receita branch→`git worktree` é documentação, não
+/// código. Erros identificam o lado.
+pub fn comparar(
+    raiz_antes: &std::path::Path,
+    raiz_depois: &std::path::Path,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> Result<Comparacao, ErroComparar> {
+    let (antes, nome_a) = estrutura_de_raiz(raiz_antes, escopo, modo_uses)
+        .map_err(|erro| ErroComparar { lado: Lado::Antes, erro })?;
+    let (depois, nome_b) = estrutura_de_raiz(raiz_depois, escopo, modo_uses)
+        .map_err(|erro| ErroComparar { lado: Lado::Depois, erro })?;
+    Ok(comparar_estruturas(&antes, &depois, &nome_a, &nome_b))
+}
+
+/// Extrai a estrutura de uma raiz-de-crate **por diretório** (fork dir-aware),
+/// devolvendo também o nome do crate (rótulo do cabeçalho). Mesma cadeia de
+/// [`analisar_estrutura`] (resolver colisões → escopo → estrutura), mas a partir
+/// de um dir em vez de `FonteGrafo`.
+fn estrutura_de_raiz(
+    raiz: &std::path::Path,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> Result<(EstruturaModulos, String), ErroLente> {
+    let grafo = lente_infra::extrair_grafo(raiz).map_err(ErroLente::Adaptador)?;
+    let nome = grafo.crate_name.clone();
+    let grafo = resolver_colisoes(grafo)?;
+    let grafo = match escopo {
+        Escopo::SeuCodigo => filtrar_stdlib(&grafo),
+        Escopo::Completo => grafo,
+    };
+    let est = estrutura_de_grafo(grafo, modo_uses)?;
+    Ok((est, nome))
 }
 
 /// Helper único da aplicação do escopo (prompt 0030): obtém o grafo

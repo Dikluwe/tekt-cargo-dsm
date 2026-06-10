@@ -7,6 +7,7 @@ members = [
     "01_core/filtro",
     "01_core/ranking",
     "01_core/estrutura",
+    "01_core/comparacao",
     "02_shell/catalogo",
     "02_shell/cli",
     "03_infra",

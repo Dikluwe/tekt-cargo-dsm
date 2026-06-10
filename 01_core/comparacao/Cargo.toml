@@ -1,0 +1,15 @@
+[package]
+name = "lente_comparacao"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+# L1 — paridade entre duas estruturas (prompt 0074). Pareamento por path
+# normalizado + deltas. Puro: stdlib + `lente_core` + `lente_estrutura`.
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+lente_core = { path = "../core" }
+lente_estrutura = { path = "../estrutura" }
