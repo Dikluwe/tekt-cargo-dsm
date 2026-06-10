@@ -37,7 +37,9 @@ use lente_core::domain::mapeamento::{MapeamentoDiff, mapear_diff};
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
 use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
 use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
-use lente_estrutura::{agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo};
+use lente_estrutura::{
+    agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
+};
 use lente_filtro::{filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
@@ -381,12 +383,17 @@ pub fn analisar_estrutura(
             .then_with(|| a.para.as_str().cmp(b.para.as_str()))
     });
 
+    // Prompt 0073: raio por módulo (montante/jusante transitivos, exatos) sobre
+    // o MESMO grafo de itens (mesmo escopo/modo) que a estrutura usa.
+    let raios = raios_por_modulo(&grafo);
+
     Ok(EstruturaModulos {
         modulos,
         dependencias,
         ciclos,
         ordem: dsm.ordem,
         blocos: dsm.blocos,
+        raios,
     })
 }
 
