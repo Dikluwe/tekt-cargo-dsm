@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/raio.md
-//! @prompt-hash 93ba50cd
+//! @prompt-hash 26c89869
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O.
@@ -100,6 +100,96 @@ impl fmt::Display for ErroRaio {
 
 impl Error for ErroRaio {}
 
+/// Falha de consulta de caminho: identifica qual endpoint não existe.
+/// Não altera o contrato de erro de [`calcular_raio`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ErroCaminhoImpacto {
+    ItemAlteradoInexistente(Path),
+    ConsumidorInexistente(Path),
+}
+
+impl fmt::Display for ErroCaminhoImpacto {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ItemAlteradoInexistente(path) => {
+                write!(f, "item alterado inexistente no grafo: {}", path)
+            }
+            Self::ConsumidorInexistente(path) => {
+                write!(f, "consumidor inexistente no grafo: {}", path)
+            }
+        }
+    }
+}
+
+impl Error for ErroCaminhoImpacto {}
+
+/// Explica uma dependência estrutural por um único caminho mínimo de `Uses`.
+///
+/// Recebe primeiro o item alterado, mas retorna os paths na direção das arestas:
+/// **consumidor → dependências intermediárias → item alterado**, incluindo ambas
+/// as pontas. O número de saltos é `caminho.len() - 1`. Para pontas distintas,
+/// equivale à profundidade do consumidor no montante de [`calcular_raio`].
+///
+/// `Ok(None)` indica dois endpoints existentes sem caminho nessa direção.
+/// Endpoints ausentes são erros distintos; se ambos faltam, o item alterado tem
+/// precedência. Consultar o mesmo nó existente retorna `Some(vec![no])`, caminho
+/// reflexivo de zero saltos, mesmo com ciclos. Isso não inclui o alvo no próprio
+/// montante do raio, cujo contrato permanece inalterado.
+///
+/// BFS com vizinhos ordenados por `Path::Ord` escolhe a menor sequência
+/// lexicográfica entre os caminhos de menor número de saltos. Independe da ordem
+/// dos nós, das arestas e dos IDs. Visita cada path uma vez e guarda apenas um
+/// predecessor por path: não enumera todos os caminhos; termina com ciclos.
+/// Arestas paralelas são deduplicadas; `Uses` inclui todos os subtipos presentes
+/// no grafo recebido; `Owns` nunca propaga impacto.
+///
+/// Exige a forma resolvida: paths únicos e endpoints íntegros, conforme a spec.
+/// É evidência de alcance estrutural, **não prova de quebra comportamental**.
+pub fn explicar_caminho_impacto(
+    grafo: &Grafo,
+    item_alterado: &Path,
+    consumidor: &Path,
+) -> Result<Option<Vec<Path>>, ErroCaminhoImpacto> {
+    if !grafo.nodes.iter().any(|n| &n.path == item_alterado) {
+        return Err(ErroCaminhoImpacto::ItemAlteradoInexistente(
+            item_alterado.clone(),
+        ));
+    }
+    if !grafo.nodes.iter().any(|n| &n.path == consumidor) {
+        return Err(ErroCaminhoImpacto::ConsumidorInexistente(
+            consumidor.clone(),
+        ));
+    }
+    if consumidor == item_alterado {
+        return Ok(Some(vec![consumidor.clone()]));
+    }
+
+    let indices = Indices::construir(grafo);
+    let mut visitados = HashSet::from([consumidor.clone()]);
+    let mut anteriores: HashMap<Path, Path> = HashMap::new();
+    let mut fila = VecDeque::from([consumidor.clone()]);
+    while let Some(atual) = fila.pop_front() {
+        if &atual == item_alterado {
+            let mut caminho = vec![atual];
+            while caminho.last() != Some(consumidor) {
+                let anterior = &anteriores[caminho.last().expect("caminho não vazio")];
+                caminho.push(anterior.clone());
+            }
+            caminho.reverse();
+            return Ok(Some(caminho));
+        }
+        if let Some(vizinhos) = indices.uses_saida.get(&atual) {
+            for vizinho in vizinhos {
+                if visitados.insert(vizinho.clone()) {
+                    anteriores.insert(vizinho.clone(), atual.clone());
+                    fila.push_back(vizinho.clone());
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
 /// Índices internos. Não expostos.
 struct Indices {
     /// Para cada path, vizinhos que apontam para ele via `Uses` (entrada).
@@ -140,6 +230,16 @@ impl Indices {
                         .push(aresta.to.clone());
                 }
             }
+        }
+
+        // O grau conta vizinhos, não relações paralelas (Import/Reference).
+        for vizinhos in uses_entrada
+            .values_mut()
+            .chain(uses_saida.values_mut())
+            .chain(owns_filhos.values_mut())
+        {
+            vizinhos.sort();
+            vizinhos.dedup();
         }
 
         Self {
@@ -285,6 +385,254 @@ mod tests {
                 .map(|(f, t, r)| aresta(f, t, r))
                 .collect(),
         }
+    }
+
+    /// Verifica a consulta contra o contrato independente de profundidades do raio.
+    fn conferir_explicacao(
+        grafo: &Grafo,
+        alterado: &str,
+        consumidor: &str,
+        esperado: Option<Vec<&str>>,
+    ) {
+        let alterado = Path::from(alterado);
+        let consumidor = Path::from(consumidor);
+        let antes = grafo.clone();
+        let caminho = explicar_caminho_impacto(grafo, &alterado, &consumidor).unwrap();
+        assert_eq!(
+            caminho,
+            esperado.map(|ps| ps.into_iter().map(Path::from).collect())
+        );
+        assert_eq!(grafo, &antes, "consulta não altera a entrada");
+        let raio = calcular_raio(grafo, &alterado).unwrap();
+        match caminho {
+            Some(caminho) => {
+                assert_eq!(caminho.first(), Some(&consumidor));
+                assert_eq!(caminho.last(), Some(&alterado));
+                if alterado == consumidor {
+                    assert_eq!(caminho.len(), 1);
+                    assert!(!raio.montante.contains_key(&consumidor));
+                } else {
+                    assert_eq!(raio.montante.get(&consumidor), Some(&(caminho.len() - 1)));
+                }
+                for passo in caminho.windows(2) {
+                    assert!(grafo.edges.iter().any(|e| e.relation == Relation::Uses
+                        && e.from == passo[0]
+                        && e.to == passo[1]));
+                }
+            }
+            None => assert!(!raio.montante.contains_key(&consumidor)),
+        }
+    }
+
+    #[test]
+    fn explicacao_cadeia_respeita_direcao_e_profundidade() {
+        let g = grafo_com(
+            vec!["A", "B", "C"],
+            vec![("C", "B", Relation::Uses), ("B", "A", Relation::Uses)],
+        );
+        conferir_explicacao(&g, "A", "C", Some(vec!["C", "B", "A"]));
+        conferir_explicacao(&g, "C", "A", None);
+    }
+
+    #[test]
+    fn explicacao_diamante_desempata_por_path_nao_ordem_ou_id() {
+        let mut g = grafo_com(
+            vec!["fim", "z", "a", "inicio"],
+            vec![
+                ("inicio", "z", Relation::Uses),
+                ("z", "fim", Relation::Uses),
+                ("inicio", "a", Relation::Uses),
+                ("a", "fim", Relation::Uses),
+            ],
+        );
+        conferir_explicacao(&g, "fim", "inicio", Some(vec!["inicio", "a", "fim"]));
+        g.nodes.reverse();
+        g.edges.reverse();
+        // Renumera os IDs mantendo a integridade referencial da fixture.
+        for n in &mut g.nodes {
+            n.id = usize::MAX - n.id;
+        }
+        for e in &mut g.edges {
+            e.id_from = usize::MAX - e.id_from;
+            e.id_to = usize::MAX - e.id_to;
+        }
+        conferir_explicacao(&g, "fim", "inicio", Some(vec!["inicio", "a", "fim"]));
+    }
+
+    #[test]
+    fn explicacao_desempate_considera_sequencia_desde_consumidor() {
+        // Escolher a partir do alvo invertido favoreceria b→c, incorretamente.
+        let g = grafo_com(
+            vec!["inicio", "a", "z", "b", "c", "fim"],
+            vec![
+                ("inicio", "b", Relation::Uses),
+                ("b", "c", Relation::Uses),
+                ("c", "fim", Relation::Uses),
+                ("inicio", "a", Relation::Uses),
+                ("a", "z", Relation::Uses),
+                ("z", "fim", Relation::Uses),
+            ],
+        );
+        conferir_explicacao(&g, "fim", "inicio", Some(vec!["inicio", "a", "z", "fim"]));
+    }
+
+    #[test]
+    fn explicacao_menor_distancia_precede_ordem_lexicografica() {
+        let g = grafo_com(
+            vec!["inicio", "a", "b", "fim"],
+            vec![
+                ("inicio", "a", Relation::Uses),
+                ("a", "b", Relation::Uses),
+                ("b", "fim", Relation::Uses),
+                ("inicio", "fim", Relation::Uses),
+            ],
+        );
+        conferir_explicacao(&g, "fim", "inicio", Some(vec!["inicio", "fim"]));
+    }
+
+    #[test]
+    fn explicacao_ciclo_termina_com_e_sem_destino_alcancavel() {
+        let g = grafo_com(
+            vec!["A", "B", "C", "isolado"],
+            vec![
+                ("A", "B", Relation::Uses),
+                ("B", "A", Relation::Uses),
+                ("B", "C", Relation::Uses),
+                ("C", "B", Relation::Uses),
+            ],
+        );
+        conferir_explicacao(&g, "C", "A", Some(vec!["A", "B", "C"]));
+        conferir_explicacao(&g, "isolado", "A", None);
+        conferir_explicacao(&g, "A", "isolado", None);
+    }
+
+    #[test]
+    fn explicacao_endpoints_ausentes_sao_erros_distintos() {
+        let g = grafo_com(vec!["existe"], vec![]);
+        let ausente = Path::from("ausente");
+        let existe = Path::from("existe");
+        let erro_alterado = explicar_caminho_impacto(&g, &ausente, &existe).unwrap_err();
+        let erro_consumidor = explicar_caminho_impacto(&g, &existe, &ausente).unwrap_err();
+        assert_eq!(
+            erro_alterado,
+            ErroCaminhoImpacto::ItemAlteradoInexistente(ausente.clone())
+        );
+        assert_eq!(
+            erro_consumidor,
+            ErroCaminhoImpacto::ConsumidorInexistente(ausente.clone())
+        );
+        assert!(
+            erro_alterado
+                .to_string()
+                .contains("item alterado inexistente")
+        );
+        assert!(
+            erro_consumidor
+                .to_string()
+                .contains("consumidor inexistente")
+        );
+        assert!(erro_consumidor.to_string().contains("ausente"));
+        assert_eq!(
+            explicar_caminho_impacto(&g, &ausente, &Path::from("outro")),
+            Err(erro_alterado.clone())
+        );
+        assert_eq!(
+            explicar_caminho_impacto(&g, &ausente, &ausente),
+            Err(erro_alterado)
+        );
+    }
+
+    #[test]
+    fn explicacao_mesmo_endpoint_e_reflexiva_mesmo_com_ciclo() {
+        let mut g = grafo_com(vec!["A", "B"], vec![]);
+        conferir_explicacao(&g, "A", "A", Some(vec!["A"]));
+        g.edges = vec![
+            aresta("A", "B", Relation::Uses),
+            aresta("B", "A", Relation::Uses),
+            aresta("A", "A", Relation::Uses),
+        ];
+        conferir_explicacao(&g, "A", "A", Some(vec!["A"]));
+    }
+
+    #[test]
+    fn explicacao_arestas_paralelas_nao_duplicam_passos() {
+        use crate::entities::grafo::UsesKind;
+        let mut g = grafo_com(
+            vec!["A", "B", "C"],
+            vec![
+                ("C", "B", Relation::Uses),
+                ("C", "B", Relation::Uses),
+                ("B", "A", Relation::Uses),
+                ("B", "A", Relation::Uses),
+            ],
+        );
+        g.edges[0].uses_kind = Some(UsesKind::Import);
+        g.edges[1].uses_kind = Some(UsesKind::Reference);
+        conferir_explicacao(&g, "A", "C", Some(vec!["C", "B", "A"]));
+    }
+
+    #[test]
+    fn explicacao_owns_nao_cria_caminho_nem_atalho() {
+        let mut g = grafo_com(vec!["A", "B", "C"], vec![("C", "A", Relation::Owns)]);
+        conferir_explicacao(&g, "A", "C", None);
+        g.edges.extend([
+            aresta("C", "B", Relation::Uses),
+            aresta("B", "A", Relation::Uses),
+        ]);
+        conferir_explicacao(&g, "A", "C", Some(vec!["C", "B", "A"]));
+    }
+
+    #[test]
+    fn explicacao_concorda_com_raio_para_todos_os_pares() {
+        let g = grafo_com(
+            vec!["a", "b", "c", "d", "e", "isolado"],
+            vec![
+                ("a", "b", Relation::Uses),
+                ("b", "c", Relation::Uses),
+                ("c", "a", Relation::Uses),
+                ("a", "d", Relation::Uses),
+                ("d", "e", Relation::Uses),
+                ("c", "e", Relation::Uses),
+                ("a", "isolado", Relation::Owns),
+                ("a", "b", Relation::Uses),
+            ],
+        );
+        for alterado in &g.nodes {
+            let raio = calcular_raio(&g, &alterado.path).unwrap();
+            for consumidor in &g.nodes {
+                let caminho =
+                    explicar_caminho_impacto(&g, &alterado.path, &consumidor.path).unwrap();
+                let saltos = caminho.as_ref().map(|c| c.len() - 1);
+                let esperado = if consumidor.path == alterado.path {
+                    Some(0)
+                } else {
+                    raio.montante.get(&consumidor.path).copied()
+                };
+                assert_eq!(saltos, esperado, "{} → {}", consumidor.path, alterado.path);
+            }
+        }
+    }
+
+    #[test]
+    fn arestas_paralelas_contam_um_unico_vizinho() {
+        use crate::entities::grafo::UsesKind;
+        let mut g = grafo_com(
+            vec!["A", "B"],
+            vec![
+                ("B", "A", Relation::Uses),
+                ("B", "A", Relation::Uses),
+                ("A", "B", Relation::Owns),
+                ("A", "B", Relation::Owns),
+            ],
+        );
+        g.edges[0].uses_kind = Some(UsesKind::Import);
+        g.edges[1].uses_kind = Some(UsesKind::Reference);
+        let a = calcular_raio(&g, &Path::from("A")).unwrap();
+        let b = calcular_raio(&g, &Path::from("B")).unwrap();
+        assert_eq!(a.uses_entrada, 1);
+        assert_eq!(b.uses_saida, 1);
+        assert_eq!(a.montante.len(), 1);
+        assert_eq!(a.owns_filhos, vec![Path::from("B")]);
     }
 
     #[test]
