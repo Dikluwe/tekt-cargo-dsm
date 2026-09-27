@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_ranking` — top-N por impacto (ranking)
-Hash do Código: 3c39bbd3
+Hash do Código: 154ba9c2
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/ranking/src/lib.rs` (crate `lente_ranking`, arquivo único).
@@ -28,6 +28,8 @@ dependem de ninguém): são o que o top-N busca. Por isso o item carrega a
 - **`ItemRanking`** — um item do ranking: `path` do nó, `impacto`
   (`= raio.montante.len()`) e a `classificacao` do `Raio`.
 - **`rankear(grafo, n)`** devolve `Vec<ItemRanking>`:
+  - **N zero**: retorno imediato de vetor vazio, antes de alocar coleções,
+    percorrer nós ou chamar `calcular_raio`. Para `n > 0`, algoritmo inalterado.
   - **Ordem determinística**: decrescente por `impacto`; desempate **ascendente
     por path**.
   - **Corte em N**: se `n ≥ nº de nós`, devolve todos.
@@ -56,6 +58,10 @@ Dado dois nós de mesmo impacto
 Quando rankeados
 Então o desempate é por path ascendente
 
+Dado um grafo não vazio com nós e arestas e n=0
+Quando rankear(grafo, 0)
+Então devolve vazio imediatamente, sem calcular raios
+
 Dado n menor que o número de nós
 Quando rankear(grafo, n)
 Então o resultado tem exatamente n itens (corte)
@@ -69,4 +75,5 @@ Então o resultado tem exatamente n itens (corte)
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-09-26 | Retorno antecipado para n=0; teste explícito com grafo não vazio. Interface e caminho n>0 preservados. | `01_core/ranking/src/lib.rs` |
 | 2026-06-07 | Nucleação (piloto da migração de convenção, prompt 0058): descreve o `lente_ranking` existente (do trabalho 0027) no formato Cristalino, com Interface Snapshot para o V6. Código inalterado — só cabeçalho + este prompt. | `01_core/ranking/src/lib.rs` |

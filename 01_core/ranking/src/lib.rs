@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/ranking.md
-//! @prompt-hash 79471c54
+//! @prompt-hash c0ec229f
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
@@ -40,7 +40,7 @@ pub struct ItemRanking {
 
 /// Top-N por impacto (`montante.len()`). Ordem decrescente; desempate por
 /// path ascendente (determinístico). Corte em `n` — se `n` ≥ número de
-/// nós, devolve todos.
+/// nós, devolve todos. Para `n == 0`, retorna vazio sem percorrer o grafo.
 ///
 /// Nós sem `montante` (Folha, Isolado) ainda entram no ranking com
 /// `impacto = 0`; o consumidor decide se filtra. A função em si não filtra
@@ -52,6 +52,10 @@ pub struct ItemRanking {
 /// — `calcular_raio` é por path, então paths repetidos seriam conflados.
 /// O wiring (`rankear_pacote`) aplica resolução antes; este L1 não.
 pub fn rankear(grafo: &Grafo, n: usize) -> Vec<ItemRanking> {
+    if n == 0 {
+        return Vec::new();
+    }
+
     let mut itens: Vec<ItemRanking> = Vec::with_capacity(grafo.nodes.len());
     let mut paths_vistos: std::collections::HashSet<&Path> =
         std::collections::HashSet::with_capacity(grafo.nodes.len());
@@ -197,8 +201,11 @@ mod tests {
     }
 
     #[test]
-    fn n_zero_devolve_vazio_sem_panic() {
-        let r = rankear(&grafo_simples(), 0);
+    fn n_zero_com_grafo_nao_vazio_devolve_vazio() {
+        let grafo = grafo_simples();
+        assert!(!grafo.nodes.is_empty());
+        assert!(!grafo.edges.is_empty());
+        let r = rankear(&grafo, 0);
         assert!(r.is_empty());
     }
 
