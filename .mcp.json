@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "lente-mcp": {
+      "type": "stdio",
+      "command": "lente-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}
