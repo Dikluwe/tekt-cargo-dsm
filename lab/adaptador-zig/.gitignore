@@ -1,0 +1,5 @@
+bin/
+.tmp/
+saida/
+__pycache__/
+compat/target/

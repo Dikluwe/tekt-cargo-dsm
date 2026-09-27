@@ -1,0 +1,18 @@
+   Compiling lente-adaptador-c-experimental v0.1.0 (/repos/Antigravity/tekt-cargo-dsm/lab/adaptador-c)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/main.rs (lab/adaptador-c/target/debug/deps/lente_adaptador_c_experimental-957cb778badf4916)
+
+running 10 tests
+test tests::unsupported_options_never_silently_change_configuration ... ok
+test tests::cwd_relative_include_and_macro_include ... ok
+test tests::external_headers_are_kept_and_classified ... ok
+test tests::graph_is_accepted_by_lente_and_transitive_impact_is_correct ... ok
+test tests::local_i_system_conditional_transitive_and_positions ... ok
+test tests::command_is_tokenized_but_never_executed ... ok
+test tests::real_system_header_and_repeated_guarded_include ... ok
+test tests::missing_header_and_syntax_error_are_partial ... ok
+test tests::manifest_identifies_partial_and_complete_units ... ok
+test tests::configurations_are_separate_and_repeated_extraction_is_identical ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

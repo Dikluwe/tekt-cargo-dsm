@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+out/
+contract-check/target/
+contract-check/Cargo.lock

@@ -1,0 +1,8 @@
+{
+  "name": "lente-typescript-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "dependencies": { "typescript": "5.9.3" },
+  "scripts": { "test": "node extrair.cjs --self-test" }
+}

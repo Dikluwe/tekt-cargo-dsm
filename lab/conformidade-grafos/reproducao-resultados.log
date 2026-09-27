@@ -1,0 +1,20 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running unittests src/main.rs (lab/conformidade-grafos/target/debug/deps/conformidade_grafos-bf5d9de4c1c691ed)
+
+running 12 tests
+test propriedades::oraculo_confere_cadeia_atalho_ciclo_e_autoaresta ... ok
+test propriedades::diagnostico_contem_reproducao_grafos_e_divergencia ... ok
+test propriedades::adicao_preserva_alcance ... ok
+test propriedades::permutacao ... ok
+test propriedades::isolado ... ok
+test propriedades::inversao ... ok
+test propriedades::owns_nao_propaga ... ok
+test propriedades::adicao_nao_aumenta_distancias ... ok
+test propriedades::duplicacao ... ok
+test propriedades::renomeacao_bijetiva ... ok
+test propriedades::remocao_nao_cria_caminhos ... ok
+corpus v1: autoarestas=42, ciclos=35, partições desconectadas=10; transformações efetivas=[46, 56, 51, 64, 52, 52, 44, 42, 46]; alcances ampliados=34, distâncias reduzidas=54, alcances reduzidos=125
+test propriedades::gerador_v1_e_corpus_cobrem_casos_nao_vazios ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.15s
+

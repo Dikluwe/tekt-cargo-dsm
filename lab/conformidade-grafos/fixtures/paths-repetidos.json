@@ -1,0 +1,29 @@
+{
+  "crate": "fixture",
+  "nodes": [
+    {
+      "id": 1,
+      "path": "colisao::fmt",
+      "name": "fmt",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 2,
+      "path": "colisao::fmt",
+      "name": "fmt",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 1,
+      "from": "colisao::fmt",
+      "id_to": 2,
+      "to": "colisao::fmt",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

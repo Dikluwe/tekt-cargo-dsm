@@ -1,0 +1,13 @@
+{
+  "crate": "fixture",
+  "nodes": [
+    {
+      "id": 1,
+      "path": "solo",
+      "name": "solo",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": []
+}

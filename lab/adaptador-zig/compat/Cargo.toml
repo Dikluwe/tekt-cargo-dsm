@@ -1,0 +1,13 @@
+# Workspace isolado da Arena; não altera o workspace principal.
+[workspace]
+
+[package]
+name = "compat_adaptador_zig"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+lente_infra = { path = "../../../03_infra" }
+lente_core = { path = "../../../01_core/core" }
+lente_estrutura = { path = "../../../01_core/estrutura" }

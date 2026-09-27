@@ -1,0 +1,52 @@
+{
+  "crate": "fixture",
+  "nodes": [
+    {
+      "id": 1,
+      "path": "origem::a",
+      "name": "a",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 2,
+      "path": "origem::b",
+      "name": "b",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 3,
+      "path": "origem::c",
+      "name": "c",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 1,
+      "from": "origem::a",
+      "id_to": 2,
+      "to": "origem::b",
+      "relation": "uses",
+      "uses_kind": "import"
+    },
+    {
+      "id_from": 2,
+      "from": "origem::b",
+      "id_to": 3,
+      "to": "origem::c",
+      "relation": "uses",
+      "uses_kind": "import"
+    },
+    {
+      "id_from": 3,
+      "from": "origem::c",
+      "id_to": 1,
+      "to": "origem::a",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

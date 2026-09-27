@@ -1,0 +1,5343 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "typescript-chain",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/chain/tsconfig.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.ts",
+          "b.ts",
+          "c.ts"
+        ],
+        "pairs": [
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "b.ts",
+            "c.ts"
+          ]
+        ],
+        "metadata": {
+          "/coverage": "complete-within-declared-scope"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a.ts",
+            "c.ts",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "typescript-isolated",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/isolated/tsconfig.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "isolated.ts"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/coverage": "complete-within-declared-scope"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "typescript-missing",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/missing/tsconfig.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.ts"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "unresolved-import"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "typescript-partial",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/partial/tsconfig.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.ts"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "commonjs"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "typescript-config-a",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/config/a.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 1,
+        "names": [
+          "a.ts",
+          "b.ts",
+          "c.ts"
+        ],
+        "pairs": [
+          [
+            "a.ts",
+            "b.ts"
+          ]
+        ],
+        "metadata": {
+          "/coverage": "complete-within-declared-scope"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "typescript-config-b",
+      "adapter": "typescript",
+      "granularity": "file",
+      "relations": "static-import",
+      "universe": "local-ts-files",
+      "requirements": [
+        {
+          "name": "Node",
+          "command": {
+            "argv": [
+              "node",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          }
+        },
+        {
+          "name": "TypeScript fixado",
+          "files": [
+            "{repo}/lab/adaptador-typescript/extrair.cjs",
+            "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+          ],
+          "command": {
+            "argv": [
+              "node",
+              "-p",
+              "require(process.argv[1]).version",
+              "{repo}/lab/adaptador-typescript/node_modules/typescript/lib/typescript.js"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "5.9.3"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-typescript/README.md",
+            "{lab}/fixtures/typescript/chain/a.ts",
+            "{lab}/fixtures/typescript/chain/b.ts",
+            "{lab}/fixtures/typescript/chain/c.ts",
+            "{lab}/fixtures/typescript/chain/tsconfig.json",
+            "{lab}/fixtures/typescript/config/a.json",
+            "{lab}/fixtures/typescript/config/a.ts",
+            "{lab}/fixtures/typescript/config/b.json",
+            "{lab}/fixtures/typescript/config/b.ts",
+            "{lab}/fixtures/typescript/config/c.ts",
+            "{lab}/fixtures/typescript/isolated/isolated.ts",
+            "{lab}/fixtures/typescript/isolated/tsconfig.json",
+            "{lab}/fixtures/typescript/missing/a.ts",
+            "{lab}/fixtures/typescript/missing/tsconfig.json",
+            "{lab}/fixtures/typescript/partial/a.ts",
+            "{lab}/fixtures/typescript/partial/tsconfig.json",
+            "{repo}/lab/adaptador-typescript/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "node",
+          "{repo}/lab/adaptador-typescript/extrair.cjs",
+          "--project",
+          "{lab}/fixtures/typescript/config/b.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 1,
+        "names": [
+          "a.ts",
+          "b.ts",
+          "c.ts"
+        ],
+        "pairs": [
+          [
+            "a.ts",
+            "c.ts"
+          ]
+        ],
+        "metadata": {
+          "/coverage": "complete-within-declared-scope"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-chain",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/chain",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a",
+            "c",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-isolated",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/isolated",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "isolated"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-missing",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/missing",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "external_dependency"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-partial",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/partial",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          1
+        ],
+        "nodes": 2,
+        "edges": 1,
+        "names": [
+          "a",
+          "b"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "partial",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "syntax_error"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-config-a",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/config/app",
+          "--root",
+          "{lab}/fixtures/python/config/lib-a",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "python-config-b",
+      "adapter": "python",
+      "granularity": "module",
+      "relations": "static-import",
+      "universe": "declared-python-roots",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-python/adaptador.py"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-python/README.md",
+            "{lab}/fixtures/python/chain/a.py",
+            "{lab}/fixtures/python/chain/b.py",
+            "{lab}/fixtures/python/chain/c.py",
+            "{lab}/fixtures/python/config/app/a.py",
+            "{lab}/fixtures/python/config/lib-a/b.py",
+            "{lab}/fixtures/python/config/lib-a/c.py",
+            "{lab}/fixtures/python/config/lib-b/b.py",
+            "{lab}/fixtures/python/config/lib-b/c.py",
+            "{lab}/fixtures/python/isolated/isolated.py",
+            "{lab}/fixtures/python/missing/a.py",
+            "{lab}/fixtures/python/partial/a.py",
+            "{lab}/fixtures/python/partial/b.py"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-I",
+          "-B",
+          "{repo}/lab/adaptador-python/adaptador.py",
+          "--root",
+          "{lab}/fixtures/python/config/app",
+          "--root",
+          "{lab}/fixtures/python/config/lib-b",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 1,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-chain",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/chain",
+              "file": "a.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-c",
+                "a.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/chain",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.c",
+          "b.h",
+          "c.h"
+        ],
+        "pairs": [
+          [
+            "a.c",
+            "b.h"
+          ],
+          [
+            "b.h",
+            "c.h"
+          ]
+        ],
+        "metadata": {
+          "/status": "complete"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a.c",
+            "c.h",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-isolated",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/isolated",
+              "file": "isolated.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-c",
+                "isolated.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/isolated",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "isolated.c"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/status": "complete"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-missing",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/missing",
+              "file": "a.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-c",
+                "a.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/missing",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          2
+        ],
+        "nodes": 0,
+        "edges": 0,
+        "names": [],
+        "pairs": [],
+        "metadata": {
+          "/status": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "file not found"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-partial",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/partial",
+              "file": "a.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-c",
+                "a.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/partial",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          2
+        ],
+        "nodes": 0,
+        "edges": 0,
+        "names": [],
+        "pairs": [],
+        "metadata": {
+          "/status": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "expected ';'"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-config-a",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/config",
+              "file": "a.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-DEXTRA",
+                "-c",
+                "a.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/config",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.c",
+          "b.h",
+          "c.h"
+        ],
+        "pairs": [
+          [
+            "a.c",
+            "b.h"
+          ],
+          [
+            "b.h",
+            "c.h"
+          ]
+        ],
+        "metadata": {
+          "/status": "complete"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "c-config-b",
+      "adapter": "c",
+      "granularity": "file",
+      "relations": "active-include",
+      "universe": "one-c-translation-unit",
+      "requirements": [
+        {
+          "name": "Adaptador C preparado",
+          "files": [
+            "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-c/README.md",
+            "{lab}/fixtures/c/chain/a.c",
+            "{lab}/fixtures/c/chain/b.h",
+            "{lab}/fixtures/c/chain/c.h",
+            "{lab}/fixtures/c/config/a.c",
+            "{lab}/fixtures/c/config/b.h",
+            "{lab}/fixtures/c/config/c.h",
+            "{lab}/fixtures/c/isolated/isolated.c",
+            "{lab}/fixtures/c/missing/a.c",
+            "{lab}/fixtures/c/partial/a.c",
+            "{repo}/lab/adaptador-c/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/c/config",
+              "file": "a.c",
+              "arguments": [
+                "clang",
+                "-std=c11",
+                "-c",
+                "a.c"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-c/target/debug/lente-adaptador-c-experimental",
+          "{case}/compile_commands.json",
+          "{lab}/fixtures/c/config",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/graph-0000.json",
+      "metadata": "{out}/metadata-0000.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 2,
+        "edges": 1,
+        "names": [
+          "a.c",
+          "b.h"
+        ],
+        "pairs": [
+          [
+            "a.c",
+            "b.h"
+          ]
+        ],
+        "metadata": {
+          "/status": "complete"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-chain",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/chain",
+              "file": "a.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "a.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/chain",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.cpp",
+          "b.hpp",
+          "c.hpp"
+        ],
+        "pairs": [
+          [
+            "a.cpp",
+            "b.hpp"
+          ],
+          [
+            "b.hpp",
+            "c.hpp"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a.cpp",
+            "c.hpp",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-isolated",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/isolated",
+              "file": "isolated.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "isolated.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/isolated",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "isolated.cpp"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-missing",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/missing",
+              "file": "a.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "a.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/missing",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          1
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.cpp"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "partial",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        },
+        "diagnostic_contains": [
+          "translation_unit_discarded"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-partial",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/partial",
+              "file": "a.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "a.cpp"
+              ]
+            },
+            {
+              "directory": "{lab}/fixtures/cpp/partial",
+              "file": "good.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "good.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/partial",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          1
+        ],
+        "nodes": 2,
+        "edges": 0,
+        "names": [
+          "a.cpp",
+          "good.cpp"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "partial",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        },
+        "diagnostic_contains": [
+          "translation_unit_discarded"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-config-a",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/config",
+              "file": "a.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-DEXTRA",
+                "-c",
+                "a.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/config",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 2,
+        "edges": 1,
+        "names": [
+          "a.cpp",
+          "b.hpp"
+        ],
+        "pairs": [
+          [
+            "a.cpp",
+            "b.hpp"
+          ]
+        ],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "cpp-config-b",
+      "adapter": "cpp",
+      "granularity": "file",
+      "relations": "semantic-reference",
+      "universe": "cpp-selected-translation-units",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-cpp/adaptador.py",
+            "{repo}/lab/adaptador-cpp/clang_api.py"
+          ]
+        },
+        {
+          "name": "libclang",
+          "files": [
+            "/usr/lib/llvm-18/lib/libclang.so"
+          ],
+          "command": {
+            "argv": [
+              "python3",
+              "-I",
+              "-B",
+              "{lab}/probe_libclang.py",
+              "/usr/lib/llvm-18/lib/libclang.so"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "18."
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-cpp/README.md",
+            "{lab}/fixtures/cpp/chain/a.cpp",
+            "{lab}/fixtures/cpp/chain/b.hpp",
+            "{lab}/fixtures/cpp/chain/c.hpp",
+            "{lab}/fixtures/cpp/config/a.cpp",
+            "{lab}/fixtures/cpp/config/b.hpp",
+            "{lab}/fixtures/cpp/isolated/isolated.cpp",
+            "{lab}/fixtures/cpp/missing/a.cpp",
+            "{lab}/fixtures/cpp/partial/a.cpp",
+            "{lab}/fixtures/cpp/partial/good.cpp"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {
+          "compile_commands.json": [
+            {
+              "directory": "{lab}/fixtures/cpp/config",
+              "file": "a.cpp",
+              "arguments": [
+                "clang++",
+                "-std=c++17",
+                "-c",
+                "a.cpp"
+              ]
+            }
+          ]
+        }
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-cpp/adaptador.py",
+          "--database",
+          "{case}/compile_commands.json",
+          "--root",
+          "{lab}/fixtures/cpp/config",
+          "--libclang",
+          "/usr/lib/llvm-18/lib/libclang.so",
+          "--graph",
+          "{out}/grafo.json",
+          "--metadata",
+          "{out}/metadados.json"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 2,
+        "edges": 0,
+        "names": [
+          "a.cpp",
+          "b.hpp"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/execution/status": "complete",
+          "/semantic_coverage": "partial"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": null
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-chain",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/chain",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "metadata": {
+          "/loading": "complete",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a",
+            "c",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-isolated",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/isolated",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "isolated"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/loading": "complete",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-missing",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/missing",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          2
+        ],
+        "nodes": 2,
+        "edges": 1,
+        "names": [
+          "a",
+          "example.invalid/evaluation_absent"
+        ],
+        "pairs": [
+          [
+            "a",
+            "example.invalid/evaluation_absent"
+          ]
+        ],
+        "metadata": {
+          "/loading": "partial",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "cannot find module providing package"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-partial",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/partial",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          2
+        ],
+        "nodes": 3,
+        "edges": 1,
+        "names": [
+          "a",
+          "example.invalid/evaluation_absent",
+          "good"
+        ],
+        "pairs": [
+          [
+            "a",
+            "example.invalid/evaluation_absent"
+          ]
+        ],
+        "metadata": {
+          "/loading": "partial",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "cannot find module providing package"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-config-a",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/config",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}",
+          "--tags",
+          "feature"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "c"
+          ]
+        ],
+        "metadata": {
+          "/loading": "complete",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "go-config-b",
+      "adapter": "go",
+      "granularity": "package",
+      "relations": "go-import",
+      "universe": "go-configured-universe",
+      "requirements": [
+        {
+          "name": "Go",
+          "command": {
+            "argv": [
+              "go",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go"
+          ]
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-go/README.md",
+            "{lab}/fixtures/go/chain/a/a.go",
+            "{lab}/fixtures/go/chain/b/b.go",
+            "{lab}/fixtures/go/chain/c/c.go",
+            "{lab}/fixtures/go/chain/go.mod",
+            "{lab}/fixtures/go/config/a/a.go",
+            "{lab}/fixtures/go/config/b/b.go",
+            "{lab}/fixtures/go/config/b/feature.go",
+            "{lab}/fixtures/go/config/c/c.go",
+            "{lab}/fixtures/go/config/go.mod",
+            "{lab}/fixtures/go/isolated/go.mod",
+            "{lab}/fixtures/go/isolated/isolated.go",
+            "{lab}/fixtures/go/missing/a.go",
+            "{lab}/fixtures/go/missing/go.mod",
+            "{lab}/fixtures/go/partial/a.go",
+            "{lab}/fixtures/go/partial/go.mod",
+            "{lab}/fixtures/go/partial/good/good.go",
+            "{repo}/lab/adaptador-go/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "{repo}/lab/adaptador-go/target/debug/lente-adaptador-go",
+          "--project",
+          "{lab}/fixtures/go/config",
+          "--goos",
+          "linux",
+          "--goarch",
+          "amd64",
+          "--work",
+          "off",
+          "--tests",
+          "exclude",
+          "--out",
+          "{out}"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 1,
+        "names": [
+          "a",
+          "b",
+          "c"
+        ],
+        "pairs": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "metadata": {
+          "/loading": "complete",
+          "/granularity": "package"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-chain",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/chain/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/chain/modules.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.zig",
+          "b.zig",
+          "c.zig"
+        ],
+        "pairs": [
+          [
+            "a.zig",
+            "b.zig"
+          ],
+          [
+            "b.zig",
+            "c.zig"
+          ]
+        ],
+        "metadata": {
+          "/completeness/syntax": "complete-within-declared-scope",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 0,
+        "depths": [
+          [
+            "a.zig",
+            "c.zig",
+            2
+          ]
+        ],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-isolated",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/isolated/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/isolated/modules.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.zig"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/completeness/syntax": "complete-within-declared-scope",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-missing",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/missing/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/missing/modules.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.zig"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/completeness/syntax": "partial",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "missing-source"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-partial",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/partial/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/partial/modules.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 1,
+        "edges": 0,
+        "names": [
+          "a.zig"
+        ],
+        "pairs": [],
+        "metadata": {
+          "/completeness/syntax": "partial",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 1,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        "diagnostic_contains": [
+          "nonliteral-import"
+        ]
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-config-a",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/config/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/config/map-a.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 3,
+        "edges": 2,
+        "names": [
+          "a.zig",
+          "c.zig",
+          "b.zig"
+        ],
+        "pairs": [
+          [
+            "a.zig",
+            "b.zig"
+          ],
+          [
+            "b.zig",
+            "c.zig"
+          ]
+        ],
+        "metadata": {
+          "/completeness/syntax": "complete-within-declared-scope",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-config-b",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "requirements": [
+        {
+          "name": "Python",
+          "command": {
+            "argv": [
+              "python3",
+              "--version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "files": [
+            "{repo}/lab/adaptador-zig/extrair.py",
+            "{repo}/lab/adaptador-zig/bin/parser"
+          ]
+        },
+        {
+          "name": "Zig",
+          "command": {
+            "argv": [
+              "zig",
+              "version"
+            ],
+            "cwd": "{repo}",
+            "timeout_ms": 20000,
+            "env": {
+              "PYTHONDONTWRITEBYTECODE": "1",
+              "PYTHONNOUSERSITE": "1",
+              "GOTOOLCHAIN": "local",
+              "GOPROXY": "off",
+              "GOSUMDB": "off",
+              "GONOPROXY": "none",
+              "GOVCS": "*:off",
+              "GOCACHE": "{case}/go-cache",
+              "NODE_OPTIONS": "",
+              "NODE_PATH": "",
+              "PYTHONPATH": "",
+              "CPATH": "",
+              "C_INCLUDE_PATH": "",
+              "CPLUS_INCLUDE_PATH": ""
+            }
+          },
+          "version_contains": "0.15.2"
+        },
+        {
+          "name": "Contrato e fontes da fixture",
+          "files": [
+            "{repo}/lab/adaptador-zig/README.md",
+            "{lab}/fixtures/zig/chain/a.zig",
+            "{lab}/fixtures/zig/chain/b.zig",
+            "{lab}/fixtures/zig/chain/c.zig",
+            "{lab}/fixtures/zig/chain/modules.json",
+            "{lab}/fixtures/zig/config/a.zig",
+            "{lab}/fixtures/zig/config/b.zig",
+            "{lab}/fixtures/zig/config/c.zig",
+            "{lab}/fixtures/zig/config/map-a.json",
+            "{lab}/fixtures/zig/config/map-b.json",
+            "{lab}/fixtures/zig/isolated/a.zig",
+            "{lab}/fixtures/zig/isolated/modules.json",
+            "{lab}/fixtures/zig/missing/a.zig",
+            "{lab}/fixtures/zig/missing/modules.json",
+            "{lab}/fixtures/zig/partial/a.zig",
+            "{lab}/fixtures/zig/partial/modules.json",
+            "{repo}/lab/adaptador-zig/CONTRATO.md"
+          ]
+        }
+      ],
+      "preparation": {
+        "files": {}
+      },
+      "command": {
+        "argv": [
+          "python3",
+          "-B",
+          "{repo}/lab/adaptador-zig/extrair.py",
+          "--root",
+          "{lab}/fixtures/zig/config/a.zig",
+          "--modules",
+          "{lab}/fixtures/zig/config/map-b.json",
+          "--out",
+          "{out}",
+          "--name",
+          "evaluation"
+        ],
+        "cwd": "{repo}",
+        "timeout_ms": 20000,
+        "env": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "GONOPROXY": "none",
+          "GOVCS": "*:off",
+          "GOCACHE": "{case}/go-cache",
+          "NODE_OPTIONS": "",
+          "NODE_PATH": "",
+          "PYTHONPATH": "",
+          "CPATH": "",
+          "C_INCLUDE_PATH": "",
+          "CPLUS_INCLUDE_PATH": ""
+        }
+      },
+      "graph": "{out}/grafo.json",
+      "metadata": "{out}/metadados.json",
+      "expected": {
+        "exit_codes": [
+          0
+        ],
+        "nodes": 2,
+        "edges": 1,
+        "names": [
+          "a.zig",
+          "c.zig"
+        ],
+        "pairs": [
+          [
+            "a.zig",
+            "c.zig"
+          ]
+        ],
+        "metadata": {
+          "/completeness/syntax": "complete-within-declared-scope",
+          "/completeness/semantics": "not-evaluated"
+        },
+        "diagnostics_min": 0,
+        "depths": [],
+        "edge_fields": {
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      },
+      "repetitions": 3,
+      "deterministic": true
+    },
+    {
+      "id": "zig-target-evaluation",
+      "adapter": "zig",
+      "granularity": "file",
+      "relations": "syntactic-candidate",
+      "universe": "zig-reachable-files",
+      "unsupported": "O adaptador n\u00e3o avalia target/optimize ou ativa ramos comptime; mapa de m\u00f3dulos \u00e9 a configura\u00e7\u00e3o suportada.",
+      "repetitions": 1
+    }
+  ],
+  "comparisons": [
+    {
+      "left": "typescript-config-a",
+      "right": "typescript-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    },
+    {
+      "left": "python-config-a",
+      "right": "python-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    },
+    {
+      "left": "c-config-a",
+      "right": "c-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    },
+    {
+      "left": "cpp-config-a",
+      "right": "cpp-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    },
+    {
+      "left": "go-config-a",
+      "right": "go-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    },
+    {
+      "left": "zig-config-a",
+      "right": "zig-config-b",
+      "expect": "different",
+      "reason": "Configura\u00e7\u00e3o expl\u00edcita distinta; compara\u00e7\u00e3o por nomes \u00fanicos de n\u00f3s dentro do mesmo provedor e sem\u00e2ntica."
+    }
+  ]
+}

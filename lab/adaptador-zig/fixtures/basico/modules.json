@@ -1,0 +1,4 @@
+{
+  "pacote": "modulos/pacote.zig",
+  "generated": { "path": "generated/options.zig", "generated": true }
+}

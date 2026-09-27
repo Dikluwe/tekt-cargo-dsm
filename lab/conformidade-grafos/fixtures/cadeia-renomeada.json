@@ -1,0 +1,44 @@
+{
+  "crate": "fixture",
+  "nodes": [
+    {
+      "id": 10,
+      "path": "outro::z",
+      "name": "z",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 90,
+      "path": "outro::entrada",
+      "name": "entrada",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 70,
+      "path": "outro::interno",
+      "name": "interno",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 70,
+      "from": "outro::interno",
+      "id_to": 10,
+      "to": "outro::z",
+      "relation": "uses",
+      "uses_kind": "reference"
+    },
+    {
+      "id_from": 90,
+      "from": "outro::entrada",
+      "id_to": 70,
+      "to": "outro::interno",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

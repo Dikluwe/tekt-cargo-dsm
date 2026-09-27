@@ -1,0 +1,31 @@
+   Compiling conformidade-grafos v0.1.0 (/repos/Antigravity/tekt-cargo-dsm/lab/conformidade-grafos)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.68s
+     Running unittests src/main.rs (lab/conformidade-grafos/target/debug/deps/conformidade_grafos-bf5d9de4c1c691ed)
+
+running 23 tests
+test propriedades::oraculo_confere_cadeia_atalho_ciclo_e_autoaresta ... ok
+test propriedades::diagnostico_contem_reproducao_grafos_e_divergencia ... ok
+test tests::colisao_de_paths_e_valida_na_forma_crua_mas_impede_analise ... ok
+test tests::ciclo_termina_e_nao_inclui_alvo_no_proprio_raio ... ok
+test tests::argumentos_e_mapa_invalido ... ok
+test tests::cadeia_tem_profundidades_e_ranking_conhecidos ... ok
+test tests::isolado_e_paralelas ... ok
+test tests::mapa_exige_bijecao_total_e_ids_existentes ... ok
+test tests::comparacao_preserva_multiarestas_e_relacao ... ok
+test tests::renomeacao_de_ciclo_preserva_pontuacoes_mesmo_mudando_desempate ... ok
+test tests::isomorfos_renomeados_e_reordenados_conferem ... ok
+test tests::invalidos_sao_rejeitados_pelo_adaptador ... ok
+test tests::falha_nao_esconde_resultados_de_outros_arquivos_e_relatorio_e_estavel ... ok
+test propriedades::isolado ... ok
+test propriedades::remocao_nao_cria_caminhos ... ok
+test propriedades::inversao ... ok
+test propriedades::adicao_preserva_alcance ... ok
+test propriedades::renomeacao_bijetiva ... ok
+test propriedades::owns_nao_propaga ... ok
+test propriedades::adicao_nao_aumenta_distancias ... ok
+test propriedades::duplicacao ... ok
+test propriedades::permutacao ... ok
+test propriedades::gerador_v1_e_corpus_cobrem_casos_nao_vazios ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+

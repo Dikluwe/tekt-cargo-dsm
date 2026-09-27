@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "choice": [
+        "./b.ts"
+      ]
+    }
+  },
+  "files": [
+    "a.ts",
+    "b.ts",
+    "c.ts"
+  ]
+}
