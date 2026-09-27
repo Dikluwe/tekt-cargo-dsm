@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/comparacao.md
-//! @prompt-hash 5a71d2b2
+//! @prompt-hash bb97a6e1
 //! @layer L1
 //! @updated 2026-09-26
 //! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core` + `lente_estrutura`.
@@ -284,6 +284,8 @@ pub fn comparar_estruturas(
     )
 }
 
+// API pública legada: manter parâmetros evita quebra nos consumidores.
+#[allow(clippy::too_many_arguments)]
 pub fn comparar_estruturas_com_mapa(
     antes: &EstruturaModulos,
     depois: &EstruturaModulos,
@@ -509,10 +511,10 @@ fn pais_owns(grafo: &Grafo) -> HashMap<usize, usize> {
 /// tipo; senão só o nome (qualificar por módulo reintroduziria a dependência de
 /// path que o 0076 zerou). Transcrição fiel da Arena 0077.
 fn nome_qualificado(no: &No, pais: &HashMap<usize, usize>, por_id: &HashMap<usize, &No>) -> String {
-    if let Some(p) = pais.get(&no.id).and_then(|pid| por_id.get(pid)) {
-        if e_tipo(p.kind) {
-            return format!("{}::{}", p.name, no.name);
-        }
+    if let Some(p) = pais.get(&no.id).and_then(|pid| por_id.get(pid))
+        && e_tipo(p.kind)
+    {
+        return format!("{}::{}", p.name, no.name);
     }
     no.name.clone()
 }

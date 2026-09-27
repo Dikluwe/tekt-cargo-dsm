@@ -219,3 +219,10 @@ Sem ferramentas ausentes entre os seis casos executados neste ambiente. Essa
 matriz verifica integração e preservação de contratos, não completude semântica
 dos extratores. Windows, instalações diferentes e projetos grandes não foram
 validados.
+
+## Enriquecimento documental
+
+[Doxygen opcional](doxygen.md) consome XML existente e associa documentação a um
+catálogo explícito, preservando ambiguidades e pendências. Não é um substituto
+para provedores C/C++, nem transforma referências documentais em Uses. Produção
+continua sem dependências Cargo de lab; configuração de executáveis é explícita.

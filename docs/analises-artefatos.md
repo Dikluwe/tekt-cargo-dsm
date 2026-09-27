@@ -146,3 +146,11 @@ identidades entre versões nem conversão universal dos formatos de snapshot.
 A cobertura semântica continua sendo a declarada por cada provedor. A DSM
 continua experimental. A integração é de arquivos e processos explícitos;
 não significa que os experimentos foram promovidos ao núcleo de produção.
+
+## Documentação Doxygen opcional
+
+`analisar_artefatos` também oferece doxygen-importar, doxygen-associar,
+doxygen-prioridade, doxygen-explorar (JSON finito) e doxygen-grafo (projeção sem
+processo). O [guia Doxygen](doxygen.md) registra comandos completos, schemas v2,
+referências pendentes, vínculo com o grafo e painel opcional na DSM. Esse fluxo
+não inicia servidor pelo MCP nem modifica dependências estruturais.

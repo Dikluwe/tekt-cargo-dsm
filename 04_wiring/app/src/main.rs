@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash 1169eaa7
+//! @prompt-hash 82ccddd1
 //! @layer L4
 //! @updated 2026-09-26
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
@@ -309,10 +309,10 @@ fn rotulo_pacote(cli: &args::Cli) -> String {
     if let Some(p) = &cli.pacote {
         return p.clone();
     }
-    if let Some(g) = &cli.grafo {
-        if let Some(stem) = g.file_stem().and_then(|s| s.to_str()) {
-            return stem.to_string();
-        }
+    if let Some(g) = &cli.grafo
+        && let Some(stem) = g.file_stem().and_then(|s| s.to_str())
+    {
+        return stem.to_string();
     }
     "estrutura".to_string()
 }

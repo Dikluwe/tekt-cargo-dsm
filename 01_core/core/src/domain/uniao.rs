@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/uniao.md
-//! @prompt-hash b1b97de9
+//! @prompt-hash 2920bc7a
 //! @layer L1
 //! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -190,7 +190,7 @@ fn rel_ord(r: Relation) -> u8 {
 
 fn uk_ord(uk: Option<UsesKind>) -> u8 {
     match uk {
-        None => 0,
+        Option::None => 0,
         Some(UsesKind::Reference) => 1,
         Some(UsesKind::Import) => 2,
     }

@@ -1,0 +1,79 @@
+{
+  "schema": "lente.symbol_catalog",
+  "version": 1,
+  "graph_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "symbols": [
+    {
+      "node_id": 10,
+      "qualified_name": "demo::loc",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      }
+    },
+    {
+      "node_id": 20,
+      "qualified_name": "demo::sig",
+      "signature": "void(int)",
+      "location": null
+    },
+    {
+      "node_id": 30,
+      "qualified_name": "demo::over",
+      "signature": "void(int)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 30
+      }
+    },
+    {
+      "node_id": 40,
+      "qualified_name": "other::over",
+      "signature": "void(int)",
+      "location": null
+    },
+    {
+      "node_id": 50,
+      "qualified_name": "demo::amb",
+      "signature": "void()",
+      "location": null
+    },
+    {
+      "node_id": 60,
+      "qualified_name": "demo::conflict",
+      "signature": "void(int)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 60
+      }
+    },
+    {
+      "node_id": 70,
+      "qualified_name": "demo::weak",
+      "signature": null,
+      "location": null
+    },
+    {
+      "node_id": 80,
+      "qualified_name": "demo::path",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 80
+      }
+    },
+    {
+      "node_id": 90,
+      "qualified_name": "missing::symbol",
+      "signature": null,
+      "location": null
+    },
+    {
+      "node_id": 100,
+      "qualified_name": null,
+      "signature": null,
+      "location": null
+    }
+  ]
+}

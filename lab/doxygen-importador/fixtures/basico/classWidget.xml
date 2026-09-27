@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doxygen version="1.9.8" xml:lang="pt-BR">
+  <compounddef id="classWidget" kind="class">
+    <compoundname>Widget</compoundname>
+    <briefdescription><para>Objeto documentado.</para></briefdescription>
+    <detaileddescription><para>Consulte <ref refid="namespacedemo_1run_int" kindref="member">run</ref>.</para></detaileddescription>
+    <location file="include/widget.hpp" line="3"/>
+  </compounddef>
+</doxygen>

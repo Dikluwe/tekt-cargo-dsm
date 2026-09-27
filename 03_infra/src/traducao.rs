@@ -31,8 +31,8 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
     let crate_name = dto.crate_name.clone();
 
     for no_dto in dto.nodes {
-        let kind = Kind::try_from(no_dto.kind.as_str())
-            .map_err(ErroAdaptador::ValorDesconhecido)?;
+        let kind =
+            Kind::try_from(no_dto.kind.as_str()).map_err(ErroAdaptador::ValorDesconhecido)?;
         let visibility = Visibility::try_from(no_dto.visibility.as_str())
             .map_err(ErroAdaptador::ValorDesconhecido)?;
         let path = Path::from(no_dto.path);
@@ -170,13 +170,7 @@ mod tests {
         }
     }
 
-    fn aresta_dto(
-        from: &str,
-        id_from: usize,
-        to: &str,
-        id_to: usize,
-        relation: &str,
-    ) -> ArestaDTO {
+    fn aresta_dto(from: &str, id_from: usize, to: &str, id_to: usize, relation: &str) -> ArestaDTO {
         ArestaDTO {
             from: from.to_string(),
             id_from,
@@ -189,10 +183,7 @@ mod tests {
 
     #[test]
     fn rejeita_texto_de_aresta_incompativel_com_id() {
-        for (from, to, contexto) in [
-            ("t::errado", "t::b", "from"),
-            ("t::a", "t::errado", "to"),
-        ] {
+        for (from, to, contexto) in [("t::errado", "t::b", "from"), ("t::a", "t::errado", "to")] {
             let dto = GrafoDTO {
                 crate_name: "t".to_string(),
                 nodes: vec![
@@ -439,8 +430,7 @@ mod tests {
             .expect("workspace root")
             .join("01_core")
             .join("core");
-        let g = crate::extrair_grafo(&alvo)
-            .expect("extração do lente_core deve funcionar");
+        let g = crate::extrair_grafo(&alvo).expect("extração do lente_core deve funcionar");
         let com_position = g.nodes.iter().filter(|n| n.position.is_some()).count();
         assert!(
             com_position > 0,

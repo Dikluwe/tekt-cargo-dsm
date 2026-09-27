@@ -1,0 +1,240 @@
+{
+  "schema": "lente.doxygen.matches",
+  "version": 1,
+  "inventory_digest": "sha256:35397b55acfbc08248952614f2c684efb754d20504a314c8b7c6ddf9dc54332f",
+  "catalog_digest": "sha256:ff4f0c83508a1db69bf24910d9efc2391b6e4b7ba6d16920720b33f659fbdaa9",
+  "matches": [
+    {
+      "node_id": 10,
+      "status": "matched",
+      "document_id": "loc",
+      "candidates": [
+        "loc"
+      ],
+      "evidence": [
+        "location_exact",
+        "qualified_name_exact",
+        "signature_missing_or_blank"
+      ]
+    },
+    {
+      "node_id": 20,
+      "status": "matched",
+      "document_id": "sig",
+      "candidates": [
+        "sig"
+      ],
+      "evidence": [
+        "location_missing",
+        "qualified_name_exact",
+        "signature_exact"
+      ]
+    },
+    {
+      "node_id": 30,
+      "status": "matched",
+      "document_id": "over-int",
+      "candidates": [
+        "over-int"
+      ],
+      "evidence": [
+        "location_exact",
+        "qualified_name_exact",
+        "signature_exact"
+      ]
+    },
+    {
+      "node_id": 40,
+      "status": "matched",
+      "document_id": "namespace",
+      "candidates": [
+        "namespace"
+      ],
+      "evidence": [
+        "location_missing",
+        "qualified_name_exact",
+        "signature_exact"
+      ]
+    },
+    {
+      "node_id": 50,
+      "status": "ambiguous",
+      "document_id": null,
+      "candidates": [
+        "amb-a",
+        "amb-b"
+      ],
+      "evidence": [
+        "location_missing",
+        "qualified_name_exact",
+        "signature_exact"
+      ]
+    },
+    {
+      "node_id": 60,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [
+        "conflict"
+      ],
+      "evidence": [
+        "location_exact",
+        "qualified_name_exact",
+        "signature_conflict"
+      ]
+    },
+    {
+      "node_id": 70,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [
+        "weak"
+      ],
+      "evidence": [
+        "location_missing",
+        "qualified_name_exact",
+        "signature_missing_or_blank"
+      ]
+    },
+    {
+      "node_id": 80,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [
+        "path"
+      ],
+      "evidence": [
+        "file_difference",
+        "location_difference",
+        "qualified_name_exact",
+        "signature_missing_or_blank"
+      ]
+    },
+    {
+      "node_id": 90,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [],
+      "evidence": [
+        "no_qualified_name_candidate"
+      ]
+    },
+    {
+      "node_id": 100,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [],
+      "evidence": [
+        "qualified_name_missing"
+      ]
+    }
+  ],
+  "unmatched_node_ids": [
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+  ],
+  "unmatched_document_ids": [
+    "amb-a",
+    "amb-b",
+    "conflict",
+    "over-double",
+    "path",
+    "weak"
+  ],
+  "diagnostics": [
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":null,\"qualified_name\":\"demo::amb\",\"signature\":\"void()\"},\"document_id\":\"amb-a\",\"facts\":[\"location_missing\",\"qualified_name_exact\",\"signature_exact\"],\"inventory\":{\"location\":null,\"qualified_name\":\"demo::amb\",\"signature\":\"void()\"},\"node_id\":50,\"sufficient\":true}",
+      "symbol_id": "amb-a"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":null,\"qualified_name\":\"demo::amb\",\"signature\":\"void()\"},\"document_id\":\"amb-b\",\"facts\":[\"location_missing\",\"qualified_name_exact\",\"signature_exact\"],\"inventory\":{\"location\":null,\"qualified_name\":\"demo::amb\",\"signature\":\"void()\"},\"node_id\":50,\"sufficient\":true}",
+      "symbol_id": "amb-b"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":60},\"qualified_name\":\"demo::conflict\",\"signature\":\"void(int)\"},\"document_id\":\"conflict\",\"facts\":[\"location_exact\",\"qualified_name_exact\",\"signature_conflict\"],\"inventory\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":60},\"qualified_name\":\"demo::conflict\",\"signature\":\"void(double)\"},\"node_id\":60,\"sufficient\":false}",
+      "symbol_id": "conflict"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":10},\"qualified_name\":\"demo::loc\",\"signature\":null},\"document_id\":\"loc\",\"facts\":[\"location_exact\",\"qualified_name_exact\",\"signature_missing_or_blank\"],\"inventory\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":10},\"qualified_name\":\"demo::loc\",\"signature\":null},\"node_id\":10,\"sufficient\":true}",
+      "symbol_id": "loc"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":null,\"qualified_name\":\"other::over\",\"signature\":\"void(int)\"},\"document_id\":\"namespace\",\"facts\":[\"location_missing\",\"qualified_name_exact\",\"signature_exact\"],\"inventory\":{\"location\":null,\"qualified_name\":\"other::over\",\"signature\":\"void(int)\"},\"node_id\":40,\"sufficient\":true}",
+      "symbol_id": "namespace"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":30},\"qualified_name\":\"demo::over\",\"signature\":\"void(int)\"},\"document_id\":\"over-double\",\"facts\":[\"line_difference\",\"location_difference\",\"qualified_name_exact\",\"signature_conflict\"],\"inventory\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":31},\"qualified_name\":\"demo::over\",\"signature\":\"void(double)\"},\"node_id\":30,\"sufficient\":false}",
+      "symbol_id": "over-double"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":30},\"qualified_name\":\"demo::over\",\"signature\":\"void(int)\"},\"document_id\":\"over-int\",\"facts\":[\"location_exact\",\"qualified_name_exact\",\"signature_exact\"],\"inventory\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":30},\"qualified_name\":\"demo::over\",\"signature\":\"void(int)\"},\"node_id\":30,\"sufficient\":true}",
+      "symbol_id": "over-int"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":{\"file\":\"src/demo.cpp\",\"line\":80},\"qualified_name\":\"demo::path\",\"signature\":null},\"document_id\":\"path\",\"facts\":[\"file_difference\",\"location_difference\",\"qualified_name_exact\",\"signature_missing_or_blank\"],\"inventory\":{\"location\":{\"file\":\"./src/demo.cpp\",\"line\":80},\"qualified_name\":\"demo::path\",\"signature\":null},\"node_id\":80,\"sufficient\":false}",
+      "symbol_id": "path"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":null,\"qualified_name\":\"demo::sig\",\"signature\":\"void(int)\"},\"document_id\":\"sig\",\"facts\":[\"location_missing\",\"qualified_name_exact\",\"signature_exact\"],\"inventory\":{\"location\":null,\"qualified_name\":\"demo::sig\",\"signature\":\"void(int)\"},\"node_id\":20,\"sufficient\":true}",
+      "symbol_id": "sig"
+    },
+    {
+      "code": "candidate_evaluation",
+      "message": "{\"catalog\":{\"location\":null,\"qualified_name\":\"demo::weak\",\"signature\":null},\"document_id\":\"weak\",\"facts\":[\"location_missing\",\"qualified_name_exact\",\"signature_missing_or_blank\"],\"inventory\":{\"location\":null,\"qualified_name\":\"demo::weak\",\"signature\":null},\"node_id\":70,\"sufficient\":false}",
+      "symbol_id": "weak"
+    },
+    {
+      "code": "inventory_context",
+      "message": "{\"coverage\":\"unknown\",\"meaning\":\"Cobertura declarada do conjunto de entrada, não completude semântica\",\"pending_relations\":[],\"producer\":{\"configuration_digest\":null,\"name\":\"doxygen\",\"version\":null}}",
+      "symbol_id": null
+    },
+    {
+      "code": "inventory_diagnostic",
+      "message": "{\"code\":\"fixture_scope\",\"message\":\"Inventário local de demonstração; cobertura desconhecida.\",\"symbol_id\":null}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_ambiguous",
+      "message": "{\"candidates\":[\"amb-a\",\"amb-b\"],\"node_id\":50,\"reason\":\"Múltiplos candidatos suficientes ou reivindicação documental conflitante\"}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_unmatched",
+      "message": "{\"candidates\":[\"conflict\"],\"node_id\":60,\"reason\":\"Nenhum candidato satisfaz a política; consulte candidate_evaluation ou evidence\"}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_unmatched",
+      "message": "{\"candidates\":[\"path\"],\"node_id\":80,\"reason\":\"Nenhum candidato satisfaz a política; consulte candidate_evaluation ou evidence\"}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_unmatched",
+      "message": "{\"candidates\":[\"weak\"],\"node_id\":70,\"reason\":\"Nenhum candidato satisfaz a política; consulte candidate_evaluation ou evidence\"}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_unmatched",
+      "message": "{\"candidates\":[],\"node_id\":100,\"reason\":\"Nenhum candidato satisfaz a política; consulte candidate_evaluation ou evidence\"}",
+      "symbol_id": null
+    },
+    {
+      "code": "node_unmatched",
+      "message": "{\"candidates\":[],\"node_id\":90,\"reason\":\"Nenhum candidato satisfaz a política; consulte candidate_evaluation ou evidence\"}",
+      "symbol_id": null
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/catalogo.md
-//! @prompt-hash 3a395ec3
+//! @prompt-hash 677cf875
 //! @layer L2
 //! @updated 2026-09-26
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
@@ -31,22 +31,22 @@ impl Template {
         let bytes = self.0.as_bytes();
         let mut i = 0;
         while i < bytes.len() {
-            if bytes[i] == b'{' {
-                if let Some(fim) = self.0[i + 1..].find('}') {
-                    let nome = &self.0[i + 1..i + 1 + fim];
-                    let valor = vars.iter().find(|(k, _)| *k == nome).map(|(_, v)| *v);
-                    match valor {
-                        Some(v) => saida.push_str(v),
-                        None => {
-                            // Degradação visível: mantém o literal.
-                            saida.push('{');
-                            saida.push_str(nome);
-                            saida.push('}');
-                        }
+            if bytes[i] == b'{'
+                && let Some(fim) = self.0[i + 1..].find('}')
+            {
+                let nome = &self.0[i + 1..i + 1 + fim];
+                let valor = vars.iter().find(|(k, _)| *k == nome).map(|(_, v)| *v);
+                match valor {
+                    Some(v) => saida.push_str(v),
+                    None => {
+                        // Degradação visível: mantém o literal.
+                        saida.push('{');
+                        saida.push_str(nome);
+                        saida.push('}');
                     }
-                    i += 1 + fim + 1;
-                    continue;
                 }
+                i += 1 + fim + 1;
+                continue;
             }
             // char comum (cuidado com UTF-8 multibyte)
             let ch = self.0[i..].chars().next().unwrap();
@@ -419,6 +419,17 @@ pub const MCP_DESCRICAO_PROVEDOR: &str = "Análise ESTRUTURAL por provedor exper
 pub const MCP_ERRO_PROVEDOR_LEGADO: &str =
     "esta ferramenta preserva Rust/JSON; para outros provedores use analisar_provedor";
 
+// Completude da extração no modo diff.
+pub const JSON_COMPLETUDE: &str = "completude";
+pub const JSON_FALHAS: &str = "falhas";
+pub const JSON_CRATE_NAME: &str = "crate_name";
+pub const JSON_MOTIVO: &str = "motivo";
+pub const DIFF_COMPLETA: &str = "completa";
+pub const DIFF_PARCIAL: &str = "parcial";
+pub const DIFF_ANALISE_COMPLETA: &str = "Análise completa: todos os crates foram analisados.\n";
+pub const DIFF_ANALISE_PARCIAL: &str = "Análise parcial: há crates não analisados; pouco ou nenhum impacto observado não garante ausência de impacto.\n";
+pub const DIFF_FALHA: Template = Template("  {crate}: {motivo}\n");
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -475,14 +486,3 @@ mod tests {
         assert_eq!(m, "Alvo 'foo::bar' não existe no grafo");
     }
 }
-
-// Completude da extração no modo diff.
-pub const JSON_COMPLETUDE: &str = "completude";
-pub const JSON_FALHAS: &str = "falhas";
-pub const JSON_CRATE_NAME: &str = "crate_name";
-pub const JSON_MOTIVO: &str = "motivo";
-pub const DIFF_COMPLETA: &str = "completa";
-pub const DIFF_PARCIAL: &str = "parcial";
-pub const DIFF_ANALISE_COMPLETA: &str = "Análise completa: todos os crates foram analisados.\n";
-pub const DIFF_ANALISE_PARCIAL: &str = "Análise parcial: há crates não analisados; pouco ou nenhum impacto observado não garante ausência de impacto.\n";
-pub const DIFF_FALHA: Template = Template("  {crate}: {motivo}\n");

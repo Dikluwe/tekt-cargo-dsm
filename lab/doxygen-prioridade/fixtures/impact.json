@@ -1,0 +1,31 @@
+{
+  "schema": "lente.impact_summary",
+  "version": 1,
+  "graph_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "coverage": "partial",
+  "items": [
+    {
+      "node_id": 30,
+      "transitive_consumers": 1
+    },
+    {
+      "node_id": 40,
+      "transitive_consumers": 7
+    },
+    {
+      "node_id": 20,
+      "transitive_consumers": 12
+    },
+    {
+      "node_id": 10,
+      "transitive_consumers": 12
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "partial_metric",
+      "message": "Contagens somente do grafo parcial informado.",
+      "symbol_id": null
+    }
+  ]
+}

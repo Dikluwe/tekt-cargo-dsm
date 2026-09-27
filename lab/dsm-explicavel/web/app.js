@@ -1,3 +1,4 @@
+// Crystalline Lineage @prompt lab/dsm-explicavel/CONTRATO-DOXYGEN.md
 'use strict';
 const $ = id => document.getElementById(id);
 // Conteúdo externo nunca passa por innerHTML, templates HTML ou atributos-evento.
@@ -30,6 +31,13 @@ function evidenceCard(r, canQuery) {
   card.append(el('p', `${r.from} → ${r.to}`));
   card.append(el('p', `IDs no snapshot: ${r.from_id} → ${r.to_id}`, 'hint'));
   card.append(el('p', 'Local de uso: não disponível. A declaração do nó não localiza esta referência.', 'hint'));
+  if (data.documentation) {
+    for (const id of [r.from_id, r.to_id]) {
+      const button = el('button', `Documentação #${id}`, 'secondary');
+      button.addEventListener('click', () => { selectDocument(String(id)); $('documentation-panel').scrollIntoView({block:'start'}); });
+      card.append(button);
+    }
+  }
   if (canQuery) {
     const button = el('button', 'Investigar cadeia destes itens', 'secondary');
     button.addEventListener('click', () => {
@@ -51,6 +59,7 @@ function selectCell(from, to, button) {
   if (cell) {
     $('selection').append(el('p', `${cell.weight} relações`, 'weight'), el('p', 'Peso = registros Uses, incluindo paralelas. Quantidade de locais de uso: desconhecida.'));
   } else $('selection').append(el('p', from.id === to.id ? 'Diagonal: relações internas são absorvidas. Consulte as exclusões abaixo.' : 'Nenhuma relação agregada nesta direção no snapshot. Isso não comprova ausência no sistema.'));
+  if (data.documentation) selectDocument(String(to.id));
   selectedEvidence = cell?.evidence_indices || []; shown = 0;
   $('evidence-list').replaceChildren(); showMore();
 }
@@ -120,6 +129,40 @@ async function query(e) {
   } catch (error) { if (version === requestVersion) $('path-result').textContent = `Consulta não concluída: ${error.message}`; }
   finally { if (version === requestVersion) $('query-button').disabled = !data.items.length; }
 }
+function selectDocument(id) {
+  const p = data.documentation;
+  const entry = p.entries.find(e => e.node_id === id);
+  if (!entry) return;
+  $('documentation-node').value = id;
+  const body = $('documentation-content'); body.replaceChildren();
+  const labels = {matched:'Associação confirmada', ambiguous:'Associação ambígua', unmatched:'Sem associação confirmada'};
+  body.append(el('h3', `${labels[entry.status]} · #${id}`));
+  body.append(el('p', 'Evidências: ' + entry.evidence.join(', ')));
+  if (entry.document) {
+    const d = entry.document.symbol;
+    body.append(el('h4', d.qualified_name || d.name));
+    body.append(el('p', d.brief || 'Sem resumo documental informado.'));
+    body.append(el('pre', d.details || 'Sem detalhes documentais informados.'));
+  }
+  if (entry.status !== 'matched' && entry.candidates.length) {
+    body.append(el('h4', 'Candidatos — não são documentação confirmada'));
+    entry.candidates.forEach(c => body.append(el('pre', JSON.stringify(c, null, 2))));
+  }
+  const ids = new Set(entry.candidates.map(c => c.id));
+  if (entry.document) ids.add(entry.document.symbol.id);
+  const pending = p.pending_relations.filter(r => ids.has(r.from) || ids.has(r.to));
+  body.append(el('h4', 'Referências documentais pendentes relevantes'));
+  body.append(el('pre', pending.length ? JSON.stringify(pending, null, 2) : 'Nenhuma pendência vinculada aos documentos deste nó.'));
+}
+function initDocumentation() {
+  const p = data.documentation; if (!p) return;
+  $('documentation-panel').hidden = false;
+  $('documentation-coverage').textContent = `Cobertura documental: ${p.coverage}. Vínculo com os bytes do grafo verificado. Documentação não altera impacto estrutural.`;
+  p.entries.forEach(e => { const o=el('option', `#${e.node_id} · ${e.qualified_name || 'nome qualificado desconhecido'}`); o.value=e.node_id; $('documentation-node').append(o); });
+  $('documentation-diagnostics').textContent = JSON.stringify({producer:p.producer, graph_digest:p.graph_digest, inventory_digest:p.inventory_digest, catalog_digest:p.catalog_digest, matches_digest:p.matches_digest, inventory:p.inventory_diagnostics, catalog:p.catalog_diagnostics, matches:p.match_diagnostics, pending_relations:p.pending_relations}, null, 2);
+  $('documentation-node').addEventListener('change', e => selectDocument(e.target.value));
+  if (p.entries.length) selectDocument(p.entries[0].node_id);
+}
 async function init() {
   try {
     const response = await fetch('/api/data'); if (!response.ok) throw new Error('Pacote indisponível');
@@ -135,6 +178,7 @@ async function init() {
     $('state').textContent = `${state}. Cobertura semântica: ${m.semantic_coverage}`;
     $('count').textContent = `${modules.length} módulos · ${data.cells.length} dependências`;
     matrix();
+    initDocumentation();
     for (const n of data.items) for (const id of ['consumer', 'changed']) {
       const option = el('option', n.path); option.value = n.id; $(id).append(option);
     }

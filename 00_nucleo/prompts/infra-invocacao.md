@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::invocacao` — invocar o fork num diretório (L3, interno)
-Hash do Código: a21d1a95
+Hash do Código: 53c55efc
 
 **Camada**: L3 — Infraestrutura. Subprocesso é I/O legítimo.
 **Unidade**: `03_infra/src/invocacao.rs` (módulo **interno** `pub(crate)` do `lente_infra`).

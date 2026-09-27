@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::metadata` — detecção de alvo (L3)
-Hash do Código: c0fac9bf
+Hash do Código: 1538e5a9
 
 **Camada**: L3 — Infraestrutura. Subprocesso `cargo metadata` é I/O legítimo.
 **Unidade**: `03_infra/src/metadata.rs` (crate `lente_infra`).
@@ -48,3 +48,6 @@ Dado 0 ou ≥2 bins sem lib Então Err(AlvosAmbiguos)
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0064) da detecção de alvo. Código inalterado. | `03_infra/src/metadata.rs` |
+
+Revisão 2026-09-27: comparações de caminhos usam Path emprestado, sem
+alocação temporária; igualdade e política de caminhos permanecem iguais.

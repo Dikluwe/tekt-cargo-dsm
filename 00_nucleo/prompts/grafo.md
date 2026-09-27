@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `grafo` — a forma de dados do grafo (entities)
-Hash do Código: cce2b0c5
+Hash do Código: b50ed6fa
 
 **Camada**: L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 **Unidade**: `01_core/core/src/entities/grafo.rs` (crate `lente_core`).

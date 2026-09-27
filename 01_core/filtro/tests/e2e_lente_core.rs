@@ -18,8 +18,7 @@ fn extrair_lente_core() -> Grafo {
         .parent()
         .expect("workspace root")
         .join("core");
-    lente_infra::extrair_grafo(&raiz)
-        .expect("extração do lente_core real deve funcionar")
+    lente_infra::extrair_grafo(&raiz).expect("extração do lente_core real deve funcionar")
 }
 
 #[test]
@@ -50,13 +49,17 @@ fn filtra_lente_core_remove_sysroot_preserva_alvo() {
     // do domínio (uniao/mapeamento/consulta/resultado_diff) ~dobraram o crate.
     // Banda larga (~±15%): afirma a ordem de grandeza, não o número exato.
     assert!(
-        nodes_antes >= 170 && nodes_antes <= 230,
+        (170..=230).contains(&nodes_antes),
         "nodes_antes fora da banda esperada (re-âncora 0070: ~200): {}",
         nodes_antes
     );
-    let alvo = f.nodes.iter().filter(|n| n.crate_name == "lente_core").count();
+    let alvo = f
+        .nodes
+        .iter()
+        .filter(|n| n.crate_name == "lente_core")
+        .count();
     assert!(
-        alvo >= 150 && alvo <= 205,
+        (150..=205).contains(&alvo),
         "alvo fora da banda esperada (re-âncora 0070: ~178): {}",
         alvo
     );
@@ -81,8 +84,7 @@ fn limite_2_real_impl_de_traits_de_stdlib_no_lente_core_permanecem() {
 
     for (path_esperado, trait_esperado) in casos {
         let achou = f.nodes.iter().any(|n| {
-            n.path.as_str() == path_esperado
-                && n.trait_.as_deref() == Some(trait_esperado)
+            n.path.as_str() == path_esperado && n.trait_.as_deref() == Some(trait_esperado)
         });
         assert!(
             achou,
@@ -100,8 +102,7 @@ fn arestas_para_stdlib_somem_no_filtro() {
     let f = filtrar_stdlib(&g);
 
     // Toda aresta remanescente tem ambas as pontas em ids que sobreviveram.
-    let ids_validos: std::collections::HashSet<usize> =
-        f.nodes.iter().map(|n| n.id).collect();
+    let ids_validos: std::collections::HashSet<usize> = f.nodes.iter().map(|n| n.id).collect();
     for a in &f.edges {
         assert!(
             ids_validos.contains(&a.id_from) && ids_validos.contains(&a.id_to),

@@ -1,0 +1,52 @@
+{
+  "schema": "lente.symbol_catalog",
+  "version": 1,
+  "graph_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "symbols": [
+    {
+      "node_id": 10,
+      "qualified_name": "demo::empty",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      }
+    },
+    {
+      "node_id": 20,
+      "qualified_name": "demo::missing",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 20
+      }
+    },
+    {
+      "node_id": 30,
+      "qualified_name": "demo::documented",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 30
+      }
+    },
+    {
+      "node_id": 40,
+      "qualified_name": "demo::choice",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 40
+      }
+    },
+    {
+      "node_id": 50,
+      "qualified_name": "demo::no-metric",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 50
+      }
+    }
+  ]
+}

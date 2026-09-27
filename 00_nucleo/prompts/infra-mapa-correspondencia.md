@@ -1,6 +1,5 @@
 # Prompt de Nucleação: mapa de correspondência TOML (L3)
-
-Hash do Código: 230697b2
+Hash do Código: 609c3eeb
 
 **Camada:** L3 — infraestrutura.
 **Unidade:** `03_infra/src/mapa_correspondencia.rs`.

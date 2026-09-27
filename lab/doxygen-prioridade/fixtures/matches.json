@@ -1,0 +1,75 @@
+{
+  "schema": "lente.doxygen.matches",
+  "version": 1,
+  "inventory_digest": "sha256:5d466c60ec6402e497af20b7369be49e903f3b67c72d31d9782a2c04a09d532b",
+  "catalog_digest": "sha256:7e11e31038c66d7aecb92d38e5faeee45a8dea661cf4ccf7c6c7254fb5778b17",
+  "matches": [
+    {
+      "node_id": 10,
+      "status": "matched",
+      "document_id": "empty",
+      "candidates": [
+        "empty"
+      ],
+      "evidence": [
+        "qualified_name_exact"
+      ]
+    },
+    {
+      "node_id": 20,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "node_id": 30,
+      "status": "matched",
+      "document_id": "documented",
+      "candidates": [
+        "documented"
+      ],
+      "evidence": [
+        "location_exact",
+        "qualified_name_exact"
+      ]
+    },
+    {
+      "node_id": 40,
+      "status": "ambiguous",
+      "document_id": null,
+      "candidates": [
+        "choice-b",
+        "choice-a"
+      ],
+      "evidence": [
+        "qualified_name_exact"
+      ]
+    },
+    {
+      "node_id": 50,
+      "status": "matched",
+      "document_id": "no-metric",
+      "candidates": [
+        "no-metric"
+      ],
+      "evidence": [
+        "location_exact"
+      ]
+    }
+  ],
+  "unmatched_node_ids": [
+    20
+  ],
+  "unmatched_document_ids": [
+    "choice-b",
+    "choice-a"
+  ],
+  "diagnostics": [
+    {
+      "code": "ambiguous_candidate",
+      "message": "Dois documentos candidatos; nenhuma seleção automática.",
+      "symbol_id": "choice-a"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `vizinhanca` — Estratégia 1 da investigação (interno)
-Hash do Código: cb3f1f6f
+Hash do Código: 387756e3
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/investiga/src/vizinhanca.rs` (módulo **interno** `pub(crate)`

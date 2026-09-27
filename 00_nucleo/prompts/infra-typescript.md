@@ -1,3 +1,7 @@
+> Estado em 2026-09-27: proposta histórica não materializada nas unidades
+> indicadas abaixo. Preservada para rastreabilidade; não descreve API disponível.
+> Implementação vigente: ADR-0008, infra-provedores.md e wiring-provedores.md.
+
 # Adaptador TypeScript: dependências estáticas entre arquivos (L3)
 
 **Unidades**: `03_infra/typescript/extrair.cjs`, `03_infra/src/typescript.rs`.

@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::dto` — DTOs do JSON do fork (L3, interno)
-Hash do Código: a14648bb
+Hash do Código: 19dacaef
 
 **Camada**: L3 — Infraestrutura. Fronteira de desserialização.
 **Unidade**: `03_infra/src/dto.rs` (módulo **interno** `pub(crate)` do `lente_infra`).

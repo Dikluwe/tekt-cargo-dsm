@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-diff.md
-//! @prompt-hash 2f564d50
+//! @prompt-hash 59e5a9f1
 //! @layer L3
 //! @updated 2026-09-26
 //! Camada:  L3 — Infraestrutura. I/O (subprocesso `git`) permitido.
@@ -37,18 +37,13 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use lente_core::domain::mapeamento::{
-    ArquivoDiff, DiffEstruturado, FaixaLinhas, OrigemArquivo,
-};
+use lente_core::domain::mapeamento::{ArquivoDiff, DiffEstruturado, FaixaLinhas, OrigemArquivo};
 
 /// Modos de falha da leitura do diff.
 #[derive(Debug)]
 pub enum ErroDiff {
     /// O subprocesso `git` rodou mas terminou com status de erro.
-    Git {
-        codigo: Option<i32>,
-        stderr: String,
-    },
+    Git { codigo: Option<i32>, stderr: String },
     /// Diff malformado (não usado hoje — `parse_diff` é tolerante; reservado
     /// para validações futuras mais estritas).
     Parse(String),
@@ -214,7 +209,10 @@ mod tests {
         assert_eq!(arqs[0].origem, OrigemArquivo::Rastreado);
         assert_eq!(
             arqs[0].linhas_alteradas,
-            vec![FaixaLinhas { inicio: 10, fim: 12 }]
+            vec![FaixaLinhas {
+                inicio: 10,
+                fim: 12
+            }]
         );
     }
 
@@ -252,15 +250,24 @@ mod tests {
                  --- a/b.rs\n+++ b/b.rs\n@@ -5,0 +6,1 @@\n+z\n";
         let arqs = parse_diff(d);
         assert_eq!(arqs.len(), 2);
-        let a = arqs.iter().find(|x| x.caminho == PathBuf::from("a.rs")).unwrap();
+        let a = arqs
+            .iter()
+            .find(|x| x.caminho == Path::new("a.rs"))
+            .unwrap();
         assert_eq!(
             a.linhas_alteradas,
             vec![
                 FaixaLinhas { inicio: 1, fim: 2 },
-                FaixaLinhas { inicio: 11, fim: 13 },
+                FaixaLinhas {
+                    inicio: 11,
+                    fim: 13
+                },
             ]
         );
-        let b = arqs.iter().find(|x| x.caminho == PathBuf::from("b.rs")).unwrap();
+        let b = arqs
+            .iter()
+            .find(|x| x.caminho == Path::new("b.rs"))
+            .unwrap();
         assert_eq!(b.linhas_alteradas, vec![FaixaLinhas { inicio: 6, fim: 6 }]);
     }
 
@@ -305,7 +312,12 @@ mod tests {
         // Modifica o rastreado (linha 2) e cria um untracked com 2 linhas.
         std::fs::write(dir.join("a.txt"), "l1\nMODIFICADA\nl3\n").unwrap();
         std::fs::write(dir.join("novo.rs"), "fn x() {}\nfn y() {}\n").unwrap();
-        let nomes_especiais = ["ação.rs", " nome com espaços.rs ", "linha\nnova.rs", "tab\t.rs"];
+        let nomes_especiais = [
+            "ação.rs",
+            " nome com espaços.rs ",
+            "linha\nnova.rs",
+            "tab\t.rs",
+        ];
         for nome in nomes_especiais {
             std::fs::write(dir.join(nome), "fn exemplo() {}\n").unwrap();
         }

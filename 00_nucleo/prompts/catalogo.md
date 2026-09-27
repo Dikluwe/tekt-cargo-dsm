@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: 6559c02b
+Hash do Código: 0745420e
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -49,6 +49,9 @@ Dado Template("Alvo '{alvo}' não existe") Quando render([("alvo","x")]) Então 
 Dado um placeholder ausente Então permanece literal (sem panic)
 Dado UTF-8 multibyte no texto Então render preserva
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

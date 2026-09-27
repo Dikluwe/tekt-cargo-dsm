@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doxygen version="1.9.8" xml:lang="pt-BR">
+  <compounddef id="namespacedemo" kind="namespace">
+    <compoundname>demo</compoundname>
+    <innerclass refid="classWidget">Widget</innerclass>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="namespacedemo_1run_int">
+        <type>void</type><definition>void demo::run</definition>
+        <argsstring>(int valor)</argsstring><name>run</name><qualifiedname>demo::run</qualifiedname>
+        <briefdescription><para>Executa a <bold>ação</bold> λ.</para></briefdescription>
+        <detaileddescription><para>Recebe <computeroutput>&lt;T&gt;</computeroutput> &amp; preserva Unicode.</para>
+          <itemizedlist><listitem><para>Primeiro passo.</para></listitem><listitem><para>Segundo passo.</para></listitem></itemizedlist>
+        </detaileddescription>
+        <location file="src/demo.cpp" line="10"/>
+        <references refid="classWidget">Widget</references>
+      </memberdef>
+      <memberdef kind="function" id="namespacedemo_1run_double">
+        <type>void</type><definition>void demo::run</definition>
+        <argsstring>(double valor)</argsstring><name>run</name><qualifiedname>demo::run</qualifiedname>
+        <location file="src/demo.cpp" line="20"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription><para>Namespace de demonstração.</para></briefdescription>
+  </compounddef>
+</doxygen>

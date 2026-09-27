@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_resolve` — aplicar o veredito (escada de nomeação)
-Hash do Código: 5e5c2f9d
+Hash do Código: 4b43f72d
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/resolve/src/lib.rs` (crate `lente_resolve`, arquivo único).

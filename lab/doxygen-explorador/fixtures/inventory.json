@@ -1,0 +1,83 @@
+{
+  "schema": "lente.doxygen.inventory",
+  "version": 2,
+  "producer": {
+    "name": "doxygen",
+    "version": null,
+    "configuration_digest": null
+  },
+  "coverage": "partial",
+  "symbols": [
+    {
+      "id": "servico",
+      "kind": "function",
+      "name": "serviço",
+      "qualified_name": "demo::serviço",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "Organiza requisições e preserva o contexto.",
+      "details": "Descrição Unicode: ação, coração, 日本語.\nTexto literal: <img src=x onerror=\"alert(1)\">",
+      "documentation_url": "https://example.org/docs/servico"
+    },
+    {
+      "id": "a",
+      "kind": "function",
+      "name": "resolver(int)",
+      "qualified_name": "demo::resolver(int)",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "b",
+      "kind": "function",
+      "name": "resolver(double)",
+      "qualified_name": "demo::resolver(double)",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "vazio",
+      "kind": "function",
+      "name": "vazio",
+      "qualified_name": "demo::vazio",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "",
+      "details": "",
+      "documentation_url": "javascript:alert(1)"
+    }
+  ],
+  "relations": [
+    {
+      "to": "a",
+      "kind": "references",
+      "from": "servico"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "entrada_parcial",
+      "message": "Fixture parcial: documentação externa não fornecida.",
+      "symbol_id": null
+    }
+  ],
+  "pending_relations": []
+}

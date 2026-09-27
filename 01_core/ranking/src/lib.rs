@@ -88,9 +88,7 @@ pub fn rankear(grafo: &Grafo, n: usize) -> Vec<ItemRanking> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lente_core::entities::grafo::{
-        Aresta, Kind, Modificadores, No, Relation, Visibility,
-    };
+    use lente_core::entities::grafo::{Aresta, Kind, Modificadores, No, Relation, Visibility};
 
     fn no(id: usize, path: &str, kind: Kind) -> No {
         No {
@@ -181,7 +179,10 @@ mod tests {
         g.edges = vec![];
         let r = rankear(&g, 10);
         let paths: Vec<&str> = r.iter().map(|i| i.path.as_str()).collect();
-        assert_eq!(paths, vec!["meu::a_primeiro", "meu::m_meio", "meu::z_ultimo"]);
+        assert_eq!(
+            paths,
+            vec!["meu::a_primeiro", "meu::m_meio", "meu::z_ultimo"]
+        );
     }
 
     #[test]

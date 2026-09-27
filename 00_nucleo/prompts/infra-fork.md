@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::fork` — o invocador do fork (L3)
-Hash do Código: 85066a4a
+Hash do Código: 1d485b41
 
 **Camada**: L3 — Infraestrutura. Subprocesso externo é I/O legítimo.
 **Unidade**: `03_infra/src/fork.rs` (crate `lente_infra`).
@@ -40,6 +40,9 @@ Dado um pacote válido Quando invocar_fork Então JSON do fork (com o crate-raiz
 Dado pacote inexistente Então Err(DeteccaoAlvo::PacoteNaoEncontrado) antes do fork
 Dado cada variante de ErroFork Então Display não-vazio
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

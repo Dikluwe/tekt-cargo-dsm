@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/investiga.md
-//! @prompt-hash ad96c985
+//! @prompt-hash ca35ea61
 //! @layer L1
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -240,14 +240,32 @@ mod tests {
         let b = no("lente_core::domain::raio::ErroRaio::fmt");
         let par = ParColidente { a: &a, b: &b };
 
-        let comum = aresta("X", "lente_core::domain::raio::ErroRaio::fmt", Relation::Uses);
+        let comum = aresta(
+            "X",
+            "lente_core::domain::raio::ErroRaio::fmt",
+            Relation::Uses,
+        );
         let viz = Vizinhanca {
             a: ArestasNo {
-                entrando: vec![comum.clone(), aresta("Y", "lente_core::domain::raio::ErroRaio::fmt", Relation::Uses)],
+                entrando: vec![
+                    comum.clone(),
+                    aresta(
+                        "Y",
+                        "lente_core::domain::raio::ErroRaio::fmt",
+                        Relation::Uses,
+                    ),
+                ],
                 saindo: vec![],
             },
             b: ArestasNo {
-                entrando: vec![comum.clone(), aresta("Z", "lente_core::domain::raio::ErroRaio::fmt", Relation::Uses)],
+                entrando: vec![
+                    comum.clone(),
+                    aresta(
+                        "Z",
+                        "lente_core::domain::raio::ErroRaio::fmt",
+                        Relation::Uses,
+                    ),
+                ],
                 saindo: vec![],
             },
         };

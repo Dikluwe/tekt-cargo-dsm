@@ -1,0 +1,175 @@
+{
+  "crate": "demo",
+  "nodes": [
+    {
+      "id": 1,
+      "path": "demo",
+      "name": "demo",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 10,
+      "path": "opaque::10",
+      "name": "run_int",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 10,
+        "end_line": 10
+      }
+    },
+    {
+      "id": 20,
+      "path": "opaque::20",
+      "name": "run_double",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 20,
+        "end_line": 20
+      }
+    },
+    {
+      "id": 30,
+      "path": "opaque::30",
+      "name": "amb",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 30,
+        "end_line": 30
+      }
+    },
+    {
+      "id": 40,
+      "path": "opaque::40",
+      "name": "weak",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 40,
+        "end_line": 40
+      }
+    },
+    {
+      "id": 50,
+      "path": "opaque::50",
+      "name": "empty",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 50,
+        "end_line": 50
+      }
+    },
+    {
+      "id": 60,
+      "path": "opaque::60",
+      "name": "missing_metric",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 60,
+        "end_line": 60
+      }
+    },
+    {
+      "id": 70,
+      "path": "opaque::70",
+      "name": "zero",
+      "kind": "fn",
+      "visibility": "pub",
+      "position": {
+        "file": "src/demo.hpp",
+        "start_line": 70,
+        "end_line": 70
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 10,
+      "to": "opaque::10",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 20,
+      "to": "opaque::20",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 30,
+      "to": "opaque::30",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 40,
+      "to": "opaque::40",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 50,
+      "to": "opaque::50",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 60,
+      "to": "opaque::60",
+      "relation": "owns"
+    },
+    {
+      "id_from": 1,
+      "from": "demo",
+      "id_to": 70,
+      "to": "opaque::70",
+      "relation": "owns"
+    },
+    {
+      "id_from": 20,
+      "from": "opaque::20",
+      "id_to": 10,
+      "to": "opaque::10",
+      "relation": "uses"
+    },
+    {
+      "id_from": 30,
+      "from": "opaque::30",
+      "id_to": 10,
+      "to": "opaque::10",
+      "relation": "uses"
+    },
+    {
+      "id_from": 40,
+      "from": "opaque::40",
+      "id_to": 20,
+      "to": "opaque::20",
+      "relation": "uses"
+    },
+    {
+      "id_from": 50,
+      "from": "opaque::50",
+      "id_to": 30,
+      "to": "opaque::30",
+      "relation": "uses"
+    }
+  ]
+}

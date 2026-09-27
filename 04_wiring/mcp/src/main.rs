@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/mcp.md
-//! @prompt-hash 387dcab6
+//! @prompt-hash f6b96945
 //! @layer L4
 //! @updated 2026-09-26
 //!
@@ -114,15 +114,16 @@ fn lista_ferramentas() -> Value {
         "tools": [
             {
                 "name": "analisar_artefatos",
-                "description": "Executa análise ESTRUTURAL de snapshots, regras ou DSM sobre arquivos existentes. NÃO comprova correção comportamental. Preserva cobertura e diagnósticos. Violação e inconclusivo são resultados com codigo_saida 1/2, não erros de transporte. Não inicia servidor DSM.",
+                "description": "Executa análise ESTRUTURAL de snapshots, regras, DSM ou enriquecimento documental Doxygen sobre arquivos existentes. NÃO comprova correção comportamental. Preserva cobertura e diagnósticos. Violação e inconclusivo são resultados com codigo_saida 1/2, não erros de transporte. Não inicia servidor DSM/Doxygen. Doxygen parcial é resultado válido; doxygen-grafo dispensa executável.",
                 "inputSchema": {
                     "type":"object", "additionalProperties":false,
-                    "required":["executavel","timeout_ms","consulta"],
+                    "required":["timeout_ms","consulta"],
                     "properties":{
                         "executavel":{"type":"string","description":"Executável preparado, caminho absoluto."},
                         "timeout_ms":{"type":"integer","minimum":1,"maximum":3600000},
                         "consulta":{"type":"object","required":["modo"],"properties":{
-                            "modo":{"type":"string","enum":["snapshots","regras","dsm","caminho-dsm"]},
+                            "modo":{"type":"string","enum":["snapshots","regras","dsm","caminho-dsm","doxygen-importar","doxygen-associar","doxygen-prioridade","doxygen-explorar","doxygen-grafo"]},
+                            "xml_dir":{"type":"string"},"inventory":{"type":"string"},"catalog":{"type":"string"},"matches":{"type":"string"},"impact":{"type":"string"},"grafo":{"type":"string"},"politica_nomes":{"enum":["opaque","rust-path"]},"coverage":{"enum":["unknown","partial","complete"]},"alvos_metricas":{"type":"array","items":{"type":"integer","minimum":0}},
                             "entrada":{"type":"string"},"baseline":{"type":"string"},"atual":{"type":"string"},"regras":{"type":"string"},"data":{"type":"string"},
                             "pacote":{"type":"string"},"consumidor":{"type":"integer","minimum":0},"alterado":{"type":"integer","minimum":0}
                         },"additionalProperties":false}

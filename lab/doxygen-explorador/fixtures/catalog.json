@@ -1,0 +1,43 @@
+{
+  "schema": "lente.symbol_catalog",
+  "version": 1,
+  "graph_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "symbols": [
+    {
+      "node_id": 10,
+      "qualified_name": "demo::serviço",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      }
+    },
+    {
+      "node_id": 20,
+      "qualified_name": "demo::resolver",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 20
+      }
+    },
+    {
+      "node_id": 30,
+      "qualified_name": "demo::sem_documentação",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 30
+      }
+    },
+    {
+      "node_id": 40,
+      "qualified_name": "demo::vazio",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 40
+      }
+    }
+  ]
+}

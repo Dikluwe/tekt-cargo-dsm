@@ -1,0 +1,88 @@
+{
+  "schema": "lente.doxygen.inventory",
+  "version": 2,
+  "producer": {
+    "name": "doxygen",
+    "version": null,
+    "configuration_digest": null
+  },
+  "coverage": "partial",
+  "symbols": [
+    {
+      "id": "empty",
+      "kind": "function",
+      "name": "empty",
+      "qualified_name": "demo::empty",
+      "signature": null,
+      "location": null,
+      "brief": "",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "documented",
+      "kind": "function",
+      "name": "documented",
+      "qualified_name": "demo::documented",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 30
+      },
+      "brief": "Explica o contrato.",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "choice-a",
+      "kind": "function",
+      "name": "choice-a",
+      "qualified_name": "demo::choice",
+      "signature": null,
+      "location": null,
+      "brief": "Uma hipótese.",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "choice-b",
+      "kind": "function",
+      "name": "choice-b",
+      "qualified_name": "demo::choice",
+      "signature": null,
+      "location": null,
+      "brief": "Outra hipótese.",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "no-metric",
+      "kind": "function",
+      "name": "no-metric",
+      "qualified_name": "demo::no-metric",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 50
+      },
+      "brief": "",
+      "details": "",
+      "documentation_url": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "documented",
+      "to": "empty",
+      "kind": "references"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "input_subset",
+      "message": "Fixture documental parcial declarada.",
+      "symbol_id": null
+    }
+  ],
+  "pending_relations": []
+}

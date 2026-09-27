@@ -1,0 +1,65 @@
+{
+  "schema": "lente.doxygen.matches",
+  "version": 1,
+  "inventory_digest": "sha256:78bb181d644ec40d7746b530b9e21acb0b7fceb95a3411cb9bb46c2cef672a47",
+  "catalog_digest": "sha256:5e0a05d8883d95d454b3a16ae2c3a0747b4a37b5f5bc539b9fd48bd797c8cf42",
+  "matches": [
+    {
+      "node_id": 10,
+      "status": "matched",
+      "document_id": "servico",
+      "candidates": [
+        "servico"
+      ],
+      "evidence": [
+        "qualified_name_exact",
+        "location_exact"
+      ]
+    },
+    {
+      "node_id": 20,
+      "status": "ambiguous",
+      "document_id": null,
+      "candidates": [
+        "a",
+        "b"
+      ],
+      "evidence": [
+        "qualified_name_exact"
+      ]
+    },
+    {
+      "node_id": 30,
+      "status": "unmatched",
+      "document_id": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "node_id": 40,
+      "status": "matched",
+      "document_id": "vazio",
+      "candidates": [
+        "vazio"
+      ],
+      "evidence": [
+        "qualified_name_exact"
+      ]
+    }
+  ],
+  "unmatched_node_ids": [
+    20,
+    30
+  ],
+  "unmatched_document_ids": [
+    "a",
+    "b"
+  ],
+  "diagnostics": [
+    {
+      "code": "assinatura_ausente",
+      "message": "Nó 20: não foi fornecida assinatura para distinguir os candidatos.",
+      "symbol_id": null
+    }
+  ]
+}

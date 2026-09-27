@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/resolve.md
-//! @prompt-hash aa3a1a65
+//! @prompt-hash 62576abc
 //! @layer L1
 //! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0042-resolve_escada_trait_ref.md
@@ -75,11 +75,7 @@ impl fmt::Display for ErroResolve {
 impl Error for ErroResolve {}
 
 /// Aplica a resolução de uma colisão de path, devolvendo um `Grafo` novo.
-pub fn aplicar(
-    grafo: &Grafo,
-    colisao: &Path,
-    veredito: &Veredito,
-) -> Result<Grafo, ErroResolve> {
+pub fn aplicar(grafo: &Grafo, colisao: &Path, veredito: &Veredito) -> Result<Grafo, ErroResolve> {
     let ids_colidentes: Vec<usize> = grafo
         .nodes
         .iter()
@@ -99,12 +95,8 @@ pub fn aplicar(
         // SE as cópias são distintas; o NOME de cada uma vem do `trait_` do
         // próprio nó (ADR-0006), não da evidência. Por isso ignoramos o
         // conteúdo da evidência aqui.
-        Veredito::Distintos { .. } => {
-            Ok(aplicar_distintos(grafo, colisao, &ids_colidentes))
-        }
-        Veredito::MesmoItem => {
-            Ok(aplicar_mesmo_item(grafo, &ids_colidentes))
-        }
+        Veredito::Distintos { .. } => Ok(aplicar_distintos(grafo, colisao, &ids_colidentes)),
+        Veredito::MesmoItem => Ok(aplicar_mesmo_item(grafo, &ids_colidentes)),
     }
 }
 
@@ -350,7 +342,11 @@ mod tests {
         // integridade referencial: id_from/id_to referenciam nós existentes
         let conjunto: HashSet<usize> = g.nodes.iter().map(|n| n.id).collect();
         for a in &g.edges {
-            assert!(conjunto.contains(&a.id_from), "id_from {} existe", a.id_from);
+            assert!(
+                conjunto.contains(&a.id_from),
+                "id_from {} existe",
+                a.id_from
+            );
             assert!(conjunto.contains(&a.id_to), "id_to {} existe", a.id_to);
         }
     }
@@ -368,11 +364,7 @@ mod tests {
         // Dois nós "M::T::fmt" (ids 1, 2). Aresta Owns de M(0) para cada cópia.
         let g = Grafo {
             crate_name: "c".to_string(),
-            nodes: vec![
-                no(0, "M::T"),
-                no(1, "M::T::fmt"),
-                no(2, "M::T::fmt"),
-            ],
+            nodes: vec![no(0, "M::T"), no(1, "M::T::fmt"), no(2, "M::T::fmt")],
             edges: vec![
                 aresta("M::T", 0, "M::T::fmt", 1, Relation::Owns),
                 aresta("M::T", 0, "M::T::fmt", 2, Relation::Owns),
@@ -437,7 +429,7 @@ mod tests {
             crate_name: "c".to_string(),
             nodes: vec![
                 no(0, "M::T"),
-                no_com_trait(36, "M::T::fmt", "Debug"),   // menor id → Debug
+                no_com_trait(36, "M::T::fmt", "Debug"), // menor id → Debug
                 no_com_trait(47, "M::T::fmt", "Display"), // maior id → Display
             ],
             edges: vec![
@@ -482,8 +474,14 @@ mod tests {
             },
         };
         let r = aplicar(&g, &Path::from("M::T::f"), &v).unwrap();
-        assert_eq!(r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(), "M::T::<Display>::f");
-        assert_eq!(r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(), "M::T::f#2");
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 1).unwrap().path.as_str(),
+            "M::T::<Display>::f"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
+            "M::T::f#2"
+        );
         assert!(paths_unicos(&r));
         checar_invariantes(&r);
     }
@@ -513,9 +511,18 @@ mod tests {
         };
         let r = aplicar(&g, &Path::from("M::T::f"), &v).unwrap();
         // ids 5,7,9 ordenados → #1,#2,#3
-        assert_eq!(r.nodes.iter().find(|n| n.id == 5).unwrap().path.as_str(), "M::T::f#1");
-        assert_eq!(r.nodes.iter().find(|n| n.id == 7).unwrap().path.as_str(), "M::T::f#2");
-        assert_eq!(r.nodes.iter().find(|n| n.id == 9).unwrap().path.as_str(), "M::T::f#3");
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 5).unwrap().path.as_str(),
+            "M::T::f#1"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 7).unwrap().path.as_str(),
+            "M::T::f#2"
+        );
+        assert_eq!(
+            r.nodes.iter().find(|n| n.id == 9).unwrap().path.as_str(),
+            "M::T::f#3"
+        );
         assert!(paths_unicos(&r));
         checar_invariantes(&r);
     }
@@ -538,7 +545,11 @@ mod tests {
         };
         let r = aplicar(&g, &Path::from("M::T::f"), &Veredito::MesmoItem).unwrap();
         // Só um nó "M::T::f" (o canônico, id 1).
-        let copias: Vec<_> = r.nodes.iter().filter(|n| n.path.as_str() == "M::T::f").collect();
+        let copias: Vec<_> = r
+            .nodes
+            .iter()
+            .filter(|n| n.path.as_str() == "M::T::f")
+            .collect();
         assert_eq!(copias.len(), 1);
         assert_eq!(copias[0].id, 1);
         // Ambos os usuários agora apontam para id 1.
@@ -639,7 +650,11 @@ mod tests {
         };
         let _ = aplicar(&g, &Path::from("T::f"), &v).unwrap();
         // O grafo de entrada continua com as cópias colidentes intactas.
-        let copias: Vec<_> = g.nodes.iter().filter(|n| n.path.as_str() == "T::f").collect();
+        let copias: Vec<_> = g
+            .nodes
+            .iter()
+            .filter(|n| n.path.as_str() == "T::f")
+            .collect();
         assert_eq!(copias.len(), 2);
     }
 
@@ -679,7 +694,10 @@ mod tests {
             r.nodes.iter().find(|n| n.id == 2).unwrap().path.as_str(),
             "M::Path::<From<String>>::from"
         );
-        assert!(paths_unicos(&r), "paths únicos após resolução (invariante laudo 0010)");
+        assert!(
+            paths_unicos(&r),
+            "paths únicos após resolução (invariante laudo 0010)"
+        );
         checar_invariantes(&r);
     }
 
@@ -872,7 +890,15 @@ mod tests {
             },
         };
         let r = aplicar(&g, &Path::from("M::T::fmt"), &v).unwrap();
-        let p = |id: usize| r.nodes.iter().find(|n| n.id == id).unwrap().path.as_str().to_string();
+        let p = |id: usize| {
+            r.nodes
+                .iter()
+                .find(|n| n.id == id)
+                .unwrap()
+                .path
+                .as_str()
+                .to_string()
+        };
         assert_eq!(p(1), "M::T::<Display>::fmt"); // d1 limpo
         assert_eq!(p(2), "M::T::<From<&str>>::fmt"); // d2
         assert_eq!(p(3), "M::T::<From<u32>>::fmt"); // d2

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/mapeamento.md
-//! @prompt-hash a1b835b5
+//! @prompt-hash abed2438
 //! @layer L1
 //! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -199,15 +199,15 @@ pub fn mapear_diff_com_inventario(
                         id: a.id,
                     });
                 }
-                if let EscopoAssociacao::Linhas { inicio, fim } = a.escopo {
-                    if inicio == 0 || inicio > fim {
-                        erros.insert(ErroInventario::IntervaloAssociacaoInvalido {
-                            caminho: arquivo.caminho.clone(),
-                            id: a.id,
-                            inicio,
-                            fim,
-                        });
-                    }
+                if let EscopoAssociacao::Linhas { inicio, fim } = a.escopo
+                    && (inicio == 0 || inicio > fim)
+                {
+                    erros.insert(ErroInventario::IntervaloAssociacaoInvalido {
+                        caminho: arquivo.caminho.clone(),
+                        id: a.id,
+                        inicio,
+                        fim,
+                    });
                 }
             }
         }

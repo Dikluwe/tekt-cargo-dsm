@@ -1,0 +1,90 @@
+{
+  "schema": "lente.doxygen.inventory",
+  "version": 2,
+  "producer": {
+    "name": "doxygen",
+    "version": "1.9.8",
+    "configuration_digest": null
+  },
+  "coverage": "unknown",
+  "symbols": [
+    {
+      "id": "classWidget",
+      "kind": "class",
+      "name": "Widget",
+      "qualified_name": null,
+      "signature": null,
+      "location": {
+        "file": "include/widget.hpp",
+        "line": 3
+      },
+      "brief": "Objeto documentado.",
+      "details": "Consulte run.",
+      "documentation_url": null
+    },
+    {
+      "id": "namespacedemo",
+      "kind": "namespace",
+      "name": "demo",
+      "qualified_name": null,
+      "signature": null,
+      "location": null,
+      "brief": "Namespace de demonstração.",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "namespacedemo_1run_double",
+      "kind": "function",
+      "name": "run",
+      "qualified_name": "demo::run",
+      "signature": "(double valor)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 20
+      },
+      "brief": "",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "namespacedemo_1run_int",
+      "kind": "function",
+      "name": "run",
+      "qualified_name": "demo::run",
+      "signature": "(int valor)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "Executa a ação λ.",
+      "details": "Recebe <T> & preserva Unicode.\n- Primeiro passo.\n- Segundo passo.",
+      "documentation_url": null
+    }
+  ],
+  "relations": [
+    {
+      "from": "classWidget",
+      "to": "namespacedemo_1run_int",
+      "kind": "ref"
+    },
+    {
+      "from": "namespacedemo",
+      "to": "classWidget",
+      "kind": "innerclass"
+    },
+    {
+      "from": "namespacedemo_1run_int",
+      "to": "classWidget",
+      "kind": "references"
+    }
+  ],
+  "pending_relations": [],
+  "diagnostics": [
+    {
+      "code": "scope_unknown",
+      "message": "XML não declara escopo suficiente para afirmar cobertura completa.",
+      "symbol_id": null
+    }
+  ]
+}

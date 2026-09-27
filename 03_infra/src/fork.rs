@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-fork.md
-//! @prompt-hash 2df941dc
+//! @prompt-hash b7cd2900
 //! @layer L3
 //! @updated 2026-06-07
 //!          ampliado por prompt 00_nucleo/prompt/0022-l3-invocador-bin-lib.md
@@ -49,10 +49,7 @@ pub enum ErroFork {
     FalhaSubprocess(std::io::Error),
     /// Subprocess executou mas terminou com status de erro; `stderr` carrega
     /// a mensagem do fork (ex.: "package X not found in workspace").
-    StatusErro {
-        codigo: Option<i32>,
-        stderr: String,
-    },
+    StatusErro { codigo: Option<i32>, stderr: String },
     /// `stdout` do subprocess não é UTF-8 válido.
     StdoutInvalido(std::string::FromUtf8Error),
     /// Falha na detecção de alvo via `cargo metadata` antes de chamar o fork.
@@ -127,7 +124,7 @@ pub(crate) fn invocar_em(
         Some(AlvoFork::Bin(nome)) => {
             cmd.args(["--bin", nome]);
         }
-        None => {}
+        Option::None => {}
     }
     cmd.args(["--package", pacote]);
     if let Some(d) = current_dir {
@@ -158,8 +155,7 @@ mod tests {
     #[ignore]
     fn invoca_fork_no_lente_core_devolve_json_valido() {
         let json = invocar_fork("lente_core").expect("fork deve rodar com sucesso");
-        let v: serde_json::Value =
-            serde_json::from_str(&json).expect("saída deve ser JSON válido");
+        let v: serde_json::Value = serde_json::from_str(&json).expect("saída deve ser JSON válido");
         // Sanidade: o crate-raiz aparece no JSON.
         let crate_name = v["crate"].as_str().unwrap_or("");
         assert_eq!(crate_name, "lente_core");
@@ -192,10 +188,7 @@ mod tests {
     /// Display cobre todas as variantes (não precisa de subprocess).
     #[test]
     fn erro_implementa_display_para_cada_variante() {
-        let v1 = ErroFork::FalhaSubprocess(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "x",
-        ));
+        let v1 = ErroFork::FalhaSubprocess(std::io::Error::new(std::io::ErrorKind::NotFound, "x"));
         let v2 = ErroFork::StatusErro {
             codigo: Some(1),
             stderr: "msg".to_string(),

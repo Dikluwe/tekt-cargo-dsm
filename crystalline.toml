@@ -37,6 +37,8 @@ lab = "lab"
 build      = "target"
 vcs        = ".git"
 cargo      = ".cargo"
+# Dependências de terceiros instaladas, não código autoral.
+node_modules = "node_modules"
 # Arena (lab/): experimentos descartáveis, fora do lattice — não se nucleia (0065).
 arena      = "lab"
 # Crate-fixture de teste do L3 (excluído do workspace cargo): harness, não
@@ -89,3 +91,9 @@ rust       = []
 typescript = []
 python     = []
 zig        = []
+
+# Propostas históricas não materializadas; ADR-0008 registra o estado real.
+# Preservadas no lugar para manter referências históricas; não contratos ativos.
+[orphan_exceptions]
+"00_nucleo/prompts/infra-typescript.md" = "Proposta histórica não materializada; ADR-0008, adaptador atual em lab."
+"00_nucleo/prompts/wiring-analise.md" = "Proposta histórica não materializada; ADR-0008 registra o pipeline vigente."

@@ -1,5 +1,5 @@
 # Contrato — análise de provedores externos
-Hash do Código: ee66dbbc
+Hash do Código: b00593fd
 
 Unidade `04_wiring/src/provedores.rs`, L4; ADR-0008.
 `analisar_provedor` valida consulta e configuração, executa ExtratorFerramenta pela
@@ -10,6 +10,9 @@ analise e extracao integral com metadados/verificação. Completudes distintas f
 no summary do verificador; não converte unknown/partial em complete.
 Erros preservam categorias da infraestrutura; consulta é enum serde estrito.
 
+ConsultaProvedor é DTO serde estrito definido no L3 (infra::provedores),
+reexportado pelo wiring no caminho público anterior. Variantes e JSON idênticos.
+
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"analisar_provedor","params":["&str","&str","ConsultaProvedor"],"return_type":"Result<String, ErroFerramenta>"}],"types":[{"name":"ConsultaProvedor","kind":"enum","members":["Ranking","Raio","RaioId","Estrutura"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"analisar_provedor","params":["&str","&str","ConsultaProvedor"],"return_type":"Result<String, ErroFerramenta>"}],"types":[],"reexports":["lente_infra::provedores::ConsultaProvedor"]} -->

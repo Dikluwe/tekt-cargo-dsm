@@ -10,6 +10,7 @@
 //! feita. Condição de saída da quarentena:
 //!   - REMOVER se a medição confirmar que E1 + trait-por-nó cobrem tudo.
 //!   - RELIGAR ao caminho se a medição revelar casos que só a E2 decide.
+//!
 //! Ver laudo 0014 em 00_nucleo/lessons/ para o registro completo.
 //!
 //! ---
@@ -35,10 +36,7 @@ pub(crate) enum ResultadoFontes {
 /// antes da quarentena). Extrai (tipo, método) do path e investiga as fontes.
 /// Fora do caminho da cascata; exercitada pelos testes para manter a E2
 /// reconstruível e verificável enquanto na quarentena.
-pub(crate) fn investigar_por_fontes(
-    par: ParColidente<'_>,
-    fontes: &[ArquivoFonte],
-) -> Veredito {
+pub(crate) fn investigar_por_fontes(par: ParColidente<'_>, fontes: &[ArquivoFonte]) -> Veredito {
     let (tipo, metodo) = match extrair_tipo_e_metodo(par.a.path.as_str()) {
         Some(p) => p,
         None => {
@@ -204,10 +202,10 @@ fn extrair_corpo(linhas: &[&str], inicio: usize) -> (Vec<String>, usize) {
     for (offset, linha) in linhas[inicio..].iter().enumerate() {
         // Métodos contam quando depth==1 (corpo do impl), ignorando o que está
         // dentro de funções aninhadas (depth>=2).
-        if depth == 1 {
-            if let Some(nome) = nome_de_fn(linha) {
-                metodos.push(nome);
-            }
+        if depth == 1
+            && let Some(nome) = nome_de_fn(linha)
+        {
+            metodos.push(nome);
         }
         for c in linha.chars() {
             match c {
@@ -236,7 +234,13 @@ fn nome_de_fn(linha: &str) -> Option<String> {
     }
     // Pular qualificadores comuns.
     let prefixos = [
-        "pub(crate) ", "pub(super) ", "pub ", "async ", "unsafe ", "const ", "extern ",
+        "pub(crate) ",
+        "pub(super) ",
+        "pub ",
+        "async ",
+        "unsafe ",
+        "const ",
+        "extern ",
     ];
     let mut mudou = true;
     while mudou {
@@ -253,11 +257,7 @@ fn nome_de_fn(linha: &str) -> Option<String> {
         .chars()
         .take_while(|c| c.is_alphanumeric() || *c == '_')
         .collect();
-    if nome.is_empty() {
-        None
-    } else {
-        Some(nome)
-    }
+    if nome.is_empty() { None } else { Some(nome) }
 }
 
 /// `s` começa com `<`. Encontra o `>` que fecha (contando profundidade) e

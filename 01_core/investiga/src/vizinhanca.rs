@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/vizinhanca.md
-//! @prompt-hash c44abf31
+//! @prompt-hash 8a84a926
 //! @layer L1
 //! @updated 2026-06-07
 //!
@@ -143,21 +143,25 @@ mod tests {
         };
         match analisar(&a, &b) {
             ResultadoVizinhanca::Decidiu(Veredito::Distintos {
-                evidencia: Evidencia::VizinhancaDisjunta {
-                    exclusivas_a,
-                    exclusivas_b,
-                },
+                evidencia:
+                    Evidencia::VizinhancaDisjunta {
+                        exclusivas_a,
+                        exclusivas_b,
+                    },
             }) => {
                 assert_eq!(exclusivas_a, 2);
                 assert_eq!(exclusivas_b, 2);
             }
-            outro => panic!("esperava Distintos por vizinhança disjunta, veio {:?}", matches!(outro, ResultadoVizinhanca::Inconclusivo { .. })),
+            outro => panic!(
+                "esperava Distintos por vizinhança disjunta, veio {:?}",
+                matches!(outro, ResultadoVizinhanca::Inconclusivo { .. })
+            ),
         }
     }
 
     #[test]
     fn vizinhancas_identicas_decidem_mesmo_item() {
-        let arestas = vec![
+        let arestas = [
             aresta("X", "T", Relation::Uses),
             aresta("T", "Y", Relation::Uses),
         ];

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring-provedores.md
-//! @prompt-hash fdfc60fc
+//! @prompt-hash 5b0c849b
 //! @layer L4
 //! @updated 2026-09-26
 //! Composição externa: não aplica convenções de resolução ou filtragem Rust.
@@ -17,17 +17,9 @@ use lente_infra::{
     extracao::{CausaProvedor, ExtratorGrafo, SolicitacaoExtracao},
     provedores::{ErroFerramenta, ExtratorFerramenta, PedidoFerramenta},
 };
-use serde::Deserialize;
 use serde_json::json;
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(tag = "modo", rename_all = "kebab-case", deny_unknown_fields)]
-pub enum ConsultaProvedor {
-    Ranking { top: usize },
-    Raio { alvo: String },
-    RaioId { alvo_id: usize },
-    Estrutura,
-}
+pub use lente_infra::provedores::ConsultaProvedor;
 
 pub fn analisar_provedor(
     provedor: &str,

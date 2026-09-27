@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/grafo.md
-//! @prompt-hash 0d481569
+//! @prompt-hash 8c84f923
 //! @layer L1
 //! @updated 2026-06-07
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -334,7 +334,10 @@ mod tests {
 
     #[test]
     fn uses_kind_reference_e_import_traduzem() {
-        assert_eq!(UsesKind::try_from("reference").unwrap(), UsesKind::Reference);
+        assert_eq!(
+            UsesKind::try_from("reference").unwrap(),
+            UsesKind::Reference
+        );
         assert_eq!(UsesKind::try_from("import").unwrap(), UsesKind::Import);
     }
 

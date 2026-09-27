@@ -1,3 +1,7 @@
+> Estado em 2026-09-27: proposta histórica não materializada nas unidades
+> indicadas abaixo. Preservada para rastreabilidade; não descreve API disponível.
+> Implementação vigente: ADR-0008, infra-provedores.md e wiring-provedores.md.
+
 # Contrato de nucleação — preparação e análise independentes da extração
 
 Unidade: `04_wiring/src/analise.rs`. Camada L4. ADR-0007.

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-provedores.md
-//! @prompt-hash 1d08478e
+//! @prompt-hash 8197fcac
 //! @layer L3
 //! @updated 2026-09-26
 //! Ferramentas opcionais via processo; nenhum algoritmo de extração reside aqui.
@@ -18,6 +18,15 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
     time::{Duration, Instant},
 };
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "modo", rename_all = "kebab-case", deny_unknown_fields)]
+pub enum ConsultaProvedor {
+    Ranking { top: usize },
+    Raio { alvo: String },
+    RaioId { alvo_id: usize },
+    Estrutura,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -483,6 +492,24 @@ pub(crate) fn executar_artefato(
     timeout_ms: u64,
     codigos: &[i32],
 ) -> Result<(i32, Value, String), ErroFerramenta> {
+    executar_artefato_impl(exe, args, timeout_ms, codigos, false)
+}
+/// Protocolo de saída nova em arquivo privado, sem publicar nas entradas.
+pub(crate) fn executar_artefato_em_arquivo(
+    exe: &Path,
+    args: &[OsString],
+    timeout_ms: u64,
+    codigos: &[i32],
+) -> Result<(i32, Value, String), ErroFerramenta> {
+    executar_artefato_impl(exe, args, timeout_ms, codigos, true)
+}
+fn executar_artefato_impl(
+    exe: &Path,
+    args: &[OsString],
+    timeout_ms: u64,
+    codigos: &[i32],
+    arquivo: bool,
+) -> Result<(i32, Value, String), ErroFerramenta> {
     if !(1..=3_600_000).contains(&timeout_ms) {
         return Err(param("timeout_ms deve estar entre 1 e 3600000"));
     }
@@ -491,16 +518,45 @@ pub(crate) fn executar_artefato(
     programa(exe)?;
     programa(Path::new("/bin/kill"))?;
     let dir = Temporario::novo()?;
+    let output = dir.0.join("resultado.json");
+    let mut args = args.to_vec();
+    if arquivo {
+        args.extend([OsString::from("--output"), output.as_os_str().to_owned()]);
+    }
     let s = executar(
         exe,
-        args,
+        &args,
         &dir.0,
         Instant::now() + Duration::from_millis(timeout_ms),
     )?;
     let codigo = s.codigo.filter(|c| codigos.contains(c)).ok_or_else(|| {
-        ErroFerramenta::Execucao(format!("análise: status {:?}: {}", s.codigo, s.stderr))
+        ErroFerramenta::Execucao(format!(
+            "{}: status {:?}: {}",
+            if s.stderr.contains("digest") {
+                "digest"
+            } else if s.stderr.contains("schema")
+                || s.stderr.contains("version")
+                || s.stderr.contains("invalid_")
+                || s.stderr.contains("inventário:")
+            {
+                "schema"
+            } else {
+                "execucao"
+            },
+            s.codigo,
+            s.stderr
+        ))
     })?;
-    let json: Value = serde_json::from_str(&s.stdout).map_err(invalido)?;
+    let texto = if arquivo {
+        let meta = fs::symlink_metadata(&output).map_err(invalido)?;
+        if !meta.is_file() {
+            return Err(invalido("saída deve ser arquivo regular novo"));
+        }
+        fs::read_to_string(&output).map_err(invalido)?
+    } else {
+        s.stdout
+    };
+    let json: Value = serde_json::from_str(&texto).map_err(invalido)?;
     if !json.is_object() {
         return Err(invalido("análise deve devolver objeto JSON"));
     }

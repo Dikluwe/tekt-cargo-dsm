@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `veredito` — o veredito da investigação de colisão (entities)
-Hash do Código: 37639bdb
+Hash do Código: 34211cbb
 
 **Camada**: L1 — Núcleo. Tipo puro (sem I/O, sem deps externas).
 **Unidade**: `01_core/core/src/entities/veredito.rs` (crate `lente_core`).

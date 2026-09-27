@@ -1,10 +1,10 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-analises.md
-//! @prompt-hash c7c22b91
+//! @prompt-hash 11b340f4
 //! @layer L3
 //! @updated 2026-09-26
 //! Integração por processo das análises de snapshots, regras e DSM.
-use crate::provedores::{ErroFerramenta, executar_artefato};
+use crate::provedores::{ErroFerramenta, executar_artefato, executar_artefato_em_arquivo};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::{
@@ -15,13 +15,39 @@ use std::{
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Configuracao {
-    executavel: PathBuf,
+    executavel: Option<PathBuf>,
     timeout_ms: u64,
     consulta: Consulta,
 }
 #[derive(Debug, Deserialize)]
 #[serde(tag = "modo", rename_all = "kebab-case", deny_unknown_fields)]
 enum Consulta {
+    DoxygenImportar {
+        xml_dir: PathBuf,
+    },
+    DoxygenAssociar {
+        inventory: PathBuf,
+        catalog: PathBuf,
+    },
+    DoxygenPrioridade {
+        inventory: PathBuf,
+        catalog: PathBuf,
+        matches: PathBuf,
+        impact: PathBuf,
+    },
+    DoxygenExplorar {
+        inventory: PathBuf,
+        catalog: PathBuf,
+        matches: PathBuf,
+    },
+    DoxygenGrafo {
+        grafo: PathBuf,
+        #[serde(default = "opaque")]
+        politica_nomes: String,
+        #[serde(default = "unknown")]
+        coverage: String,
+        alvos_metricas: Option<Vec<u64>>,
+    },
     Snapshots {
         entrada: PathBuf,
     },
@@ -40,9 +66,20 @@ enum Consulta {
         alterado: u64,
     },
 }
+fn opaque() -> String {
+    "opaque".into()
+}
+fn unknown() -> String {
+    "unknown".into()
+}
 impl Consulta {
     fn nome(&self) -> &'static str {
         match self {
+            Self::DoxygenImportar { .. } => "doxygen-importar",
+            Self::DoxygenAssociar { .. } => "doxygen-associar",
+            Self::DoxygenPrioridade { .. } => "doxygen-prioridade",
+            Self::DoxygenExplorar { .. } => "doxygen-explorar",
+            Self::DoxygenGrafo { .. } => "doxygen-grafo",
             Self::Snapshots { .. } => "snapshots",
             Self::Regras { .. } => "regras",
             Self::Dsm { .. } => "dsm",
@@ -60,6 +97,48 @@ impl Consulta {
             Ok(p.as_os_str().to_owned())
         }
         Ok(match self {
+            Self::DoxygenGrafo { grafo, .. } => vec![arquivo(grafo)?],
+            Self::DoxygenImportar { xml_dir } => {
+                if !xml_dir.is_absolute() || !xml_dir.is_dir() {
+                    return Err(ErroFerramenta::Parametros(
+                        "xml_dir deve ser diretório absoluto existente".into(),
+                    ));
+                }
+                vec!["--xml-dir".into(), xml_dir.as_os_str().to_owned()]
+            }
+            Self::DoxygenAssociar { inventory, catalog } => vec![
+                "--inventory".into(),
+                arquivo(inventory)?,
+                "--catalog".into(),
+                arquivo(catalog)?,
+            ],
+            Self::DoxygenExplorar {
+                inventory,
+                catalog,
+                matches,
+            } => vec![
+                "--inventory".into(),
+                arquivo(inventory)?,
+                "--catalog".into(),
+                arquivo(catalog)?,
+                "--matches".into(),
+                arquivo(matches)?,
+            ],
+            Self::DoxygenPrioridade {
+                inventory,
+                catalog,
+                matches,
+                impact,
+            } => vec![
+                "--inventory".into(),
+                arquivo(inventory)?,
+                "--catalog".into(),
+                arquivo(catalog)?,
+                "--matches".into(),
+                arquivo(matches)?,
+                "--impact".into(),
+                arquivo(impact)?,
+            ],
             Self::Snapshots { entrada } => vec![arquivo(entrada)?],
             Self::Dsm { entrada } => vec!["prepare".into(), arquivo(entrada)?],
             Self::CaminhoDsm {
@@ -114,6 +193,33 @@ pub struct ResultadoAnalise {
 }
 fn conferir_saida(modo: &str, codigo: i32, v: &Value) -> Result<(), ErroFerramenta> {
     let valido = match modo {
+        "doxygen-importar" => {
+            v["schema"] == "lente.doxygen.inventory"
+                && v["version"] == 2
+                && v["pending_relations"].is_array()
+                && v["symbols"].is_array()
+                && v["relations"].is_array()
+                && v["diagnostics"].is_array()
+                && (if codigo == 2 {
+                    v["coverage"] == "partial"
+                } else {
+                    v["coverage"] == "unknown"
+                })
+        }
+        "doxygen-associar" => {
+            v["schema"] == "lente.doxygen.matches" && v["version"] == 1 && v["matches"].is_array()
+        }
+        "doxygen-prioridade" => {
+            v["schema"] == "lente.doxygen.priority_report"
+                && v["version"] == 2
+                && v["items"].is_array()
+                && v["pending_relations"].is_array()
+        }
+        "doxygen-explorar" => {
+            v["entries"].is_array()
+                && v["pending_relations"].is_array()
+                && v["graph_binding"] == "not_verified"
+        }
         "regras" => {
             v["report_version"] == 1
                 && v["status"].as_str()
@@ -153,10 +259,49 @@ pub fn analisar_artefatos(configuracao: &str) -> Result<ResultadoAnalise, ErroFe
         .map_err(|e| ErroFerramenta::Parametros(e.to_string()))?;
     let args = c.consulta.argumentos()?;
     let modo = c.consulta.nome();
-    let codigos: &[i32] = if modo == "regras" { &[0, 1, 2] } else { &[0] };
-    let (codigo, analise, stderr) = executar_artefato(&c.executavel, &args, c.timeout_ms, codigos)?;
+    if !(1..=3_600_000).contains(&c.timeout_ms) {
+        return Err(ErroFerramenta::Parametros(
+            "timeout_ms deve estar entre 1 e 3600000".into(),
+        ));
+    }
+    if let Consulta::DoxygenGrafo {
+        grafo,
+        politica_nomes,
+        coverage,
+        alvos_metricas,
+    } = &c.consulta
+    {
+        if c.executavel.is_some() {
+            return Err(ErroFerramenta::Parametros(
+                "doxygen-grafo não aceita executavel".into(),
+            ));
+        }
+        let bytes = std::fs::read(grafo).map_err(|e| ErroFerramenta::Parametros(e.to_string()))?;
+        let analise =
+            crate::doxygen::projetar(&bytes, politica_nomes, coverage, alvos_metricas.as_deref())
+                .map_err(ErroFerramenta::SaidaInvalida)?;
+        return Ok(ResultadoAnalise {
+            codigo: 0,
+            json: json!({"analise":analise,"execucao":{"modo":modo,"codigo_saida":0,"stderr":""}})
+                .to_string(),
+        });
+    }
+    let exe = c
+        .executavel
+        .as_deref()
+        .ok_or_else(|| ErroFerramenta::Parametros("executavel obrigatório neste modo".into()))?;
+    let codigos: &[i32] = match modo {
+        "regras" => &[0, 1, 2],
+        "doxygen-importar" => &[0, 2],
+        _ => &[0],
+    };
+    let (codigo, analise, stderr) = if modo.starts_with("doxygen-") {
+        executar_artefato_em_arquivo(exe, &args, c.timeout_ms, codigos)?
+    } else {
+        executar_artefato(exe, &args, c.timeout_ms, codigos)?
+    };
     conferir_saida(modo, codigo, &analise)?;
-    Ok(ResultadoAnalise{codigo:codigo as u8,json:json!({"analise":analise,"execucao":{"modo":modo,"codigo_saida":codigo,"stderr":stderr}}).to_string()})
+    Ok(ResultadoAnalise{codigo:if modo=="regras" {codigo as u8} else {0},json:json!({"analise":analise,"execucao":{"modo":modo,"codigo_saida":codigo,"stderr":stderr}}).to_string()})
 }
 /// A configuração pode ser relativa; seus caminhos internos devem ser absolutos.
 pub fn analisar_arquivo(configuracao: &Path) -> Result<ResultadoAnalise, ErroFerramenta> {

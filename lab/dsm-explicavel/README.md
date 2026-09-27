@@ -165,3 +165,11 @@ caracteres, consulta, erros, snapshot congelado e recursos locais.
 Inspeção de navegador efetivamente realizada e roteiro reproduzível em
 [tests/VERIFICACAO-UI.md](tests/VERIFICACAO-UI.md). Captura da vista em
 [artifacts/dsm-explicavel.png](artifacts/dsm-explicavel.png).
+
+## Painel documental opcional
+
+A integração posterior está descrita em [CONTRATO-DOXYGEN.md](CONTRATO-DOXYGEN.md)
+e no [guia operacional](../../docs/doxygen.md). As opções --graph, --inventory,
+--catalog, --matches e --explorer habilitam o painel após validação dos vínculos.
+Sem elas, comportamento e API anteriores permanecem. Nenhum servidor é iniciado
+implicitamente pelo MCP.

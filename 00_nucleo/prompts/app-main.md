@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::main` — o ponto de entrada (L4)
-Hash do Código: df353ce6
+Hash do Código: 3bba5774
 
 **Camada**: L4 — Fiação (app/ponto de composição). Importa L1/L2/L4.
 **Unidade**: `04_wiring/app/src/main.rs` (crate `lente_app`, o binário `lente`).
@@ -48,6 +48,9 @@ Dado --grafo <json> --alvo <path> Quando run Então o JSON/texto do raio
 Dado --diff --vista resumo Quando run Então a vista resumo
 Dado um erro do pipeline Quando run Então SaidaErro com mensagem do catálogo
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

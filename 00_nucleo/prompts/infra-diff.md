@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra::diff` — ler o diff (L3)
-Hash do Código: cb5f85c2
+Hash do Código: 73db5060
 
 **Camada**: L3 — Infraestrutura. Subprocesso `git` é I/O legítimo.
 **Unidade**: `03_infra/src/diff.rs` (crate `lente_infra`).
@@ -52,3 +52,6 @@ Dado um repo com rastreado+untracked Quando ler_diff Então os dois (caminhos ab
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0064) do leitor de diff. Código inalterado. | `03_infra/src/diff.rs` |
+
+Revisão 2026-09-27: comparações de caminhos usam Path emprestado, sem
+alocação temporária; igualdade e política de caminhos permanecem iguais.

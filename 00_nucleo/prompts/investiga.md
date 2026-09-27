@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_investiga` — investigar uma colisão de path
-Hash do Código: 11871840
+Hash do Código: 7bf94212
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/investiga/src/lib.rs` (crate `lente_investiga`).

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-metadata.md
-//! @prompt-hash 93c70d4d
+//! @prompt-hash ce457876
 //! @layer L3
 //! @updated 2026-06-07
 //!          diagnóstico de diretório por prompt 00_nucleo/prompt/0024-l3-diretorio-inexistente-diagnostico.md
@@ -75,10 +75,7 @@ pub enum ErroMetadata {
     FalhaSubprocess(String),
     /// `cargo metadata` rodou mas terminou com status ≠ 0. Stderr embalado
     /// para diagnóstico (ex.: "could not find `Cargo.toml`").
-    StatusErro {
-        codigo: Option<i32>,
-        stderr: String,
-    },
+    StatusErro { codigo: Option<i32>, stderr: String },
     /// stdout do metadata não é UTF-8 válido.
     StdoutInvalido(String),
     /// JSON do metadata não bate com o schema esperado.
@@ -145,9 +142,7 @@ impl fmt::Display for ErroMetadata {
             }
             ErroMetadata::AlvosAmbiguos { bins } => {
                 if bins.is_empty() {
-                    f.write_str(
-                        "pacote sem alvo analisável: nem biblioteca nem binário",
-                    )
+                    f.write_str("pacote sem alvo analisável: nem biblioteca nem binário")
                 } else {
                     write!(
                         f,
@@ -189,8 +184,8 @@ pub(crate) fn invocar_metadata(current_dir: Option<&Path>) -> Result<MetadataOut
             stderr: String::from_utf8_lossy(&saida.stderr).into_owned(),
         });
     }
-    let stdout = String::from_utf8(saida.stdout)
-        .map_err(|e| ErroMetadata::StdoutInvalido(e.to_string()))?;
+    let stdout =
+        String::from_utf8(saida.stdout).map_err(|e| ErroMetadata::StdoutInvalido(e.to_string()))?;
     serde_json::from_str(&stdout).map_err(|e| ErroMetadata::JsonInvalido(e.to_string()))
 }
 
@@ -261,7 +256,7 @@ pub(crate) fn detectar_pacote_e_alvo_por_diretorio(
     let pkg = md
         .packages
         .iter()
-        .find(|p| PathBuf::from(&p.manifest_path) == manifest_alvo)
+        .find(|p| Path::new(&p.manifest_path) == manifest_alvo)
         .ok_or_else(|| {
             ErroMetadata::PacoteNoDiretorioNaoEncontrado(
                 manifest_alvo.to_string_lossy().into_owned(),
@@ -341,12 +336,18 @@ mod tests {
     fn bin_mais_lib_seleciona_lib() {
         // O caso que motivou o prompt 0022 (egui_demo_app). Agora pela fonte
         // autoritativa, não pela heurística.
-        assert_eq!(selecionar_alvo(pkg(&parse(JSON_BIN_MAIS_LIB), "p")).unwrap(), AlvoFork::Lib);
+        assert_eq!(
+            selecionar_alvo(pkg(&parse(JSON_BIN_MAIS_LIB), "p")).unwrap(),
+            AlvoFork::Lib
+        );
     }
 
     #[test]
     fn so_lib_seleciona_lib() {
-        assert_eq!(selecionar_alvo(pkg(&parse(JSON_SO_LIB), "p")).unwrap(), AlvoFork::Lib);
+        assert_eq!(
+            selecionar_alvo(pkg(&parse(JSON_SO_LIB), "p")).unwrap(),
+            AlvoFork::Lib
+        );
     }
 
     #[test]
@@ -366,7 +367,10 @@ mod tests {
         // Fase 1 do prompt 0023 verificou contra binário real: `cargo modules
         // --lib` num proc-macro funciona. Por isso `proc-macro` está em
         // KINDS_LIB.
-        assert_eq!(selecionar_alvo(pkg(&parse(JSON_PROC_MACRO), "pm")).unwrap(), AlvoFork::Lib);
+        assert_eq!(
+            selecionar_alvo(pkg(&parse(JSON_PROC_MACRO), "pm")).unwrap(),
+            AlvoFork::Lib
+        );
     }
 
     #[test]
@@ -430,7 +434,7 @@ mod tests {
         let achado = md
             .packages
             .iter()
-            .find(|p| PathBuf::from(&p.manifest_path) == manifest)
+            .find(|p| Path::new(&p.manifest_path) == manifest)
             .unwrap();
         assert_eq!(achado.name, "lib_pkg");
         assert_eq!(selecionar_alvo(achado).unwrap(), AlvoFork::Lib);

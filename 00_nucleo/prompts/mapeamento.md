@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `mapeamento` — o núcleo do modo `--diff` (domain)
-Hash do Código: 3cad5182
+Hash do Código: a1f88e77
 
 **Camada**: L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 **Unidade**: `01_core/core/src/domain/mapeamento.rs` (crate `lente_core`).
@@ -84,6 +84,9 @@ Dado caminho relativo do diff e position absoluta Então casam (reconciliação)
 Dado untracked .rs em membro fora do grafo Então solto; fora de membro Então não-fonte
 Dado o mesmo diff/grafo 2× Então MapeamentoDiff igual
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

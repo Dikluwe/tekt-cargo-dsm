@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra` — o adaptador da fonte (L3)
-Hash do Código: 15041ad8
+Hash do Código: b664531b
 
 **Camada**: L3 — Infraestrutura. I/O e deps externas permitidos.
 **Unidade**: `03_infra/src/lib.rs` (crate `lente_infra`, fachada).
@@ -70,3 +70,8 @@ Dado dois nós com mesmo id Então Err(IdDuplicado) (invariante)
 Expõe provedores opcionais por processo, conforme ADR-0008 e infra-provedores.md; nenhum import de lab.
 
 Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
+
+## Enriquecimento Doxygen
+
+Exporta módulo doxygen (contrato infra-doxygen.md); projeção de catálogo/impacto
+não modifica L1 nem importa crates da Arena.

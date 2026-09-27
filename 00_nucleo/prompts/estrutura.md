@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_estrutura` — vista de módulos, ciclos e DSM
-Hash do Código: 0959662a
+Hash do Código: 360d0ab1
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/estrutura/src/lib.rs` (crate `lente_estrutura`, arquivo único).
@@ -116,6 +116,9 @@ internas, órfão isolado e referenciado, endpoints/ancestrais ausentes, múltip
 pais convergentes, ciclos e auto-ciclos, descendentes inválidos, Owns paralelos,
 permutação válida e inválida, cadeia profunda, contabilidade exaustiva e regressão
 dos pares/pesos legados em grafos válidos. O exemplo de consulta é um doctest.
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

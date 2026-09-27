@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doxygenindex version="1.9.8">
+  <compound refid="namespacedemo" kind="namespace">
+    <name>demo</name>
+    <member refid="namespacedemo_1run_int" kind="function"><name>run</name></member>
+    <member refid="namespacedemo_1run_double" kind="function"><name>run</name></member>
+  </compound>
+  <compound refid="classWidget" kind="class"><name>Widget</name></compound>
+</doxygenindex>

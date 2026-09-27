@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-invocacao.md
-//! @prompt-hash 6152e1cb
+//! @prompt-hash 1249bf26
 //! @layer L3
 //! @updated 2026-06-07
 //!           consolidado por prompt 00_nucleo/prompt/0018-consolidar-invocador.md
@@ -38,16 +38,12 @@ fn mapear_erro_fork(e: ErroFork) -> ErroAdaptador {
         ErroFork::FalhaSubprocess(io_err) if io_err.kind() == ErrorKind::NotFound => {
             ErroAdaptador::BinarioNaoEncontrado
         }
-        ErroFork::FalhaSubprocess(io_err) => {
-            ErroAdaptador::FalhaSubprocesso(io_err.to_string())
-        }
+        ErroFork::FalhaSubprocess(io_err) => ErroAdaptador::FalhaSubprocesso(io_err.to_string()),
         ErroFork::StatusErro { codigo, stderr } => ErroAdaptador::SubprocessoFalhou {
             exit_code: codigo,
             stderr,
         },
-        ErroFork::StdoutInvalido(utf8_err) => {
-            ErroAdaptador::SaidaNaoUtf8(utf8_err.to_string())
-        }
+        ErroFork::StdoutInvalido(utf8_err) => ErroAdaptador::SaidaNaoUtf8(utf8_err.to_string()),
         ErroFork::DeteccaoAlvo(e) => ErroAdaptador::DeteccaoAlvo(e),
     }
 }
@@ -64,9 +60,7 @@ mod tests {
     fn diretorio_inexistente_da_diretorio_inexistente() {
         let inexistente = Path::new("/tmp/__lente_diretorio_inexistente_0024__xyz");
         match invocar(inexistente).unwrap_err() {
-            ErroAdaptador::DeteccaoAlvo(crate::metadata::ErroMetadata::DiretorioInexistente(
-                p,
-            )) => {
+            ErroAdaptador::DeteccaoAlvo(crate::metadata::ErroMetadata::DiretorioInexistente(p)) => {
                 assert_eq!(p, inexistente);
             }
             outro => panic!("erro inesperado: {:?}", outro),
@@ -103,7 +97,11 @@ path = "src/main.rs"
 "#,
         )
         .unwrap();
-        std::fs::write(dir.join("src/lib.rs"), "pub fn hello() -> &'static str { \"hi\" }").unwrap();
+        std::fs::write(
+            dir.join("src/lib.rs"),
+            "pub fn hello() -> &'static str { \"hi\" }",
+        )
+        .unwrap();
         std::fs::write(
             dir.join("src/main.rs"),
             "fn main() { println!(\"{}\", binlib_e2e_0023::hello()); }",

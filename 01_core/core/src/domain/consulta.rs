@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/consulta.md
-//! @prompt-hash a3fa1581
+//! @prompt-hash fcd75b56
 //! @layer L1
 //! @updated 2026-06-07
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
@@ -41,16 +41,11 @@ pub enum FonteGrafo {
 /// usuário. O escopo só muda `uses_saida` e, por consequência, a
 /// classificação. Os campos `uses_entrada` (= "diretos") e
 /// `montante.len()` (= "transitivos") permanecem.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Escopo {
+    #[default]
     Completo,
     SeuCodigo,
-}
-
-impl Default for Escopo {
-    fn default() -> Self {
-        Escopo::Completo
-    }
 }
 
 /// Modo de inclusão das arestas `Uses` no modo `--estrutura` — escolha
@@ -67,16 +62,11 @@ impl Default for Escopo {
 /// pediu `SoReferencia` e nenhuma aresta `Uses` do grafo tem `uses_kind`,
 /// a fiação retorna `ErroLente::ForkSemUsesKind` — não silencia produzindo
 /// `Todas` disfarçado.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ModoUses {
+    #[default]
     Todas,
     SoReferencia,
-}
-
-impl Default for ModoUses {
-    fn default() -> Self {
-        ModoUses::Todas
-    }
 }
 
 /// Como o alvo do raio é apontado: por path canônico ou por id.

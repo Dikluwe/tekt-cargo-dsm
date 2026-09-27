@@ -1,5 +1,5 @@
 # Contrato — ferramentas de extração opcionais
-Hash do Código: b34db8d1
+Hash do Código: 23089712
 
 Unidade `03_infra/src/provedores.rs`, L3; ADR-0007 e ADR-0008.
 Implementa ExtratorGrafo para solicitação Ferramenta. O envelope L1 usa Json
@@ -30,9 +30,19 @@ summary verificado; estados ausentes ficam desconhecidos, completos não implica
 cobertura semântica completa. Metadados e capacidades originais não são descartados.
 Erros distinguem parâmetros, indisponibilidade, execução, timeout e saída inválida.
 
-## Interface Snapshot
+ConsultaProvedor é DTO serde estrito definido no L3 (infra::provedores),
+reexportado pelo wiring no caminho público anterior. Variantes e JSON idênticos.
 
 O executor é reutilizado internamente por `analises` para comandos conhecidos
 de artefatos, com os mesmos prazos, isolamento temporário e encerramento de grupo.
+
+## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"executar_artefato","params":["&Path","&[OsString]","u64","&[i32]"],"return_type":"Result<(i32, Value, String), ErroFerramenta>"}],"types":[{"name":"ConfiguracaoFerramenta","kind":"struct","members":["executavel","helper","verificador","timeout_ms","permitir_metadados_sem_vinculo","incluir_ambiente","parametros"]},{"name":"PedidoFerramenta","kind":"struct","members":["provedor","configuracao"]},{"name":"ErroFerramenta","kind":"enum","members":["Parametros","Indisponivel","Execucao","Timeout","SaidaInvalida"]},{"name":"ContextoFerramenta","kind":"struct","members":["dados"]},{"name":"ExtratorFerramenta","kind":"struct","members":["contexto"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"executar_artefato","params":["&Path","&[OsString]","u64","&[i32]"],"return_type":"Result<(i32, Value, String), ErroFerramenta>"},{"name":"executar_artefato_em_arquivo","params":["&Path","&[OsString]","u64","&[i32]"],"return_type":"Result<(i32, Value, String), ErroFerramenta>"}],"types":[{"name":"ConsultaProvedor","kind":"enum","members":["Ranking","Raio","RaioId","Estrutura"]},{"name":"ConfiguracaoFerramenta","kind":"struct","members":["executavel","helper","verificador","timeout_ms","permitir_metadados_sem_vinculo","incluir_ambiente","parametros"]},{"name":"PedidoFerramenta","kind":"struct","members":["provedor","configuracao"]},{"name":"ErroFerramenta","kind":"enum","members":["Parametros","Indisponivel","Execucao","Timeout","SaidaInvalida"]},{"name":"ContextoFerramenta","kind":"struct","members":["dados"]},{"name":"ExtratorFerramenta","kind":"struct","members":["contexto"]}],"reexports":[]} -->
+
+## Saída em arquivo de ferramenta documental
+
+executar_artefato_em_arquivo usa o executor existente, acrescenta --output em
+diretório privado novo, exige arquivo regular e JSON completo após saída aceita.
+Nada é publicado externamente nem sobrescreve entradas. Erros do helper indicam
+schema/digest/execução em contexto, preservando stderr e status.

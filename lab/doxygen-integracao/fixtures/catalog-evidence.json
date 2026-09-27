@@ -1,0 +1,71 @@
+[
+  {
+    "node_id": 1,
+    "qualified_name": null,
+    "signature": null,
+    "location": null
+  },
+  {
+    "node_id": 10,
+    "qualified_name": "demo::run",
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 10
+    }
+  },
+  {
+    "node_id": 20,
+    "qualified_name": "demo::run",
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 20
+    }
+  },
+  {
+    "node_id": 30,
+    "qualified_name": "demo::amb",
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 30
+    }
+  },
+  {
+    "node_id": 40,
+    "qualified_name": "demo::weak",
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 40
+    }
+  },
+  {
+    "node_id": 50,
+    "qualified_name": "demo::empty",
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 50
+    }
+  },
+  {
+    "node_id": 60,
+    "qualified_name": null,
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 60
+    }
+  },
+  {
+    "node_id": 70,
+    "qualified_name": null,
+    "signature": null,
+    "location": {
+      "file": "src/demo.hpp",
+      "line": 70
+    }
+  }
+]

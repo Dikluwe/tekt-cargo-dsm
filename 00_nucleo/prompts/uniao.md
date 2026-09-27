@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `uniao` — a união de grafos por path (domain)
-Hash do Código: 5aaa8f2c
+Hash do Código: eb6e84f7
 
 **Camada**: L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 **Unidade**: `01_core/core/src/domain/uniao.rs` (crate `lente_core`).
@@ -51,6 +51,9 @@ Dado A referencia b::Foo mas B não o tem Então fantasma com representante (0 s
 Dado core::* referenciado Então externo (não fantasma)
 Dado o mesmo conjunto 2× Então grafos iguais (determinístico)
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

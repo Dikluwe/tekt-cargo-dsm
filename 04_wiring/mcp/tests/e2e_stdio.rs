@@ -42,7 +42,12 @@ fn e2e_stdio_initialize_e_call_diff() {
     let saida = filho.wait_with_output().expect("colher saída");
     let texto = String::from_utf8_lossy(&saida.stdout);
     let linhas: Vec<&str> = texto.lines().filter(|l| !l.trim().is_empty()).collect();
-    assert_eq!(linhas.len(), 2, "esperava 2 respostas (initialize, call): {}", texto);
+    assert_eq!(
+        linhas.len(),
+        2,
+        "esperava 2 respostas (initialize, call): {}",
+        texto
+    );
 
     // Resposta 1: initialize ecoa a versão pedida.
     let r1: Value = serde_json::from_str(linhas[0]).unwrap();

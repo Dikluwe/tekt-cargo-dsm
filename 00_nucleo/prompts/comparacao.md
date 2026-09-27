@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_comparacao` — paridade entre duas estruturas (L1)
-Hash do Código: e27d942e
+Hash do Código: 1cc2cc41
 
 **Camada**: L1 — Núcleo (puro). Importa `lente_core` e `lente_estrutura`.
 **Unidade**: `01_core/comparacao/src/lib.rs` (crate `lente_comparacao`).
@@ -90,6 +90,10 @@ Verificação adicional: paths diferentes com mesma chave; paths iguais ou
 semelhantes com chaves distintas; separadores e Unicode; duplicidade unilateral
 ou bilateral; ausências e entradas excedentes; pesos e paths preservados;
 permutação; regressões dos modos legados.
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt sem mudança de
+semântica ou API. Em comparação, a assinatura pública de oito argumentos é
+preservada por compatibilidade. Padrões Option::None continuam exaustivos.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

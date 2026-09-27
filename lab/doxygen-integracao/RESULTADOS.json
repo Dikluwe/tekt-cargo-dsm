@@ -1,0 +1,23 @@
+{
+  "synthetic": {
+    "inventory": "partial",
+    "matches": {
+      "matched": 3,
+      "ambiguous": 1,
+      "unmatched": 4
+    },
+    "pending": 1
+  },
+  "real": {
+    "version": "1.9.8",
+    "configuration_digest": "sha256:b4573417125179eb03fb4b44e678912468377d62cf58006b09651e363ab29f8c",
+    "inventory": "partial",
+    "matches": {
+      "matched": 2,
+      "ambiguous": 0,
+      "unmatched": 1
+    },
+    "pending": 0
+  },
+  "successful_process_checks": 62
+}

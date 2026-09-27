@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_mcp` — a boca MCP (L4)
-Hash do Código: 0716dc5b
+Hash do Código: 09b12a95
 
 **Camada**: L4 — Fiação (ponto de entrada). Importa L4 (`lente_wiring`), L2
 (`lente_cli`) e L1 (`lente_core`); compõe, não cria domínio.
@@ -78,3 +78,10 @@ Dado E2E por stdio (initialize→call impacto_do_diff) Então o conteúdo é o J
 Agora são quatro ferramentas: analisar_provedor soma-se às três anteriores. Configuração objeto e consulta tipada estritas; mesmo envelope JSON que CLI. Metadados, capacidades e cobertura preservados; parcial isError=false, erro isError=true com categoria. Ferramentas legadas aceitam provedor rust opcional e rejeitam outros. Nove testes reais opt-in cobrem seis provedores, parcial, pacote adulterado e consultas de raio/estrutura.
 
 Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
+
+## Enriquecimento documental (ADR-0009)
+
+analisar_artefatos anuncia doxygen-importar/associar/prioridade/explorar/grafo.
+Executável obrigatório nos modos de processo e omitido no modo grafo puro de
+projeção L3. Preserva códigos originais e stderr; parcial é isError=false.
+Não inicia servidor do explorador/DSM; modo explorar somente prepara JSON.

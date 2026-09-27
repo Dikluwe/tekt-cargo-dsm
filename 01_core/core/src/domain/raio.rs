@@ -285,11 +285,7 @@ pub fn calcular_raio(grafo: &Grafo, alvo: &Path) -> Result<Raio, ErroRaio> {
     let jusante = bfs_profundidades(alvo, &indices.uses_saida);
 
     let owns_pai = indices.owns_pai.get(alvo).cloned();
-    let mut owns_filhos = indices
-        .owns_filhos
-        .get(alvo)
-        .cloned()
-        .unwrap_or_default();
+    let mut owns_filhos = indices.owns_filhos.get(alvo).cloned().unwrap_or_default();
     owns_filhos.sort();
 
     Ok(Raio {
@@ -306,10 +302,7 @@ pub fn calcular_raio(grafo: &Grafo, alvo: &Path) -> Result<Raio, ErroRaio> {
 
 /// BFS partindo do alvo na direção do índice dado, retornando profundidades.
 /// O alvo não entra no resultado. Termina com ciclos (visitados).
-fn bfs_profundidades(
-    alvo: &Path,
-    vizinhos: &HashMap<Path, Vec<Path>>,
-) -> HashMap<Path, usize> {
+fn bfs_profundidades(alvo: &Path, vizinhos: &HashMap<Path, Vec<Path>>) -> HashMap<Path, usize> {
     let mut profundidades: HashMap<Path, usize> = HashMap::new();
     let mut visitados: HashSet<Path> = HashSet::new();
     let mut fila: VecDeque<(Path, usize)> = VecDeque::new();
@@ -380,10 +373,7 @@ mod tests {
         Grafo {
             crate_name: "t".to_string(),
             nodes: nodes.into_iter().map(no).collect(),
-            edges: edges
-                .into_iter()
-                .map(|(f, t, r)| aresta(f, t, r))
-                .collect(),
+            edges: edges.into_iter().map(|(f, t, r)| aresta(f, t, r)).collect(),
         }
     }
 
@@ -685,10 +675,7 @@ mod tests {
     #[test]
     fn owns_nao_propaga_consequencia_e_aparece_como_contexto() {
         // M owns I, sem Uses. Raio de I: consequência vazia, owns_pai = M.
-        let g = grafo_com(
-            vec!["M", "I"],
-            vec![("M", "I", Relation::Owns)],
-        );
+        let g = grafo_com(vec!["M", "I"], vec![("M", "I", Relation::Owns)]);
         let r = calcular_raio(&g, &Path::from("I")).unwrap();
         assert!(r.montante.is_empty());
         assert!(r.jusante.is_empty());
@@ -711,11 +698,7 @@ mod tests {
         let r = calcular_raio(&g, &Path::from("M")).unwrap();
         assert_eq!(
             r.owns_filhos,
-            vec![
-                Path::from("M::a"),
-                Path::from("M::m"),
-                Path::from("M::z"),
-            ]
+            vec![Path::from("M::a"), Path::from("M::m"), Path::from("M::z"),]
         );
     }
 
@@ -779,10 +762,7 @@ mod tests {
     #[test]
     fn no_isolado_em_grafo_com_outros_e_isolado() {
         // Outros nós existem e têm Uses, mas X não participa de nenhuma.
-        let g = grafo_com(
-            vec!["A", "B", "X"],
-            vec![("A", "B", Relation::Uses)],
-        );
+        let g = grafo_com(vec!["A", "B", "X"], vec![("A", "B", Relation::Uses)]);
         let r = calcular_raio(&g, &Path::from("X")).unwrap();
         assert_eq!(r.classificacao, Classificacao::Isolado);
         assert_eq!(r.uses_entrada, 0);

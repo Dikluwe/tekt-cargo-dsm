@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/veredito.md
-//! @prompt-hash bc56b948
+//! @prompt-hash 232739d5
 //! @layer L1
 //! @updated 2026-06-07
 //! ADRs:    00_nucleo/adr/0004-resolucao-colisoes-path.md
@@ -60,7 +60,13 @@ mod tests {
             },
         };
         match v {
-            Veredito::Distintos { evidencia: Evidencia::VizinhancaDisjunta { exclusivas_a, exclusivas_b } } => {
+            Veredito::Distintos {
+                evidencia:
+                    Evidencia::VizinhancaDisjunta {
+                        exclusivas_a,
+                        exclusivas_b,
+                    },
+            } => {
                 assert_eq!(exclusivas_a, 2);
                 assert_eq!(exclusivas_b, 3);
             }
@@ -76,7 +82,9 @@ mod tests {
             },
         };
         match v {
-            Veredito::Distintos { evidencia: Evidencia::ImplDeTraitsDiferentes { traits } } => {
+            Veredito::Distintos {
+                evidencia: Evidencia::ImplDeTraitsDiferentes { traits },
+            } => {
                 assert_eq!(traits.0, "Display");
                 assert_eq!(traits.1, "Debug");
             }

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/extracao.md
-//! @prompt-hash 00000000
+//! @prompt-hash dc7caa69
 //! @layer L1
 //! @updated 2026-09-26
 //! Envelope puro da fronteira de extração (ADR-0007).
@@ -30,7 +30,11 @@ mod tests {
     #[test]
     fn envelope_preserva_dados_e_diagnosticos() {
         let e = ExtracaoGrafo {
-            grafo: Grafo { crate_name: "amostra".into(), nodes: vec![], edges: vec![] },
+            grafo: Grafo {
+                crate_name: "amostra".into(),
+                nodes: vec![],
+                edges: vec![],
+            },
             provedor: IdentidadeProvedor::Memoria,
             diagnosticos: vec!["limite declarado".into()],
         };

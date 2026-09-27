@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-mapa-correspondencia.md
-//! @prompt-hash 6f9a74d5
+//! @prompt-hash f040d3ff
 //! @layer L3
 //! @updated 2026-08-26
 

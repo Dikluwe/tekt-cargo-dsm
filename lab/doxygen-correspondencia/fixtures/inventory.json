@@ -1,0 +1,146 @@
+{
+  "schema": "lente.doxygen.inventory",
+  "version": 2,
+  "producer": {
+    "name": "doxygen",
+    "version": null,
+    "configuration_digest": null
+  },
+  "coverage": "unknown",
+  "symbols": [
+    {
+      "id": "loc",
+      "kind": "function",
+      "name": "loc",
+      "qualified_name": "demo::loc",
+      "signature": null,
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 10
+      },
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "sig",
+      "kind": "function",
+      "name": "sig",
+      "qualified_name": "demo::sig",
+      "signature": "void(int)",
+      "location": null,
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "over-int",
+      "kind": "function",
+      "name": "over",
+      "qualified_name": "demo::over",
+      "signature": "void(int)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 30
+      },
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "over-double",
+      "kind": "function",
+      "name": "over",
+      "qualified_name": "demo::over",
+      "signature": "void(double)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 31
+      },
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "namespace",
+      "kind": "function",
+      "name": "over",
+      "qualified_name": "other::over",
+      "signature": "void(int)",
+      "location": null,
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "amb-a",
+      "kind": "function",
+      "name": "amb",
+      "qualified_name": "demo::amb",
+      "signature": "void()",
+      "location": null,
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "amb-b",
+      "kind": "function",
+      "name": "amb",
+      "qualified_name": "demo::amb",
+      "signature": "void()",
+      "location": null,
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "conflict",
+      "kind": "function",
+      "name": "conflict",
+      "qualified_name": "demo::conflict",
+      "signature": "void(double)",
+      "location": {
+        "file": "src/demo.cpp",
+        "line": 60
+      },
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "weak",
+      "kind": "function",
+      "name": "weak",
+      "qualified_name": "demo::weak",
+      "signature": null,
+      "location": null,
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    },
+    {
+      "id": "path",
+      "kind": "function",
+      "name": "path",
+      "qualified_name": "demo::path",
+      "signature": null,
+      "location": {
+        "file": "./src/demo.cpp",
+        "line": 80
+      },
+      "brief": "Texto <&> literal",
+      "details": "",
+      "documentation_url": null
+    }
+  ],
+  "relations": [],
+  "diagnostics": [
+    {
+      "code": "fixture_scope",
+      "message": "Inventário local de demonstração; cobertura desconhecida.",
+      "symbol_id": null
+    }
+  ],
+  "pending_relations": []
+}

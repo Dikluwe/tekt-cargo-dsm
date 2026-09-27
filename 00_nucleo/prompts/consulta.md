@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `consulta` — o vocabulário de pedido (domain)
-Hash do Código: 77030bb9
+Hash do Código: 3782ca52
 
 **Camada**: L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 **Unidade**: `01_core/core/src/domain/consulta.rs` (crate `lente_core`).
@@ -40,6 +40,9 @@ Dado Escopo::default() Então Completo
 Dado ModoUses::default() Então Todas
 Dado AlvoBusca::PorPath(p) Então carrega o Path; PorId(n) Então o id
 ```
+
+Revisão 2026-09-27: saneamento mecânico de Clippy/rustfmt, preservando
+semântica e API; qualificação Option::None não é um braço curinga.
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->

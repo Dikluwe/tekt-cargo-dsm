@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash 0c524c8e
+//! @prompt-hash 359ef283
 //! @layer L1
 //! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -218,10 +218,7 @@ pub fn agregar_por_modulo(grafo: &Grafo) -> Grafo {
                     .find(|n| n.id == a.id_to)
                     .map(|n| matches!(n.kind, Kind::Mod | Kind::Crate))
                     .unwrap_or(false);
-                if from_e_mod
-                    && to_e_mod
-                    && chaves.insert((a.id_from, a.id_to, Relation::Owns))
-                {
+                if from_e_mod && to_e_mod && chaves.insert((a.id_from, a.id_to, Relation::Owns)) {
                     arestas.push(a.clone());
                 }
             }
@@ -340,10 +337,10 @@ fn alcanca(
     while let Some(x) = fila.pop_front() {
         if let Some(vizinhos) = adj.get(&x) {
             for &y in vizinhos {
-                if let Some(&m) = modulo_de.get(&y) {
-                    if m != self_mod {
-                        mods.insert(m);
-                    }
+                if let Some(&m) = modulo_de.get(&y)
+                    && m != self_mod
+                {
+                    mods.insert(m);
                 }
                 if visto.insert(y) {
                     fila.push_back(y);
@@ -474,8 +471,8 @@ pub fn ordenar_dsm(grafo: &Grafo) -> OrdemDsm {
             .unwrap_or_default()
     };
     let mut prontos: BTreeSet<(String, usize)> = BTreeSet::new();
-    for i in 0..sccs.len() {
-        if grau_entrada[i] == 0 {
+    for (i, grau) in grau_entrada.iter().enumerate() {
+        if *grau == 0 {
             prontos.insert((chave(i), i));
         }
     }
@@ -576,8 +573,8 @@ fn tarjan_sccs(grafo: &Grafo, path_por_id: &HashMap<usize, Path>) -> Vec<Vec<usi
                 let last = dfs.last_mut().unwrap();
                 last.1 = i + 1;
 
-                if !index.contains_key(&w) {
-                    index.insert(w, idx);
+                if let std::collections::hash_map::Entry::Vacant(e) = index.entry(w) {
+                    e.insert(idx);
                     lowlink.insert(w, idx);
                     idx += 1;
                     stack.push(w);
@@ -913,7 +910,7 @@ pub fn agregar_por_modulo_detalhado(grafo: &Grafo) -> AgregacaoDetalhada {
                 Relation::Uses => 1,
             },
             match a.uses_kind {
-                None => 0,
+                Option::None => 0,
                 Some(UsesKind::Reference) => 1,
                 Some(UsesKind::Import) => 2,
             },
@@ -1113,7 +1110,11 @@ mod tests {
 
         let a = de("k::a");
         // jusante (do que A depende, forward): só B — C fica de fora (exata).
-        assert_eq!(a.jusante, vec![Path::from("k::b")], "A depende só de B, não de C");
+        assert_eq!(
+            a.jusante,
+            vec![Path::from("k::b")],
+            "A depende só de B, não de C"
+        );
         assert!(a.montante.is_empty(), "ninguém depende de A");
 
         let b = de("k::b");
@@ -1131,7 +1132,7 @@ mod tests {
         g.nodes = vec![no(99, "k::orfao", Kind::Fn)];
         g.edges = vec![]; // sem Owns
         let m = mapa_modulo_contenedor(&g);
-        assert!(m.get(&99).is_none());
+        assert!(!m.contains_key(&99));
     }
 
     // ---- agregar_por_modulo --------------------------------------------------
@@ -1169,9 +1170,7 @@ mod tests {
             .push(aresta(11, "k::a::f", 12, "k::a::f2", Relation::Uses));
         let r = agregar_por_modulo(&g);
         assert!(
-            r.edges
-                .iter()
-                .all(|a| a.relation != Relation::Uses),
+            r.edges.iter().all(|a| a.relation != Relation::Uses),
             "uses intra-módulo não vira aresta"
         );
     }
@@ -1344,10 +1343,7 @@ mod tests {
     #[test]
     fn detectar_ciclos_funciona_sobre_grafo_de_itens_tambem() {
         let mut g = Grafo::new("k");
-        g.nodes = vec![
-            no(11, "k::a::x", Kind::Fn),
-            no(21, "k::b::y", Kind::Fn),
-        ];
+        g.nodes = vec![no(11, "k::a::x", Kind::Fn), no(21, "k::b::y", Kind::Fn)];
         g.edges = vec![
             aresta(11, "k::a::x", 21, "k::b::y", Relation::Uses),
             aresta(21, "k::b::y", 11, "k::a::x", Relation::Uses),
@@ -1361,14 +1357,14 @@ mod tests {
 
     /// Helper que monta um grafo módulo→módulo já no formato que o
     /// `ordenar_dsm` espera. Não é o agregador (que sobe `Owns`); é direto.
-    fn grafo_modulos(
-        ms: &[(usize, &str)],
-        deps: &[(usize, usize)],
-    ) -> Grafo {
+    fn grafo_modulos(ms: &[(usize, &str)], deps: &[(usize, usize)]) -> Grafo {
         let mut g = Grafo::new("k");
         g.nodes = ms.iter().map(|&(id, p)| no(id, p, Kind::Mod)).collect();
         let path_de = |id: usize| -> &str {
-            ms.iter().find(|&&(i, _)| i == id).map(|&(_, p)| p).unwrap_or("")
+            ms.iter()
+                .find(|&&(i, _)| i == id)
+                .map(|&(_, p)| p)
+                .unwrap_or("")
         };
         g.edges = deps
             .iter()
@@ -1380,10 +1376,7 @@ mod tests {
     #[test]
     fn ordenar_dag_linear_devolve_ordem_topologica_estavel() {
         // A→B→C. Sem ciclos. Ordem topológica: A, B, C. Blocos: vazio.
-        let g = grafo_modulos(
-            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
-            &[(1, 2), (2, 3)],
-        );
+        let g = grafo_modulos(&[(1, "k::a"), (2, "k::b"), (3, "k::c")], &[(1, 2), (2, 3)]);
         let o = ordenar_dsm(&g);
         let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
         assert_eq!(nomes, vec!["k::a", "k::b", "k::c"]);
@@ -1394,10 +1387,7 @@ mod tests {
     fn ordenar_um_ciclo_de_dois_modulos_vira_bloco_unico() {
         // A↔B. Bloco {A,B}; só esse SCC. Ordem: A, B (membros internos
         // alfabéticos).
-        let g = grafo_modulos(
-            &[(1, "k::a"), (2, "k::b")],
-            &[(1, 2), (2, 1)],
-        );
+        let g = grafo_modulos(&[(1, "k::a"), (2, "k::b")], &[(1, 2), (2, 1)]);
         let o = ordenar_dsm(&g);
         let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
         assert_eq!(nomes, vec!["k::a", "k::b"]);
@@ -1440,10 +1430,7 @@ mod tests {
         // b. Próximo pop pela chave "k::b" < "k::c". Resultado: a, b, c.
         // (Qualquer ordem topológica é DSM-correta; o algoritmo escolhe
         // a determinística via fila ordenada por path.)
-        let g = grafo_modulos(
-            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
-            &[(1, 2)],
-        );
+        let g = grafo_modulos(&[(1, "k::a"), (2, "k::b"), (3, "k::c")], &[(1, 2)]);
         let o = ordenar_dsm(&g);
         let nomes: Vec<&str> = o.ordem.iter().map(|p| p.as_str()).collect();
         assert_eq!(nomes, vec!["k::a", "k::b", "k::c"]);
@@ -1458,10 +1445,7 @@ mod tests {
     #[test]
     fn ordenar_e_deterministico_entre_extracoes() {
         // Duas extrações do mesmo grafo → mesma ordem (sem aleatoriedade).
-        let g = grafo_modulos(
-            &[(1, "k::a"), (2, "k::b"), (3, "k::c")],
-            &[(1, 2), (2, 3)],
-        );
+        let g = grafo_modulos(&[(1, "k::a"), (2, "k::b"), (3, "k::c")], &[(1, 2), (2, 3)]);
         let o1 = ordenar_dsm(&g);
         let o2 = ordenar_dsm(&g);
         assert_eq!(o1, o2);
@@ -1487,13 +1471,10 @@ mod tests {
         }
         let mut grade = vec![vec![false; n]; n];
         for a in &g.edges {
-            if a.relation == Relation::Uses {
-                if let (Some(&i), Some(&j)) = (
-                    idx.get(a.from.as_str()),
-                    idx.get(a.to.as_str()),
-                ) {
-                    grade[i][j] = true;
-                }
+            if a.relation == Relation::Uses
+                && let (Some(&i), Some(&j)) = (idx.get(a.from.as_str()), idx.get(a.to.as_str()))
+            {
+                grade[i][j] = true;
             }
         }
         // Cada dependência original corresponde a uma célula `true`.
