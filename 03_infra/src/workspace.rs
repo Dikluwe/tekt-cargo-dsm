@@ -1,30 +1,16 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-workspace.md
-//! @prompt-hash 8466abe0
+//! @prompt-hash b9fcc0e7
 //! @layer L3
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0001-fonte-do-grafo-fork-externo.md
 //!          00_nucleo/adr/0003-workspace-cargo.md
 //! Camada:  L3 — Infraestrutura. I/O (filesystem, subprocesso) permitido.
 //!
-//! Fundação de I/O do **grafo de workspace** (a união L1 e a orquestração L4
-//! vêm no 0045): enumeração de membros e extração por crate com **cache de
-//! chave completa**.
-//!
-//! Duas regras de fronteira deste módulo:
-//! - A enumeração **lê os `Cargo.toml` direto** (via `toml`), **sem**
-//!   `cargo metadata` — preservando o invariante de subprocessos do cargo
-//!   (só o fork e o metadata já existentes). A versão do toolchain vem do
-//!   `rustc` (subprocesso de `rustc`, não de `cargo`).
-//! - A extração cacheada é **aditiva**: `extrair_grafo` e o fork não mudam.
-//!
-//! A chave de cache fecha a limitação registrada no laudo 0040 (a chave só
-//! pegava os fontes): agora cobre **fontes + `Cargo.toml` do membro +
-//! `Cargo.lock` do workspace + versão do toolchain**, em ordem fixa. A
-//! re-extração espúria do arquivo solto (laudo 0043) **continua aceita** —
-//! a enumeração de fontes é por glob de filesystem, de propósito; não é
-//! "corrigida" aqui.
+//! Enumeração por TOML, descoberta de toolchain no diretório do membro e
+//! extração com validade conservadora. Ver infra-cache-validade.md: chave v2,
+//! dependências locais transitivas, motivos de bypass e contexto por rodada.
 
 use core::error::Error;
 use core::fmt;
@@ -33,7 +19,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 
 use lente_core::entities::grafo::Grafo;
 
@@ -43,7 +28,8 @@ use lente_core::entities::grafo::Grafo;
 
 /// Um membro do workspace: nome do **pacote** (de `[package].name`, o que o
 /// fork recebe — pode diferir do nome do diretório) e o diretório que contém
-/// o `Cargo.toml`.
+/// o `Cargo.toml`. Não é o nome canônico do crate: esse vem de
+/// `Grafo.crate_name` após a extração, inclusive quando há `[lib].name`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MembroWorkspace {
     pub nome: String,
@@ -277,30 +263,59 @@ fn casa_curinga(padrao: &str, nome: &str) -> bool {
 // 2. Versão do toolchain (subprocesso de `rustc`, não `cargo`)
 // ---------------------------------------------------------------------------
 
-/// Devolve a string do toolchain (`rustc --version`). **Uma** chamada por
-/// rodada do grafo (o L4 consulta uma vez e passa como parâmetro adiante —
-/// por isso a versão é argumento da extração, não consulta interna por
-/// membro). Respeita um eventual `rust-toolchain.toml` via shim do rustup
-/// (o `rustc` resolvido já é o pinado); não há pin neste projeto.
-pub fn versao_toolchain() -> Result<String, ErroWorkspace> {
-    let saida = Command::new("rustc")
-        .arg("--version")
+/// Devolve a versão do toolchain no mesmo diretório usado pela extração.
+/// O shim do rustup respeita overrides por membro; não instala toolchains.
+pub fn versao_toolchain(diretorio: &Path) -> Result<String, ErroWorkspace> {
+    let versao = executar_toolchain(
+        diretorio,
+        Command::new("rustc"),
+        &["--version", "--verbose"],
+    )?;
+    let sysroot = executar_toolchain(diretorio, Command::new("rustc"), &["--print", "sysroot"])?;
+    // Fronteiras inequívocas entre versão completa e identidade da instalação.
+    Ok(serde_json::json!([versao, sysroot]).to_string())
+}
+
+// Command injetável para testar subprocessos sem alterar PATH ou cwd globais.
+#[cfg(test)]
+fn consultar_toolchain(diretorio: &Path, comando: Command) -> Result<String, ErroWorkspace> {
+    executar_toolchain(diretorio, comando, &["--version"])
+}
+
+fn executar_toolchain(
+    diretorio: &Path,
+    mut comando: Command,
+    argumentos: &[&str],
+) -> Result<String, ErroWorkspace> {
+    let contexto = || format!("rustc {} em {}", argumentos.join(" "), diretorio.display());
+    let saida = comando
+        .args(argumentos)
+        .current_dir(diretorio)
+        .env("RUSTUP_AUTO_INSTALL", "0")
         .output()
-        .map_err(|e| ErroWorkspace::Toolchain(format!("falha ao rodar rustc: {}", e)))?;
+        .map_err(|e| ErroWorkspace::Toolchain(format!("falha ao rodar {}: {}", contexto(), e)))?;
     if !saida.status.success() {
         return Err(ErroWorkspace::Toolchain(format!(
-            "rustc --version saiu com {:?}: {}",
+            "{} saiu com {:?}: {}",
+            contexto(),
             saida.status.code(),
             String::from_utf8_lossy(&saida.stderr).trim()
         )));
     }
-    String::from_utf8(saida.stdout)
-        .map(|s| s.trim().to_string())
-        .map_err(|e| ErroWorkspace::Toolchain(format!("stdout do rustc não é UTF-8: {}", e)))
+    let texto = String::from_utf8(saida.stdout).map_err(|e| {
+        ErroWorkspace::Toolchain(format!("stdout de {} não é UTF-8: {}", contexto(), e))
+    })?;
+    if texto.trim().is_empty() {
+        return Err(ErroWorkspace::Toolchain(format!(
+            "stdout vazio de {}",
+            contexto()
+        )));
+    }
+    Ok(texto.trim().to_string())
 }
 
 // ---------------------------------------------------------------------------
-// 3+4. Chave de cache completa e extração cacheada
+// 3+4. Chave v2 e extração conservadora
 // ---------------------------------------------------------------------------
 
 /// Subdiretório do cache, sob `target/` (já gitignorado — sem mudança no
@@ -309,157 +324,102 @@ fn dir_cache(raiz: &Path) -> PathBuf {
     raiz.join("target").join("lente-cache")
 }
 
-/// Computa a chave de cache (SHA-256) do membro. **Ordem fixa**, com domínio
-/// separado por rótulo para evitar ambiguidade entre componentes:
-///
-/// 1. os **fontes** do membro — glob `dir/src/**.rs`, ordenado por caminho
-///    relativo (decisão 0043: glob de filesystem, aceita re-extração espúria
-///    do arquivo solto);
-/// 2. o **`Cargo.toml`** do membro (o que faltava no 0040);
-/// 3. o **`Cargo.lock`** do workspace (`raiz/Cargo.lock`; ausente → vazio);
-/// 4. a **versão do toolchain**.
-///
-/// Isolável para testar a invalidação sem rodar o fork.
+/// Digest v2. Não prova reutilização: consultar `CacheExtracao::avaliar`
+/// para conhecer motivos de bypass. A versão deve corresponder ao membro.
 pub fn chave_cache(
     membro: &MembroWorkspace,
     raiz: &Path,
     versao_toolchain: &str,
 ) -> Result<String, ErroWorkspace> {
-    let mut h = Sha256::new();
-
-    // 1. fontes
-    h.update(b"FONTES\0");
-    for (rel, conteudo) in coletar_fontes(&membro.dir.join("src"))? {
-        h.update(rel.as_bytes());
-        h.update(b"\0");
-        h.update((conteudo.len() as u64).to_le_bytes());
-        h.update(b"\0");
-        h.update(&conteudo);
-        h.update(b"\0");
-    }
-
-    // 2. Cargo.toml do membro
-    h.update(b"CARGO_TOML\0");
-    let toml_membro = std::fs::read(membro.dir.join("Cargo.toml")).map_err(ErroWorkspace::Io)?;
-    h.update((toml_membro.len() as u64).to_le_bytes());
-    h.update(b"\0");
-    h.update(&toml_membro);
-    h.update(b"\0");
-
-    // 3. Cargo.lock do workspace (ausente → vazio, determinístico)
-    h.update(b"CARGO_LOCK\0");
-    let lock = ler_opcional(&raiz.join("Cargo.lock"))?;
-    h.update((lock.len() as u64).to_le_bytes());
-    h.update(b"\0");
-    h.update(&lock);
-    h.update(b"\0");
-
-    // 4. toolchain
-    h.update(b"TOOLCHAIN\0");
-    h.update(versao_toolchain.as_bytes());
-    h.update(b"\0");
-
-    Ok(format!("{:x}", h.finalize()))
+    Ok(crate::CacheExtracao::default()
+        .avaliar(membro, raiz, versao_toolchain)?
+        .chave)
 }
 
-/// Extrai o `Grafo` do membro, com cache de chave completa.
-///
-/// - Chave existe no cache → lê o JSON cru → desserializa (**acerto**, sem
-///   fork).
-/// - Não existe → roda o fork (`fork::invocar_fork`), grava o JSON cru no
-///   cache de forma **atômica** (temp + rename), e desserializa (**erro de
-///   cache**, com fork).
-///
-/// Concorrência: uso reativo (uma rodada por vez); duas rodadas extraindo o
-/// mesmo crate são last-write-wins inofensivo (mesma chave ⇒ mesmo conteúdo).
+/// Conveniência para uma extração. Para vários membros, compartilhar uma
+/// `CacheExtracao` evita reler árvores, dependências e executável do fork.
 pub fn extrair_grafo_cacheado(
     membro: &MembroWorkspace,
     raiz: &Path,
     versao_toolchain: &str,
 ) -> Result<Grafo, ErroWorkspace> {
-    let chave = chave_cache(membro, raiz, versao_toolchain)?;
-    let dir = dir_cache(raiz);
-    let destino = dir.join(format!("{}.json", chave));
-
-    match std::fs::read_to_string(&destino) {
-        Ok(json) => return crate::desserializar_grafo(&json).map_err(ErroWorkspace::Adaptador),
-        Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(ErroWorkspace::Io(e)),
-        Err(_) => {} // NotFound → cache miss, segue para o fork
-    }
-
-    // Prompt 0075: invoca o fork no **diretório do membro**, não pelo nome no
-    // CWD. O `invocar_fork(nome)` resolve o alvo via `cargo metadata` rodado no
-    // CWD do processo — só acha o membro quando o CWD é o mesmo workspace
-    // (verdade no `--diff`, falso ao `--comparar` um workspace noutro caminho).
-    // `invocacao::invocar(dir)` resolve no próprio diretório → CWD-independente.
-    let json = crate::invocacao::invocar(&membro.dir).map_err(ErroWorkspace::Adaptador)?;
-    std::fs::create_dir_all(&dir).map_err(ErroWorkspace::Io)?;
-    escrever_atomico(&destino, json.as_bytes())?;
-    crate::desserializar_grafo(&json).map_err(ErroWorkspace::Adaptador)
+    crate::CacheExtracao::default().extrair(membro, raiz, versao_toolchain)
 }
 
-// ---------------------------------------------------------------------------
-// Helpers de I/O
-// ---------------------------------------------------------------------------
-
-/// Lista recursivamente os `.rs` sob `src`, em ordem determinística por
-/// caminho relativo, devolvendo `(rel, conteúdo)`. `src` ausente → vazio.
-fn coletar_fontes(src: &Path) -> Result<Vec<(String, Vec<u8>)>, ErroWorkspace> {
-    let mut acc: Vec<(String, Vec<u8>)> = Vec::new();
-    if !src.exists() {
-        return Ok(acc);
+impl crate::CacheExtracao {
+    /// Reutiliza somente quando todas as entradas estão no domínio do contrato.
+    /// Entradas com I/O dinâmico/configuração não rastreável fazem bypass.
+    pub fn extrair(
+        &mut self,
+        membro: &MembroWorkspace,
+        raiz: &Path,
+        versao_toolchain: &str,
+    ) -> Result<Grafo, ErroWorkspace> {
+        let validade = self.avaliar(membro, raiz, versao_toolchain)?;
+        extrair_com_validade(membro, raiz, &validade, crate::invocacao::invocar)
     }
-    fn walk(base: &Path, dir: &Path, acc: &mut Vec<(String, Vec<u8>)>) -> Result<(), ErroWorkspace> {
-        let rd = std::fs::read_dir(dir).map_err(ErroWorkspace::Io)?;
-        let mut entradas: Vec<PathBuf> = Vec::new();
-        for e in rd {
-            entradas.push(e.map_err(ErroWorkspace::Io)?.path());
+}
+
+fn extrair_com_validade(
+    membro: &MembroWorkspace,
+    raiz: &Path,
+    validade: &crate::ValidadeCache,
+    invocar: impl FnOnce(&Path) -> Result<String, crate::ErroAdaptador>,
+) -> Result<Grafo, ErroWorkspace> {
+    let destino = dir_cache(raiz).join(format!("{}.json", validade.chave));
+    let reutilizavel = validade.motivos_bypass.is_empty();
+    if reutilizavel {
+        match std::fs::read_to_string(&destino) {
+            Ok(json) => return crate::desserializar_grafo(&json).map_err(ErroWorkspace::Adaptador),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(ErroWorkspace::Io(e)),
         }
-        entradas.sort();
-        for p in entradas {
-            if p.is_dir() {
-                walk(base, &p, acc)?;
-            } else if p.extension().map(|e| e == "rs").unwrap_or(false) {
-                let conteudo = std::fs::read(&p).map_err(ErroWorkspace::Io)?;
-                let rel = p
-                    .strip_prefix(base)
-                    .unwrap_or(&p)
-                    .to_string_lossy()
-                    .into_owned();
-                acc.push((rel, conteudo));
-            }
+    }
+    let json = invocar(&membro.dir).map_err(ErroWorkspace::Adaptador)?;
+    // A validação antecede até a criação do diretório de cache.
+    let grafo = crate::desserializar_grafo(&json).map_err(ErroWorkspace::Adaptador)?;
+    if reutilizavel {
+        std::fs::create_dir_all(dir_cache(raiz)).map_err(ErroWorkspace::Io)?;
+        escrever_atomico(&destino, json.as_bytes())?;
+    }
+    Ok(grafo)
+}
+
+static SEQUENCIA_TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn criar_temporario(destino: &Path) -> Result<(PathBuf, std::fs::File), ErroWorkspace> {
+    use std::sync::atomic::Ordering;
+    loop {
+        let seq = SEQUENCIA_TEMP.fetch_add(1, Ordering::Relaxed);
+        let mut nome = destino.as_os_str().to_os_string();
+        nome.push(format!(".{}.{}.tmp", std::process::id(), seq));
+        let p = PathBuf::from(nome);
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&p)
+        {
+            Ok(f) => return Ok((p, f)),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(e) => return Err(ErroWorkspace::Io(e)),
         }
-        Ok(())
-    }
-    walk(src, src, &mut acc)?;
-    acc.sort_by(|a, b| a.0.cmp(&b.0));
-    Ok(acc)
-}
-
-/// Lê um arquivo; ausente (`NotFound`) → vazio. Outras falhas de I/O propagam.
-fn ler_opcional(p: &Path) -> Result<Vec<u8>, ErroWorkspace> {
-    match std::fs::read(p) {
-        Ok(b) => Ok(b),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-        Err(e) => Err(ErroWorkspace::Io(e)),
     }
 }
 
-/// Escreve `conteudo` em `destino` de forma atômica: grava num temp irmão
-/// (sufixado pelo PID, para writers concorrentes não colidirem) e renomeia.
-/// `rename` no mesmo diretório é atômico — o cache nunca tem entrada parcial.
+/// Temporário exclusivo por chamada/processo; rename publica apenas JSON completo.
 fn escrever_atomico(destino: &Path, conteudo: &[u8]) -> Result<(), ErroWorkspace> {
-    let dir = destino.parent().ok_or_else(|| {
-        ErroWorkspace::Manifesto("destino do cache sem diretório-pai".to_string())
-    })?;
-    let nome = destino
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("cache");
-    let tmp = dir.join(format!(".{}.{}.tmp", nome, std::process::id()));
-    std::fs::write(&tmp, conteudo).map_err(ErroWorkspace::Io)?;
-    std::fs::rename(&tmp, destino).map_err(ErroWorkspace::Io)?;
-    Ok(())
+    use std::io::Write;
+    let (tmp, mut arquivo) = criar_temporario(destino)?;
+    let resultado = (|| {
+        arquivo.write_all(conteudo)?;
+        arquivo.sync_all()?;
+        drop(arquivo);
+        std::fs::rename(&tmp, destino)
+    })();
+    if resultado.is_err() {
+        let _ = std::fs::remove_file(&tmp);
+    }
+    resultado.map_err(ErroWorkspace::Io)
 }
 
 #[cfg(test)]
@@ -478,14 +438,20 @@ mod tests {
 
     #[test]
     fn natureza_raiz_detecta_crate_workspace_e_erro() {
-        let crate_dir = escrever_cargo("crate", "[package]\nname=\"x\"\nversion=\"0.0.0\"\nedition=\"2024\"\n");
+        let crate_dir = escrever_cargo(
+            "crate",
+            "[package]\nname=\"x\"\nversion=\"0.0.0\"\nedition=\"2024\"\n",
+        );
         assert_eq!(natureza_raiz(&crate_dir).unwrap(), NaturezaRaiz::Crate);
 
         let ws_dir = escrever_cargo("ws", "[workspace]\nmembers=[\"a\"]\n");
         assert_eq!(natureza_raiz(&ws_dir).unwrap(), NaturezaRaiz::Workspace);
 
         // package + workspace (crate que também é raiz de workspace) → crate.
-        let ambos = escrever_cargo("ambos", "[workspace]\n\n[package]\nname=\"y\"\nversion=\"0\"\nedition=\"2024\"\n");
+        let ambos = escrever_cargo(
+            "ambos",
+            "[workspace]\n\n[package]\nname=\"y\"\nversion=\"0\"\nedition=\"2024\"\n",
+        );
         assert_eq!(natureza_raiz(&ambos).unwrap(), NaturezaRaiz::Crate);
 
         // sem nenhuma das tabelas → erro claro.
@@ -493,7 +459,8 @@ mod tests {
         assert!(natureza_raiz(&nenhum).is_err());
 
         // Cargo.toml ausente → erro claro citando a raiz.
-        let vazio = std::env::temp_dir().join(format!("__lente_nat_vazio_{}__", std::process::id()));
+        let vazio =
+            std::env::temp_dir().join(format!("__lente_nat_vazio_{}__", std::process::id()));
         let _ = std::fs::remove_dir_all(&vazio);
         std::fs::create_dir_all(&vazio).unwrap();
         assert!(natureza_raiz(&vazio).is_err());
@@ -505,11 +472,7 @@ mod tests {
 
     /// Cria um diretório temporário único para o teste (sem dep externa).
     fn temp_dir(tag: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!(
-            "__lente_ws_{}_{}__",
-            tag,
-            std::process::id()
-        ));
+        let d = std::env::temp_dir().join(format!("__lente_ws_{}_{}__", tag, std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         std::fs::create_dir_all(&d).unwrap();
         d
@@ -525,7 +488,10 @@ mod tests {
     fn crate_em(dir: &Path, nome: &str) {
         escrever(
             &dir.join("Cargo.toml"),
-            &format!("[package]\nname = \"{}\"\nversion = \"0.0.0\"\nedition = \"2024\"\n", nome),
+            &format!(
+                "[package]\nname = \"{}\"\nversion = \"0.0.0\"\nedition = \"2024\"\n",
+                nome
+            ),
         );
         escrever(&dir.join("src/lib.rs"), "pub fn x() {}\n");
     }
@@ -595,32 +561,111 @@ mod tests {
             .to_path_buf();
         let membros = enumerar_membros(&raiz).expect("enumeração do workspace real");
         let nomes: Vec<&str> = membros.iter().map(|m| m.nome.as_str()).collect();
-        assert!(nomes.contains(&"lente_core"), "lente_core deve estar: {:?}", nomes);
+        assert!(
+            nomes.contains(&"lente_core"),
+            "lente_core deve estar: {:?}",
+            nomes
+        );
         assert!(nomes.contains(&"lente_infra"));
         // Nenhum crate do lab (ex.: proto-impacto-diff) aparece.
         assert!(
-            !membros.iter().any(|m| m.dir.components().any(|c| c.as_os_str() == "lab")),
+            !membros
+                .iter()
+                .any(|m| m.dir.components().any(|c| c.as_os_str() == "lab")),
             "nenhum membro deve vir de lab/: {:?}",
             membros
         );
-        assert!(!nomes.iter().any(|n| n.contains("proto")), "sem crate proto-*: {:?}", nomes);
+        assert!(
+            !nomes.iter().any(|n| n.contains("proto")),
+            "sem crate proto-*: {:?}",
+            nomes
+        );
     }
 
     // ---- Toolchain --------------------------------------------------------
 
-    /// `rustc --version` está garantido num ambiente que roda `cargo test`.
-    #[test]
-    fn versao_toolchain_contem_rustc() {
-        let v = versao_toolchain().expect("rustc deve responder");
-        assert!(v.contains("rustc"), "versão inesperada: {}", v);
+    #[cfg(unix)]
+    fn shell(script: &str) -> Command {
+        let mut comando = Command::new("/bin/sh");
+        comando.args(["-c", script, "rustc-controlado"]);
+        comando
     }
 
+    #[test]
+    #[cfg(unix)]
+    fn consulta_toolchain_no_diretorio_recebido_sem_mudar_cwd() {
+        let cwd = std::env::current_dir().unwrap();
+        let (a, membro_a) = fixture_membro("toolchain_a");
+        let (b, membro_b) = fixture_membro("toolchain_b");
+        escrever(&membro_a.dir.join("versao"), "rustc contexto-a\n");
+        escrever(&membro_b.dir.join("versao"), "rustc contexto-b\n");
+        let consultar =
+            |dir: &Path| {
+                consultar_toolchain(dir, shell(
+            "test \"$1\" = --version && test \"$RUSTUP_AUTO_INSTALL\" = 0 && cat versao"
+        )).unwrap()
+            };
+        assert_ne!(cwd, a);
+        let versao_a = consultar(&membro_a.dir);
+        let versao_b = consultar(&membro_b.dir);
+        assert_eq!(versao_a, "rustc contexto-a");
+        assert_eq!(versao_b, "rustc contexto-b");
+        // Versão e diretório são componentes independentes da chave v2.
+        let chave_a = chave_cache(&membro_a, &a, &versao_a).unwrap();
+        assert_ne!(chave_a, chave_cache(&membro_b, &b, &versao_a).unwrap());
+        assert_ne!(chave_a, chave_cache(&membro_a, &a, &versao_b).unwrap());
+        assert_eq!(std::env::current_dir().unwrap(), cwd);
+        std::fs::remove_dir_all(a).unwrap();
+        std::fs::remove_dir_all(b).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn contexto_sysroot_usa_diretorio_e_rejeita_saida_vazia() {
+        let dir = temp_dir("sysroot_contexto");
+        escrever(&dir.join("sysroot"), "/toolchains/contexto-especifico");
+        let saida = executar_toolchain(&dir, shell("test \"$1\" = --print && test \"$2\" = sysroot && test \"$RUSTUP_AUTO_INSTALL\" = 0 && cat sysroot"), &["--print", "sysroot"]).unwrap();
+        assert_eq!(saida, "/toolchains/contexto-especifico");
+        let erro = executar_toolchain(&dir, shell("exit 0"), &["--print", "sysroot"]).unwrap_err();
+        assert!(erro.to_string().contains("stdout vazio"));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn toolchain_falha_de_execucao_tem_contexto() {
+        let dir = temp_dir("toolchain_spawn");
+        let erro = consultar_toolchain(&dir, Command::new(dir.join("inexistente"))).unwrap_err();
+        assert!(matches!(erro, ErroWorkspace::Toolchain(_)));
+        let mensagem = erro.to_string();
+        assert!(mensagem.contains("falha ao rodar rustc"));
+        assert!(mensagem.contains(dir.to_str().unwrap()));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn toolchain_preserva_status_stderr_e_stdout_invalido() {
+        let dir = temp_dir("toolchain_erros");
+        let erro = consultar_toolchain(&dir, shell("echo toolchain-indisponivel >&2; exit 42"))
+            .unwrap_err()
+            .to_string();
+        assert!(erro.contains("42"));
+        assert!(erro.contains("toolchain-indisponivel"));
+        assert!(erro.contains(dir.to_str().unwrap()));
+        let erro = consultar_toolchain(&dir, shell("printf '\\377'"))
+            .unwrap_err()
+            .to_string();
+        assert!(erro.contains("não é UTF-8"));
+        assert!(erro.contains(dir.to_str().unwrap()));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
     // ---- Chave de cache: estabilidade e invalidação -----------------------
 
     /// Monta um membro real (src/lib.rs + Cargo.toml) e uma raiz com
     /// Cargo.lock, e devolve `(raiz, membro)` para os testes de chave.
     fn fixture_membro(tag: &str) -> (PathBuf, MembroWorkspace) {
         let raiz = temp_dir(tag);
+        escrever(&raiz.join("Cargo.toml"), "[workspace]\nmembers=[\"m\"]\n");
         escrever(&raiz.join("Cargo.lock"), "# lock v1\n");
         let dir = raiz.join("m");
         crate_em(&dir, "membro_x");
@@ -717,7 +762,14 @@ mod tests {
         }"#;
         escrever(&destino, json);
 
-        let g = extrair_grafo_cacheado(&m, &raiz, "tc").expect("deve ler o cache");
+        let validade = crate::ValidadeCache {
+            chave,
+            motivos_bypass: BTreeSet::new(),
+        };
+        let g = extrair_com_validade(&m, &raiz, &validade, |_| {
+            panic!("hit não deve invocar fork")
+        })
+        .expect("deve ler o cache");
         assert_eq!(g.crate_name, "membro_x");
         assert_eq!(g.nodes.len(), 1);
         let _ = std::fs::remove_dir_all(&raiz);
@@ -731,7 +783,13 @@ mod tests {
         let chave = chave_cache(&m, &raiz, "tc").unwrap();
         let destino = dir_cache(&raiz).join(format!("{}.json", chave));
         escrever(&destino, "{ não é json do fork");
-        match extrair_grafo_cacheado(&m, &raiz, "tc") {
+        let validade = crate::ValidadeCache {
+            chave,
+            motivos_bypass: BTreeSet::new(),
+        };
+        match extrair_com_validade(&m, &raiz, &validade, |_| {
+            panic!("cache corrompido deve falhar antes do fork")
+        }) {
             Err(ErroWorkspace::Adaptador(_)) => {}
             outro => panic!("esperava Adaptador, veio {:?}", outro),
         }
@@ -754,6 +812,100 @@ mod tests {
             .collect();
         assert!(restos.is_empty(), "temp não deve sobrar: {:?}", restos);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn json_invalido_nao_publica_e_bypass_nao_le_nem_publica() {
+        let (raiz, m) = fixture_membro("publicacao");
+        let mut validade = crate::ValidadeCache {
+            chave: "teste".into(),
+            motivos_bypass: BTreeSet::new(),
+        };
+        let destino = dir_cache(&raiz).join("teste.json");
+        let r = extrair_com_validade(&m, &raiz, &validade, |_| Ok("{}".into()));
+        assert!(matches!(r, Err(ErroWorkspace::Adaptador(_))));
+        assert!(!destino.exists());
+        assert!(!dir_cache(&raiz).exists());
+        escrever(&destino, "cache inválido que não deve ser lido");
+        validade.motivos_bypass.insert("build script".into());
+        let json = r#"{"crate":"x","nodes":[],"edges":[]}"#;
+        extrair_com_validade(&m, &raiz, &validade, |dir| {
+            assert_eq!(dir, m.dir);
+            Ok(json.into())
+        })
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(destino).unwrap(),
+            "cache inválido que não deve ser lido"
+        );
+        std::fs::remove_dir_all(raiz).unwrap();
+    }
+
+    #[test]
+    fn temporarios_distintos_em_chamadas_simultaneas() {
+        let dir = temp_dir("temps_concorrentes");
+        let destino = dir.join("grafo.json");
+        let barreira = std::sync::Barrier::new(8);
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..8)
+                .map(|_| {
+                    scope.spawn(|| {
+                        let (p, f) = criar_temporario(&destino).unwrap();
+                        barreira.wait();
+                        assert!(p.exists());
+                        drop(f);
+                        p
+                    })
+                })
+                .collect();
+            let paths: BTreeSet<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
+            assert_eq!(paths.len(), 8);
+            for p in paths {
+                std::fs::remove_file(p).unwrap();
+            }
+        });
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn escritas_concorrentes_publicam_apenas_conteudo_completo() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        let dir = temp_dir("atomico_concorrente");
+        let destino = dir.join("grafo.json");
+        escrever_atomico(&destino, &vec![0; 65536]).unwrap();
+        let terminou = AtomicBool::new(false);
+        std::thread::scope(|scope| {
+            let leitor = scope.spawn(|| {
+                while !terminou.load(Ordering::Acquire) {
+                    let bytes = std::fs::read(&destino).unwrap();
+                    assert_eq!(bytes.len(), 65536);
+                    assert!(bytes.iter().all(|b| *b == bytes[0]));
+                }
+            });
+            let handles: Vec<_> = (1..=8)
+                .map(|n| {
+                    let destino = &destino;
+                    scope.spawn(move || escrever_atomico(destino, &vec![n; 65536]).unwrap())
+                })
+                .collect();
+            for h in handles {
+                h.join().unwrap();
+            }
+            terminou.store(true, Ordering::Release);
+            leitor.join().unwrap();
+        });
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn falha_de_rename_limpa_temporario() {
+        let dir = temp_dir("rename_falha");
+        let destino = dir.join("destino");
+        std::fs::create_dir(&destino).unwrap();
+        assert!(escrever_atomico(&destino, b"x").is_err());
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     // ---- Display dos erros ------------------------------------------------
@@ -790,14 +942,21 @@ mod tests {
             nome: "lente_core".to_string(),
             dir: raiz.join("01_core").join("core"),
         };
-        let tc = versao_toolchain().unwrap();
+        let tc = versao_toolchain(&membro.dir).unwrap();
         let chave = chave_cache(&membro, &raiz, &tc).unwrap();
         let destino = dir_cache(&raiz).join(format!("{}.json", chave));
         let _ = std::fs::remove_file(&destino);
 
         let g = extrair_grafo_cacheado(&membro, &raiz, &tc).expect("fork deve extrair");
         assert_eq!(g.crate_name, "lente_core");
-        assert!(destino.exists(), "cache deve ter sido gravado");
+        let validade = crate::CacheExtracao::default()
+            .avaliar(&membro, &raiz, &tc)
+            .unwrap();
+        assert_eq!(
+            destino.exists(),
+            validade.motivos_bypass.is_empty(),
+            "publicação deve respeitar bypass"
+        );
     }
 
     /// Transparência: erro→fork→grava e depois acerto→cache devolvem Grafos
@@ -813,7 +972,7 @@ mod tests {
             nome: "lente_core".to_string(),
             dir: raiz.join("01_core").join("core"),
         };
-        let tc = versao_toolchain().unwrap();
+        let tc = versao_toolchain(&membro.dir).unwrap();
         let chave = chave_cache(&membro, &raiz, &tc).unwrap();
         let destino = dir_cache(&raiz).join(format!("{}.json", chave));
         let _ = std::fs::remove_file(&destino);

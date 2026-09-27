@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra.md
-//! @prompt-hash aa45b288
+//! @prompt-hash 919148af
 //! @layer L3
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0001-fonte-do-grafo-fork-externo.md
 //!          00_nucleo/adr/0002-modelagem-do-grafo.md
@@ -24,15 +24,22 @@ use core::fmt;
 
 use lente_core::entities::grafo::{Grafo, ValorDesconhecido};
 
+pub mod analises;
+mod cache;
 mod diff;
 mod dto;
+pub mod extracao;
+pub mod fork;
 mod invocacao;
+mod mapa_correspondencia;
 mod metadata;
+pub mod provedores;
 mod traducao;
 mod workspace;
-pub mod fork;
 
+pub use cache::{CacheExtracao, ValidadeCache};
 pub use diff::{ErroDiff, ler_diff};
+pub use mapa_correspondencia::{ErroMapaCorrespondencia, ler_mapa_correspondencia};
 pub use metadata::ErroMetadata;
 pub use workspace::{
     ErroWorkspace, MembroWorkspace, NaturezaRaiz, chave_cache, enumerar_membros,
@@ -134,8 +141,8 @@ pub fn extrair_grafo(caminho_crate: &std::path::Path) -> Result<Grafo, ErroAdapt
 /// que já têm o JSON (lido de arquivo ou capturado de `fork::invocar_fork`)
 /// e não precisam lidar com `serde` nem com o formato cru do DTO.
 pub fn desserializar_grafo(json: &str) -> Result<Grafo, ErroAdaptador> {
-    let dto: dto::GrafoDTO = serde_json::from_str(json)
-        .map_err(|e| ErroAdaptador::JsonInvalido(e.to_string()))?;
+    let dto: dto::GrafoDTO =
+        serde_json::from_str(json).map_err(|e| ErroAdaptador::JsonInvalido(e.to_string()))?;
     traducao::traduzir(dto)
 }
 
@@ -194,9 +201,7 @@ mod tests {
                 id: 99,
                 contexto: "id_from".to_string(),
             },
-            ErroAdaptador::DeteccaoAlvo(ErroMetadata::PacoteNaoEncontrado(
-                "x".to_string(),
-            )),
+            ErroAdaptador::DeteccaoAlvo(ErroMetadata::PacoteNaoEncontrado("x".to_string())),
             ErroAdaptador::DeteccaoAlvo(ErroMetadata::AlvosAmbiguos {
                 bins: vec!["a".to_string(), "b".to_string()],
             }),
@@ -215,8 +220,8 @@ mod tests {
     #[test]
     #[ignore]
     fn e2e_extrai_grafo_de_fixture() {
-        let alvo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures/crate-amostra");
+        let alvo =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/crate-amostra");
 
         let g = extrair_grafo(&alvo).expect("extração deve funcionar");
 
@@ -269,7 +274,10 @@ mod tests {
         let g = extrair_grafo(&alvo).expect("extração de lente_core deve funcionar agora");
 
         assert_eq!(g.crate_name, "lente_core");
-        assert!(g.nodes.len() > 10, "grafo deve ter pelo menos uma dezena de nós");
+        assert!(
+            g.nodes.len() > 10,
+            "grafo deve ter pelo menos uma dezena de nós"
+        );
 
         // Invariante novo: ids únicos.
         use std::collections::HashSet;
