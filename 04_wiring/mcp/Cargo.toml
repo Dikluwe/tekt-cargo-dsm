@@ -19,3 +19,5 @@ lente_core = { path = "../../01_core/core" }
 lente_cli = { path = "../../02_shell/cli" }
 # JSON-RPC à mão: só serde_json (já dep do workspace). Sem SDK/async — ver laudo 0070.
 serde_json = "1"
+
+lente_catalogo = { path = "../../02_shell/catalogo" }

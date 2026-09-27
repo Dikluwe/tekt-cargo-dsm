@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash a6255b04
+//! @prompt-hash a3a89302
 //! @layer L4
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
 //!          escopo do usuário por prompt 00_nucleo/prompt/0030-escopo-usuario.md
 //! Camada:  L4 — Fiação (composição pura, sem lógica de negócio).
@@ -29,10 +29,18 @@
 
 #![forbid(unsafe_code)]
 
+pub mod provedores;
+// Fronteira L3 compartilhada pelas duas bocas L4, sem dependência da Arena.
+pub use lente_infra::analises;
+
 use core::error::Error;
 use core::fmt;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
+use lente_comparacao::{
+    ChavePareamento, MapaCorrespondencia, Proveniencia, aplicar_mapa, comparar_estruturas_com_mapa,
+    comparar_itens,
+};
 use lente_core::domain::mapeamento::{MapeamentoDiff, mapear_diff};
 use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
 use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
@@ -40,11 +48,10 @@ use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
 use lente_estrutura::{
     agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
 };
-use lente_comparacao::{ChavePareamento, Proveniencia, comparar_estruturas, comparar_itens};
-use lente_infra::NaturezaRaiz;
 use lente_filtro::{filtrar_nao_membros, filtrar_so_referencia, filtrar_stdlib};
 use lente_infra::ErroAdaptador;
 use lente_infra::ErroWorkspace;
+use lente_infra::NaturezaRaiz;
 use lente_infra::fork::ErroFork;
 use lente_infra::{ErroDiff, ler_diff};
 use lente_investiga::{ArestasNo, ParColidente, Vizinhanca};
@@ -54,17 +61,17 @@ use lente_resolve::ErroResolve;
 // Re-export para consumidores L2 não precisarem depender de `lente_ranking`/
 // `lente_estrutura` diretamente — a fronteira de API do wiring carrega os
 // tipos de resultado.
-pub use lente_core::domain::resultado_diff::{
-    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,
-};
 pub use lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
+pub use lente_core::domain::resultado_diff::{
+    CompletudeDiff, FalhaCrate, RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,
+};
 pub use lente_core::domain::uniao::Fantasma;
 pub use lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm};
 pub use lente_ranking::ItemRanking;
 // Prompt 0074: o contrato da comparação, para a saída (L2) e o agente.
 pub use lente_comparacao::{
-    ArestaComparada, Comparacao, ComparacaoItens, ItemAmbiguo, ItemPareado, ItemSemPar, Lado,
-    ResumoCiclos,
+    AlegacaoDeclarada, ArestaComparada, Comparacao, ComparacaoItens, CorrespondenciaAplicada,
+    ItemAmbiguo, ItemPareado, ItemSemPar, Lado, RelacaoDeclarada, ResultadoMapa, ResumoCiclos,
 };
 
 // O vocabulário de pedido — `FonteGrafo`/`Escopo`/`ModoUses`/`AlvoBusca` — desceu
@@ -97,6 +104,8 @@ pub enum ErroLente {
     /// Prompt 0047: falha ao ler o diff do repositório (subprocesso `git`) —
     /// de `lente_infra::ler_diff` (0046).
     Diff(ErroDiff),
+    /// Nenhum membro foi extraído e resolvido com sucesso.
+    NenhumCrateAnalisado(Vec<FalhaCrate>),
 }
 
 impl From<ErroFork> for ErroLente {
@@ -146,6 +155,13 @@ impl fmt::Display for ErroLente {
             ),
             ErroLente::Workspace(e) => write!(f, "grafo de workspace: {}", e),
             ErroLente::Diff(e) => write!(f, "leitura do diff: {}", e),
+            ErroLente::NenhumCrateAnalisado(falhas) => {
+                f.write_str("nenhum crate pôde ser analisado")?;
+                for falha in falhas {
+                    write!(f, "; {}: {}", falha.crate_name, falha.motivo)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -181,15 +197,6 @@ pub fn calcular_raio_de_alvo(
     Ok(raio)
 }
 
-/// Um crate que **não** entrou no grafo de workspace (prompt 0075): a extração
-/// ou a resolução de colisão falhou. É **sinal**, como os fantasmas (0045) — não
-/// erro fatal: o crate é pulado, os demais entram, e isto é reportado.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FalhaCrate {
-    pub crate_name: String,
-    pub motivo: String,
-}
-
 /// O grafo de workspace montado: o grafo unificado dos membros que extraíram, os
 /// fantasmas da união (esperado vazio neste repo — laudo 0041), e os crates que
 /// **falharam** (prompt 0075 — resiliência: 1 crate irresolúvel não aborta tudo).
@@ -198,6 +205,9 @@ pub struct GrafoWorkspace {
     pub grafo: Grafo,
     pub fantasmas: Vec<Fantasma>,
     pub falhas: Vec<FalhaCrate>,
+    /// Pacote Cargo → crate canônico dos grafos incluídos na união.
+    /// Membros com falha não têm identidade presumida neste mapa.
+    pub crates_por_pacote: BTreeMap<String, String>,
 }
 
 /// Monta o grafo de workspace (prompt 0045): a fundação do motor da trilha
@@ -205,7 +215,7 @@ pub struct GrafoWorkspace {
 ///
 /// Passos (composição pura — sem lógica nova):
 /// 1. `lente_infra::enumerar_membros` (L3, 0044) → membros.
-/// 2. `lente_infra::versao_toolchain` (L3) → versão, **uma vez**.
+/// 2. `lente_infra::versao_toolchain` (L3) → versão no diretório de cada membro.
 /// 3. Para cada membro: `lente_infra::extrair_grafo_cacheado` (L3) → `Grafo`.
 /// 4. Para cada `Grafo`: [`resolver_colisoes`] → grafo resolvido do crate
 ///    (resolver **por crate antes de unir** — laudo 0041).
@@ -213,37 +223,80 @@ pub struct GrafoWorkspace {
 ///    fantasmas.
 ///
 /// A primeira chamada num workspace frio paga a extração de todos os crates
-/// (~33s, laudo 0040); o cache de chave completa (0044) aquece as seguintes.
+/// (~33s, laudo 0040); o cache v2 aquece as seguintes quando as entradas permitem reutilização.
 pub fn montar_grafo_workspace(raiz: &std::path::Path) -> Result<GrafoWorkspace, ErroLente> {
+    montar_grafo_workspace_com_toolchain(raiz, lente_infra::versao_toolchain)
+}
+
+fn montar_grafo_workspace_com_toolchain(
+    raiz: &std::path::Path,
+    consultar: impl FnMut(&std::path::Path) -> Result<String, lente_infra::ErroWorkspace>,
+) -> Result<GrafoWorkspace, ErroLente> {
+    let mut cache = lente_infra::CacheExtracao::default();
+    montar_grafo_workspace_com_io(raiz, consultar, |membro, raiz, versao| {
+        cache.extrair(membro, raiz, versao)
+    })
+}
+
+fn montar_grafo_workspace_com_io(
+    raiz: &std::path::Path,
+    mut consultar: impl FnMut(&std::path::Path) -> Result<String, lente_infra::ErroWorkspace>,
+    mut extrair: impl FnMut(
+        &lente_infra::MembroWorkspace,
+        &std::path::Path,
+        &str,
+    ) -> Result<Grafo, lente_infra::ErroWorkspace>,
+) -> Result<GrafoWorkspace, ErroLente> {
     let membros = lente_infra::enumerar_membros(raiz)?;
-    let versao = lente_infra::versao_toolchain()?;
     let mut grafos: Vec<GrafoCrate> = Vec::with_capacity(membros.len());
     let mut falhas: Vec<FalhaCrate> = Vec::new();
+    let mut crates_por_pacote = BTreeMap::new();
     for membro in &membros {
+        // O mesmo contexto de invocacao::invocar, inclusive entre duas raízes.
+        // Falha de descoberta continua sendo erro de workspace, sem chave falsa.
+        let versao = consultar(&membro.dir)?;
         // Prompt 0075: resiliente — extração/resolução de um crate que falha é
         // **pulada e reportada** (sinal, não erro fatal). Em código real (typst)
         // o resolvedor de colisão (0019) encontra sobreposição parcial que a
         // Estratégia 1 não decide e a 2 (quarentenada, 0014) não cobre; abortar
         // tudo por 1 crate esconderia o número dos outros.
-        let resultado = lente_infra::extrair_grafo_cacheado(membro, raiz, &versao)
+        let resultado = extrair(membro, raiz, &versao)
             .map_err(ErroLente::Workspace)
             .and_then(resolver_colisoes);
         match resultado {
-            Ok(grafo) => grafos.push(GrafoCrate {
-                crate_name: membro.nome.clone(),
-                grafo,
-            }),
+            Ok(grafo) => {
+                // O JSON identifica o crate extraído, inclusive [lib].name.
+                // O pacote continua sendo a identidade Cargo e de diagnóstico.
+                crates_por_pacote.insert(membro.nome.clone(), grafo.crate_name.clone());
+                grafos.push(GrafoCrate {
+                    crate_name: grafo.crate_name.clone(),
+                    grafo,
+                });
+            }
             Err(e) => falhas.push(FalhaCrate {
                 crate_name: membro.nome.clone(),
                 motivo: e.to_string(),
             }),
         }
     }
+    finalizar_grafo_workspace(grafos, falhas, crates_por_pacote)
+}
+
+/// A presença de um grafo extraído, e não sua quantidade de nós, define sucesso.
+fn finalizar_grafo_workspace(
+    grafos: Vec<GrafoCrate>,
+    falhas: Vec<FalhaCrate>,
+    crates_por_pacote: BTreeMap<String, String>,
+) -> Result<GrafoWorkspace, ErroLente> {
+    if grafos.is_empty() {
+        return Err(ErroLente::NenhumCrateAnalisado(falhas));
+    }
     let ResultadoUniao { grafo, fantasmas } = unir_grafos(grafos);
     Ok(GrafoWorkspace {
         grafo,
         fantasmas,
         falhas,
+        crates_por_pacote,
     })
 }
 
@@ -274,17 +327,18 @@ pub fn analisar_diff(raiz: &std::path::Path) -> Result<ResultadoDiff, ErroLente>
     let raiz = raiz.as_path();
 
     let diff = ler_diff(raiz)?;
-    // O `--diff` ignora as falhas por crate (prompt 0075): antes abortava por
-    // 1 crate irresolúvel; agora segue com os que extraíram (melhoria silenciosa).
     let GrafoWorkspace {
-        grafo, fantasmas, ..
+        grafo,
+        fantasmas,
+        falhas,
+        ..
     } = montar_grafo_workspace(raiz)?;
     let membros_dirs: Vec<std::path::PathBuf> = lente_infra::enumerar_membros(raiz)?
         .into_iter()
         .map(|m| m.dir)
         .collect();
     let mapa = mapear_diff(&diff, &grafo, &membros_dirs);
-    Ok(montar_resultado_diff(&grafo, mapa, fantasmas))
+    Ok(montar_resultado_diff(&grafo, mapa, fantasmas, falhas))
 }
 
 /// A **parte pura** da análise de diff (sem git/fork): dado o grafo, o
@@ -295,6 +349,7 @@ fn montar_resultado_diff(
     grafo: &Grafo,
     mapa: MapeamentoDiff,
     fantasmas: Vec<Fantasma>,
+    falhas: Vec<FalhaCrate>,
 ) -> ResultadoDiff {
     let MapeamentoDiff {
         tocados,
@@ -317,6 +372,7 @@ fn montar_resultado_diff(
     let combinado = combinar_raios(&raios);
 
     ResultadoDiff {
+        falhas,
         tocados: tocados_com_raio,
         combinado,
         ligados,
@@ -425,8 +481,7 @@ fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModu
         })
         .collect();
     dependencias.sort_by(|a, b| {
-        a.de
-            .as_str()
+        a.de.as_str()
             .cmp(b.de.as_str())
             .then_with(|| a.para.as_str().cmp(b.para.as_str()))
     });
@@ -465,11 +520,16 @@ pub fn comparar(
     raiz_depois: &std::path::Path,
     escopo: Escopo,
     modo_uses: ModoUses,
+    mapa: Option<&MapaCorrespondencia>,
 ) -> Result<Comparacao, ErroComparar> {
-    let a = extrair_lado(raiz_antes, escopo, modo_uses)
-        .map_err(|erro| ErroComparar { lado: Lado::Antes, erro })?;
-    let b = extrair_lado(raiz_depois, escopo, modo_uses)
-        .map_err(|erro| ErroComparar { lado: Lado::Depois, erro })?;
+    let a = extrair_lado(raiz_antes, escopo, modo_uses).map_err(|erro| ErroComparar {
+        lado: Lado::Antes,
+        erro,
+    })?;
+    let b = extrair_lado(raiz_depois, escopo, modo_uses).map_err(|erro| ErroComparar {
+        lado: Lado::Depois,
+        erro,
+    })?;
     // Prompt 0075: workspace em qualquer lado → chave de path completo.
     let chave = if a.modo == NaturezaRaiz::Workspace || b.modo == NaturezaRaiz::Workspace {
         ChavePareamento::PathCompleto
@@ -482,7 +542,10 @@ pub fn comparar(
         a.fantasmas.iter().map(|p| p.as_str().to_string()).collect();
     let fant_b: std::collections::BTreeSet<String> =
         b.fantasmas.iter().map(|p| p.as_str().to_string()).collect();
-    let itens = comparar_itens(&a.grafo, &fant_a, &b.grafo, &fant_b);
+    let mut itens = comparar_itens(&a.grafo, &fant_a, &b.grafo, &fant_b);
+    if let Some(mapa) = mapa {
+        aplicar_mapa(&mut itens, mapa, &a.grafo, &b.grafo);
+    }
     let proveniencia = Proveniencia {
         modo_antes: modo_texto(a.modo).to_string(),
         modo_depois: modo_texto(b.modo).to_string(),
@@ -495,7 +558,7 @@ pub fn comparar(
         third_party_antes: a.third_party,
         third_party_depois: b.third_party,
     };
-    Ok(comparar_estruturas(
+    Ok(comparar_estruturas_com_mapa(
         &a.est,
         &b.est,
         &a.nome,
@@ -503,6 +566,7 @@ pub fn comparar(
         chave,
         proveniencia,
         itens,
+        mapa,
     ))
 }
 
@@ -539,6 +603,15 @@ fn extrair_lado(
     escopo: Escopo,
     modo_uses: ModoUses,
 ) -> Result<LadoExtraido, ErroLente> {
+    extrair_lado_com_workspace(raiz, escopo, modo_uses, montar_grafo_workspace)
+}
+
+fn extrair_lado_com_workspace(
+    raiz: &std::path::Path,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    montar: impl FnOnce(&std::path::Path) -> Result<GrafoWorkspace, ErroLente>,
+) -> Result<LadoExtraido, ErroLente> {
     // Prompt 0075 (lição do 0047): canonicalizar a raiz — a detecção de alvo casa
     // o `Cargo.toml` do membro contra os `manifest_path` (absolutos) do `cargo
     // metadata`; com raiz relativa (ex.: `--antes lab/...`), os dirs dos membros
@@ -571,10 +644,10 @@ fn extrair_lado(
                 grafo,
                 fantasmas,
                 falhas,
-            } = montar_grafo_workspace(raiz)?;
-            let membros = lente_infra::enumerar_membros(raiz).unwrap_or_default();
-            let n_crates = membros.len();
-            let nomes: Vec<String> = membros.iter().map(|m| m.nome.clone()).collect();
+                crates_por_pacote,
+            } = montar(raiz)?;
+            let n_crates = crates_por_pacote.len() + falhas.len();
+            let nomes: Vec<String> = crates_por_pacote.into_values().collect();
             let fant: Vec<Path> = fantasmas.iter().map(|f| f.path.clone()).collect();
             let falhas_txt: Vec<String> = falhas
                 .iter()
@@ -701,8 +774,16 @@ fn resolver_uma_colisao(grafo: Grafo, path_colidente: &Path) -> Result<Grafo, Er
 
     let viz = construir_vizinhanca(&grafo, id_a, id_b);
     // Buscar os Nos do par (referências; precisamos depois para investigar).
-    let no_a = grafo.nodes.iter().find(|n| n.id == id_a).expect("id_a existe");
-    let no_b = grafo.nodes.iter().find(|n| n.id == id_b).expect("id_b existe");
+    let no_a = grafo
+        .nodes
+        .iter()
+        .find(|n| n.id == id_a)
+        .expect("id_a existe");
+    let no_b = grafo
+        .nodes
+        .iter()
+        .find(|n| n.id == id_b)
+        .expect("id_b existe");
     let par = ParColidente { a: no_a, b: no_b };
 
     // E2 em quarentena (laudo 0014): fontes sempre None aqui.
@@ -742,6 +823,97 @@ fn clonar(a: &Aresta) -> Aresta {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Double da fronteira I/O: testes de fiação não exigem fork instalado nem
+    // configuração Cargo do host. A política real de cache é testada no L3.
+    fn ler_fixture_cache(
+        m: &lente_infra::MembroWorkspace,
+        raiz: &std::path::Path,
+        tc: &str,
+    ) -> Result<Grafo, lente_infra::ErroWorkspace> {
+        let chave = lente_infra::chave_cache(m, raiz, tc)?;
+        let json = std::fs::read_to_string(
+            raiz.join("target/lente-cache")
+                .join(format!("{chave}.json")),
+        )
+        .map_err(lente_infra::ErroWorkspace::Io)?;
+        lente_infra::desserializar_grafo(&json).map_err(lente_infra::ErroWorkspace::Adaptador)
+    }
+
+    fn montar_fixture(raiz: &std::path::Path) -> Result<GrafoWorkspace, ErroLente> {
+        montar_grafo_workspace_com_io(raiz, lente_infra::versao_toolchain, ler_fixture_cache)
+    }
+
+    #[test]
+    fn toolchain_por_membro_e_por_raiz_chega_ao_cache() {
+        let base =
+            std::env::temp_dir().join(format!("lente_wiring_toolchains_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        let mut consultados = Vec::new();
+        for lado in ["antes", "depois"] {
+            let raiz = base.join(lado);
+            std::fs::create_dir_all(&raiz).unwrap();
+            std::fs::write(
+                raiz.join("Cargo.toml"),
+                "[workspace]\nmembers = [\"a\", \"b\"]\n",
+            )
+            .unwrap();
+            let cache = raiz.join("target/lente-cache");
+            std::fs::create_dir_all(&cache).unwrap();
+            for nome in ["a", "b"] {
+                let dir = raiz.join(nome);
+                std::fs::create_dir_all(dir.join("src")).unwrap();
+                std::fs::write(
+                    dir.join("Cargo.toml"),
+                    format!("[package]\nname=\"{nome}\"\nversion=\"0.0.0\"\n"),
+                )
+                .unwrap();
+                std::fs::write(dir.join("src/lib.rs"), "").unwrap();
+            }
+            // Materializar todos os membros antes de calcular o snapshot do workspace.
+            for nome in ["a", "b"] {
+                let dir = raiz.join(nome);
+                let membro = lente_infra::MembroWorkspace {
+                    nome: nome.into(),
+                    dir,
+                };
+                let versao = format!("rustc {lado}-{nome}");
+                let chave = lente_infra::chave_cache(&membro, &raiz, &versao).unwrap();
+                let json = format!(
+                    r#"{{"crate":"{nome}","nodes":[{{"id":1,"path":"{nome}","name":"{nome}","kind":"crate","visibility":"pub"}}],"edges":[]}}"#
+                );
+                std::fs::write(cache.join(format!("{chave}.json")), json).unwrap();
+            }
+            let resultado = montar_grafo_workspace_com_io(
+                &raiz,
+                |dir| {
+                    assert_eq!(dir.parent(), Some(raiz.as_path()));
+                    consultados.push(dir.to_path_buf());
+                    Ok(format!(
+                        "rustc {lado}-{}",
+                        dir.file_name().unwrap().to_str().unwrap()
+                    ))
+                },
+                ler_fixture_cache,
+            )
+            .unwrap();
+            assert!(resultado.falhas.is_empty(), "{:?}", resultado.falhas);
+            assert_eq!(resultado.grafo.nodes.len(), 2);
+            // A falha de descoberta continua fatal e mantém seu diagnóstico.
+            let erro = montar_grafo_workspace_com_toolchain(&raiz, |_| {
+                Err(lente_infra::ErroWorkspace::Toolchain("indisponível".into()))
+            })
+            .unwrap_err();
+            assert!(matches!(
+                erro,
+                ErroLente::Workspace(lente_infra::ErroWorkspace::Toolchain(_))
+            ));
+            assert!(erro.to_string().contains("indisponível"));
+        }
+        assert_eq!(consultados.len(), 4);
+        assert_ne!(consultados[0], consultados[2]);
+        std::fs::remove_dir_all(base).unwrap();
+    }
 
     /// JSON sintético com colisão tipo `Display+Debug` mais usuários
     /// distintos — vizinhança disjunta por construção, trait nos nós.
@@ -832,6 +1004,171 @@ mod tests {
         }
     }
 
+    /// Cache sintético exercita L3 → resolução → união → filtro sem exigir o fork.
+    struct WorkspaceIdentidade(std::path::PathBuf);
+
+    impl Drop for WorkspaceIdentidade {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn workspace_identidade(pacote: &str, canonico: &str, falha: bool) -> WorkspaceIdentidade {
+        let raiz = std::env::temp_dir().join(format!(
+            "lente-identidade-{}-{}-{}",
+            std::process::id(),
+            pacote,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(raiz.join("target/lente-cache")).unwrap();
+        std::fs::write(
+            raiz.join("Cargo.toml"),
+            "[workspace]\nmembers = [\"consumidor\", \"alvo\"]\n",
+        )
+        .unwrap();
+        for (dir, nome, lib) in [
+            ("consumidor", "a-consumidor", "a_consumidor"),
+            ("alvo", pacote, canonico),
+        ] {
+            std::fs::create_dir_all(raiz.join(dir).join("src")).unwrap();
+            let lib = if nome == "meu-pacote" {
+                String::new()
+            } else {
+                format!("[lib]\nname = {lib:?}\n")
+            };
+            std::fs::write(
+                raiz.join(dir).join("Cargo.toml"),
+                format!(
+                    "[package]\nname = {nome:?}\nversion = \"0.0.0\"\nedition = \"2024\"\n{lib}"
+                ),
+            )
+            .unwrap();
+            std::fs::write(raiz.join(dir).join("src/lib.rs"), "pub struct Item;\n").unwrap();
+        }
+        for membro in lente_infra::enumerar_membros(&raiz).unwrap() {
+            let versao = lente_infra::versao_toolchain(&membro.dir).unwrap();
+            let json = if membro.nome == "a-consumidor" {
+                format!(
+                    r#"{{"crate":"a_consumidor","nodes":[
+                    {{"id":0,"path":"a_consumidor","name":"a_consumidor","kind":"crate","visibility":"pub"}},
+                    {{"id":1,"path":"{canonico}::Item","name":"Item","kind":"struct","visibility":"priv"}},
+                    {{"id":2,"path":"{canonico}::Sumiu","name":"Sumiu","kind":"struct","visibility":"pub"}},
+                    {{"id":3,"path":"externo::Tipo","name":"Tipo","kind":"struct","visibility":"pub"}}
+                ],"edges":[
+                    {{"id_from":0,"from":"a_consumidor","id_to":1,"to":"{canonico}::Item","relation":"uses","uses_kind":"reference"}},
+                    {{"id_from":0,"from":"a_consumidor","id_to":2,"to":"{canonico}::Sumiu","relation":"uses","uses_kind":"reference"}},
+                    {{"id_from":0,"from":"a_consumidor","id_to":3,"to":"externo::Tipo","relation":"uses","uses_kind":"reference"}}
+                ]}}"#
+                )
+            } else if falha {
+                "JSON inválido".to_string()
+            } else {
+                format!(
+                    r#"{{"crate":"{canonico}","nodes":[
+                    {{"id":0,"path":"{canonico}","name":"{canonico}","kind":"crate","visibility":"pub"}},
+                    {{"id":1,"path":"{canonico}::Item","name":"Item","kind":"struct","visibility":"pub"}}
+                ],"edges":[{{"id_from":0,"from":"{canonico}","id_to":1,"to":"{canonico}::Item","relation":"owns"}}]}}"#
+                )
+            };
+            let chave = lente_infra::chave_cache(&membro, &raiz, &versao).unwrap();
+            std::fs::write(
+                raiz.join("target/lente-cache")
+                    .join(format!("{chave}.json")),
+                json,
+            )
+            .unwrap();
+        }
+        WorkspaceIdentidade(raiz)
+    }
+
+    #[test]
+    fn workspace_identidade_canonica_define_detecta_fantasma_e_filtra() {
+        use lente_core::entities::grafo::Visibility;
+        for (pacote, canonico) in [
+            ("meu-pacote", "meu_pacote"),
+            ("pacote-publicado", "biblioteca_interna"),
+            ("coincidente", "coincidente"),
+        ] {
+            let fixture = workspace_identidade(pacote, canonico, false);
+            let gw = montar_fixture(&fixture.0).unwrap();
+            assert!(gw.falhas.is_empty());
+            assert_eq!(gw.crates_por_pacote[pacote], canonico);
+            let item = format!("{canonico}::Item");
+            let definicoes: Vec<_> = gw
+                .grafo
+                .nodes
+                .iter()
+                .filter(|n| n.path.as_str() == item)
+                .collect();
+            assert_eq!(definicoes.len(), 1);
+            // Referência priv do consumidor ordenado primeiro não pode vencer.
+            assert_eq!(definicoes[0].visibility, Visibility::Pub);
+            assert_eq!(definicoes[0].crate_name, canonico);
+            assert_eq!(gw.fantasmas.len(), 1);
+            assert_eq!(gw.fantasmas[0].path.as_str(), format!("{canonico}::Sumiu"));
+            assert_eq!(gw.fantasmas[0].referenciado_por, ["a_consumidor"]);
+            let lado = extrair_lado_com_workspace(
+                &fixture.0,
+                Escopo::SeuCodigo,
+                ModoUses::Todas,
+                montar_fixture,
+            )
+            .unwrap();
+            assert_eq!(lado.crates, 2);
+            assert_eq!(lado.third_party, 1);
+            assert!(lado.grafo.nodes.iter().any(|n| n.path.as_str() == item));
+            assert!(
+                lado.grafo
+                    .nodes
+                    .iter()
+                    .any(|n| n.path.as_str() == format!("{canonico}::Sumiu"))
+            );
+            assert!(
+                !lado
+                    .grafo
+                    .nodes
+                    .iter()
+                    .any(|n| n.path.as_str() == "externo::Tipo")
+            );
+            assert!(
+                lado.grafo
+                    .edges
+                    .iter()
+                    .all(|a| lado.grafo.nodes.iter().any(|n| n.id == a.id_from)
+                        && lado.grafo.nodes.iter().any(|n| n.id == a.id_to))
+            );
+        }
+    }
+
+    #[test]
+    fn workspace_falha_preserva_pacote_sem_inventar_identidade() {
+        let fixture = workspace_identidade("pacote-com-falha", "nome_customizado", true);
+        let gw = montar_fixture(&fixture.0).unwrap();
+        assert_eq!(gw.falhas.len(), 1);
+        assert_eq!(gw.falhas[0].crate_name, "pacote-com-falha");
+        assert!(!gw.crates_por_pacote.contains_key("pacote-com-falha"));
+        // Sem extração não sabemos que nome_customizado é um membro.
+        assert!(gw.fantasmas.is_empty());
+        let lado = extrair_lado_com_workspace(
+            &fixture.0,
+            Escopo::SeuCodigo,
+            ModoUses::Todas,
+            montar_fixture,
+        )
+        .unwrap();
+        assert_eq!(lado.crates, 2);
+        assert!(lado.falhas[0].starts_with("pacote-com-falha — "));
+        assert!(
+            lado.grafo
+                .nodes
+                .iter()
+                .all(|n| n.path.as_str() == "a_consumidor")
+        );
+    }
+
     // ---- Grafo de workspace (prompt 0045) -----------------------------------
 
     /// E2E real (requer fork): monta o grafo de workspace do projeto-lente.
@@ -896,11 +1233,14 @@ mod tests {
                 && e.from.as_str().starts_with("lente_infra")
                 && e.to.as_str().starts_with("lente_core")
         });
-        assert!(cross, "esperava aresta cross-crate lente_infra → lente_core");
+        assert!(
+            cross,
+            "esperava aresta cross-crate lente_infra → lente_core"
+        );
     }
 
-    /// E2E (requer fork): a segunda montagem (cache morno) é rápida — sem
-    /// rodar o fork. Limiar generoso (quente ~70ms no laudo 0040).
+    /// E2E (requer fork): limiar de cache quente só se todas as entradas
+    /// estiverem no domínio de reutilização. Bypass não promete esse tempo.
     #[test]
     #[ignore]
     fn e2e_montar_grafo_workspace_cache_morno_e_rapido() {
@@ -908,13 +1248,25 @@ mod tests {
             .parent()
             .unwrap()
             .to_path_buf();
+        let mut cache = lente_infra::CacheExtracao::default();
+        let reutilizavel = lente_infra::enumerar_membros(&raiz)
+            .unwrap()
+            .iter()
+            .all(|m| {
+                let tc = lente_infra::versao_toolchain(&m.dir).unwrap();
+                cache
+                    .avaliar(m, &raiz, &tc)
+                    .unwrap()
+                    .motivos_bypass
+                    .is_empty()
+            });
         let _ = montar_grafo_workspace(&raiz).expect("primeira (aquece o cache)");
         let t = std::time::Instant::now();
         let gw = montar_grafo_workspace(&raiz).expect("segunda (cache morno)");
         let dt = t.elapsed();
         assert!(gw.grafo.nodes.len() > 300);
         assert!(
-            dt.as_secs() < 5,
+            !reutilizavel || dt.as_secs() < 5,
             "cache morno deveria ser rápido, veio {:?}",
             dt
         );
@@ -944,7 +1296,7 @@ mod tests {
             soltos: vec![std::path::PathBuf::from("/r/a/src/solto.rs")],
             nao_fonte: vec![std::path::PathBuf::from("/r/README.md")],
         };
-        let r = montar_resultado_diff(&grafo, mapa, Vec::new());
+        let r = montar_resultado_diff(&grafo, mapa, Vec::new(), Vec::new());
 
         // O tocado t::A traz seu raio (t::B no montante).
         assert_eq!(r.tocados.len(), 1);
@@ -955,9 +1307,154 @@ mod tests {
         assert!(r.combinado.jusante.is_empty());
         // Censo e fantasmas passam adiante intactos.
         assert_eq!(r.ligados, vec![std::path::PathBuf::from("/r/a/src/lig.rs")]);
-        assert_eq!(r.soltos, vec![std::path::PathBuf::from("/r/a/src/solto.rs")]);
+        assert_eq!(
+            r.soltos,
+            vec![std::path::PathBuf::from("/r/a/src/solto.rs")]
+        );
         assert_eq!(r.nao_fonte, vec![std::path::PathBuf::from("/r/README.md")]);
         assert!(r.fantasmas.is_empty());
+    }
+
+    /// Exercita analisar_diff de ponta a ponta com git real e cache sintético,
+    /// sem invocar o fork. Detecta descarte de falhas na própria orquestração.
+    #[test]
+    fn analisar_diff_propaga_falhas_do_cache_e_rejeita_falha_total() {
+        let fixture = workspace_identidade("meu-pacote", "meu_pacote", false);
+        let raiz = &fixture.0;
+        for args in [
+            vec!["init", "-q"],
+            vec![
+                "-c",
+                "user.name=Teste",
+                "-c",
+                "user.email=teste@example.invalid",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "base",
+            ],
+        ] {
+            let saida = std::process::Command::new("git")
+                .args(args)
+                .current_dir(raiz)
+                .output()
+                .unwrap();
+            assert!(
+                saida.status.success(),
+                "{}",
+                String::from_utf8_lossy(&saida.stderr)
+            );
+        }
+        let completo = analisar_diff(raiz).unwrap();
+        assert_eq!(completo.completude(), CompletudeDiff::Completa);
+        let membros = lente_infra::enumerar_membros(raiz).unwrap();
+        let invalidar = |nome: &str| {
+            let membro = membros.iter().find(|m| m.nome == nome).unwrap();
+            let versao = lente_infra::versao_toolchain(&membro.dir).unwrap();
+            let chave = lente_infra::chave_cache(membro, raiz, &versao).unwrap();
+            std::fs::write(
+                raiz.join("target/lente-cache")
+                    .join(format!("{chave}.json")),
+                "JSON inválido",
+            )
+            .unwrap();
+        };
+        invalidar("meu-pacote");
+        let parcial = analisar_diff(raiz).unwrap();
+        assert_eq!(parcial.completude(), CompletudeDiff::Parcial);
+        assert_eq!(parcial.falhas.len(), 1);
+        assert_eq!(parcial.falhas[0].crate_name, "meu-pacote");
+        assert!(!parcial.falhas[0].motivo.is_empty());
+        let motivo = parcial.falhas[0].motivo.clone();
+        invalidar("a-consumidor");
+        match analisar_diff(raiz).unwrap_err() {
+            ErroLente::NenhumCrateAnalisado(falhas) => {
+                assert_eq!(falhas.len(), 2);
+                assert!(
+                    falhas
+                        .iter()
+                        .any(|f| f.crate_name == "meu-pacote" && f.motivo == motivo)
+                );
+            }
+            outro => panic!("erro inesperado: {outro}"),
+        }
+    }
+
+    #[test]
+    fn diff_completude_preserva_resultado_e_falhas() {
+        let grafo = lente_infra::desserializar_grafo(
+            r#"{"crate":"ok","nodes":[
+            {"id":1,"path":"ok::A","name":"A","kind":"fn","visibility":"pub"},
+            {"id":2,"path":"ok::B","name":"B","kind":"fn","visibility":"pub"}
+        ],"edges":[{"from":"ok::B","id_from":2,"to":"ok::A","id_to":1,"relation":"uses"}]}"#,
+        )
+        .unwrap();
+        for falhas in [
+            vec![],
+            vec![FalhaCrate {
+                crate_name: "falhou".into(),
+                motivo: "colisão não resolvida: X".into(),
+            }],
+        ] {
+            let gw = finalizar_grafo_workspace(
+                vec![GrafoCrate {
+                    crate_name: "ok".into(),
+                    grafo: grafo.clone(),
+                }],
+                falhas.clone(),
+                BTreeMap::new(),
+            )
+            .unwrap();
+            let mapa = MapeamentoDiff {
+                tocados: vec![lente_core::domain::mapeamento::NoTocado {
+                    id: 1,
+                    path: Path::from("ok::A"),
+                }],
+                ligados: vec![],
+                soltos: vec![],
+                nao_fonte: vec![],
+            };
+            let r = montar_resultado_diff(&gw.grafo, mapa, gw.fantasmas, gw.falhas);
+            assert_eq!(
+                r.completude(),
+                if falhas.is_empty() {
+                    CompletudeDiff::Completa
+                } else {
+                    CompletudeDiff::Parcial
+                }
+            );
+            assert_eq!(r.falhas, falhas);
+            assert_eq!(r.tocados.len(), 1);
+            assert_eq!(r.combinado.montante, vec![(Path::from("ok::B"), 1)]);
+        }
+    }
+
+    #[test]
+    fn nenhum_crate_analisado_e_erro_com_todos_os_motivos() {
+        let falhas = vec![
+            FalhaCrate {
+                crate_name: "a".into(),
+                motivo: "extração falhou".into(),
+            },
+            FalhaCrate {
+                crate_name: "b".into(),
+                motivo: "colisão não resolvida".into(),
+            },
+        ];
+        let erro = finalizar_grafo_workspace(vec![], falhas.clone(), BTreeMap::new()).unwrap_err();
+        let texto = erro.to_string();
+        assert!(texto.contains("nenhum crate pôde ser analisado"));
+        for f in &falhas {
+            assert!(texto.contains(&f.crate_name));
+            assert!(texto.contains(&f.motivo));
+        }
+        assert!(matches!(erro, ErroLente::NenhumCrateAnalisado(fs) if fs == falhas));
+        assert!(matches!(
+            finalizar_grafo_workspace(vec![], vec![], BTreeMap::new()),
+            Err(ErroLente::NenhumCrateAnalisado(_))
+        ));
     }
 
     /// `ErroLente::Diff` traduz via `Display` (cobre a variante nova).
@@ -1013,10 +1510,7 @@ mod tests {
         )
         .expect("pipeline contra lente_core real");
         // Sanidade: o raio se refere ao alvo pedido (que NÃO é colidente).
-        assert_eq!(
-            raio.alvo.as_str(),
-            "lente_core::domain::raio::Raio"
-        );
+        assert_eq!(raio.alvo.as_str(), "lente_core::domain::raio::Raio");
     }
 
     /// Verificação crucial complementar: roda o pipeline contra o JSON
@@ -1030,7 +1524,11 @@ mod tests {
 
         // Antes do pipeline: t::T::fmt existe em 2 nós.
         assert_eq!(
-            grafo.nodes.iter().filter(|n| n.path.as_str() == "t::T::fmt").count(),
+            grafo
+                .nodes
+                .iter()
+                .filter(|n| n.path.as_str() == "t::T::fmt")
+                .count(),
             2,
             "antes: dois nós colidem em t::T::fmt"
         );
@@ -1042,16 +1540,26 @@ mod tests {
 
         // Após o pipeline: t::T::fmt NÃO EXISTE; <Display>/<Debug> existem.
         assert_eq!(
-            grafo.nodes.iter().filter(|n| n.path.as_str() == "t::T::fmt").count(),
+            grafo
+                .nodes
+                .iter()
+                .filter(|n| n.path.as_str() == "t::T::fmt")
+                .count(),
             0,
             "colisão t::T::fmt deve ter sumido"
         );
         assert!(
-            grafo.nodes.iter().any(|n| n.path.as_str() == "t::T::<Display>::fmt"),
+            grafo
+                .nodes
+                .iter()
+                .any(|n| n.path.as_str() == "t::T::<Display>::fmt"),
             "deve existir t::T::<Display>::fmt"
         );
         assert!(
-            grafo.nodes.iter().any(|n| n.path.as_str() == "t::T::<Debug>::fmt"),
+            grafo
+                .nodes
+                .iter()
+                .any(|n| n.path.as_str() == "t::T::<Debug>::fmt"),
             "deve existir t::T::<Debug>::fmt"
         );
     }
@@ -1203,7 +1711,10 @@ mod tests {
         );
         match r {
             Err(ErroLente::Raio(_)) => {}
-            outro => panic!("esperava ErroLente::Raio (AlvoInexistente), veio {:?}", outro),
+            outro => panic!(
+                "esperava ErroLente::Raio (AlvoInexistente), veio {:?}",
+                outro
+            ),
         }
     }
 
@@ -1286,8 +1797,7 @@ mod tests {
 
         // O ciclo {t::a, t::b}.
         assert_eq!(r.ciclos.len(), 1);
-        let modulos_ciclo: Vec<&str> =
-            r.ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
+        let modulos_ciclo: Vec<&str> = r.ciclos[0].modulos.iter().map(|p| p.as_str()).collect();
         assert_eq!(modulos_ciclo, vec!["t::a", "t::b"]);
     }
 
@@ -1338,8 +1848,7 @@ mod tests {
         assert_eq!(r_completo.ciclos, r_seu.ciclos);
 
         // O escopo MUDA quais módulos aparecem na listagem.
-        let mods_completo: Vec<&str> =
-            r_completo.modulos.iter().map(|p| p.as_str()).collect();
+        let mods_completo: Vec<&str> = r_completo.modulos.iter().map(|p| p.as_str()).collect();
         let mods_seu: Vec<&str> = r_seu.modulos.iter().map(|p| p.as_str()).collect();
         assert!(mods_completo.contains(&"core::fmt"));
         assert!(!mods_seu.contains(&"core::fmt"));
@@ -1442,7 +1951,11 @@ mod tests {
             ModoUses::SoReferencia,
         )
         .unwrap();
-        assert!(r.ciclos.is_empty(), "ciclo deve sumir; veio: {:?}", r.ciclos);
+        assert!(
+            r.ciclos.is_empty(),
+            "ciclo deve sumir; veio: {:?}",
+            r.ciclos
+        );
         let deps: Vec<(&str, &str)> = r
             .dependencias
             .iter()
@@ -1528,7 +2041,12 @@ mod tests {
         );
         let Ok(estrut) = r else { return };
         // Ancorado no laudo 0033: SCC de 42 módulos.
-        let maior = estrut.ciclos.iter().map(|c| c.modulos.len()).max().unwrap_or(0);
+        let maior = estrut
+            .ciclos
+            .iter()
+            .map(|c| c.modulos.len())
+            .max()
+            .unwrap_or(0);
         assert_eq!(
             maior, 42,
             "esperava o SCC de 42 do laudo 0033; veio {}",
@@ -1550,7 +2068,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(r.ordem.len(), r.modulos.len(), "ordem tem mesmo tamanho que modulos");
+        assert_eq!(
+            r.ordem.len(),
+            r.modulos.len(),
+            "ordem tem mesmo tamanho que modulos"
+        );
         let nomes_ordem: Vec<&str> = r.ordem.iter().map(|p| p.as_str()).collect();
         // `t` é a raiz (crate); não tem deps de saída → fica no início ou
         // fim conforme topológica do agregado. O bloco {t::a, t::b}
@@ -1565,8 +2087,7 @@ mod tests {
 
         // Bloco do SCC: {t::a, t::b}.
         assert_eq!(r.blocos.len(), 1);
-        let bloco_nomes: Vec<&str> =
-            r.blocos[0].iter().map(|p| p.as_str()).collect();
+        let bloco_nomes: Vec<&str> = r.blocos[0].iter().map(|p| p.as_str()).collect();
         assert_eq!(bloco_nomes, vec!["t::a", "t::b"]);
     }
 

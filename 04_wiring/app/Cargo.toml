@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 # L4 (orquestração) + o ErroLente agregado.
 lente_wiring = { path = ".." }
+lente_infra = { path = "../../03_infra" }
 # L1 (vocabulário de consulta, Path).
 lente_core = { path = "../../01_core/core" }
 # L2 (apresentação pura — args clap + formatadores).

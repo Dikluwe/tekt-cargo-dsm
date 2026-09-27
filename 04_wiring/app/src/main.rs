@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash 41cdbe2d
+//! @prompt-hash 1169eaa7
 //! @layer L4
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
 //! Camada:  L4 — Fiação (app/ponto de composição). É o crate que **compõe** a
 //!          apresentação (`lente_cli`, L2) com a orquestração (`lente_wiring`,
@@ -21,11 +21,23 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use lente_catalogo as cat;
-use lente_core::entities::grafo::Path as PathGrafo;
 use lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses};
+use lente_core::entities::grafo::Path as PathGrafo;
 
 fn main() -> ExitCode {
     let cli = args::Cli::parse();
+    if let Some(config) = &cli.analise_artefatos {
+        return match lente_wiring::analises::analisar_arquivo(config) {
+            Ok(resultado) => {
+                println!("{}", resultado.json);
+                ExitCode::from(resultado.codigo)
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                ExitCode::from(3)
+            }
+        };
+    }
     match run(cli) {
         Ok(s) => {
             println!("{}", s);
@@ -83,6 +95,16 @@ fn escolher_modo_uses(cli: &args::Cli) -> ModoUses {
 
 /// Composição testável: a partir de `Cli`, decide e produz stdout ou erro.
 fn run(cli: args::Cli) -> Result<String, SaidaErro> {
+    if cli.provedor.as_deref().is_some_and(|p| p != "rust") {
+        return run_provedor(&cli);
+    }
+    if cli.config_provedor.is_some() {
+        return Err(SaidaErro {
+            codigo: 2,
+            mensagem: cat::ERRO_CONFIG_PROVEDOR.into(),
+        });
+    }
+
     // Modo diff (prompt 0047): opera na raiz do repo, não usa `--grafo`/
     // `--pacote`. Roteado antes de `construir_fonte` (não há fonte a construir).
     if cli.diff {
@@ -124,6 +146,55 @@ fn run(cli: args::Cli) -> Result<String, SaidaErro> {
             mensagem: erro::traduzir(&e, &contexto),
         }),
     }
+}
+
+fn run_provedor(cli: &args::Cli) -> Result<String, SaidaErro> {
+    use lente_wiring::provedores::{ConsultaProvedor, analisar_provedor};
+    if cli.grafo.is_some()
+        || cli.pacote.is_some()
+        || cli.diff
+        || cli.comparar
+        || cli.filtrar_stdlib
+        || cli.so_referencia
+        || cli.html
+        || cli.text
+        || cli.repo.is_some()
+        || cli.antes.is_some()
+        || cli.depois.is_some()
+        || cli.saida.is_some()
+        || cli.vista.is_some()
+        || cli.mapa_correspondencia.is_some()
+    {
+        return Err(SaidaErro {
+            codigo: 2,
+            mensagem: cat::ERRO_OPCOES_PROVEDOR.into(),
+        });
+    }
+    let config = cli.config_provedor.as_ref().ok_or_else(|| SaidaErro {
+        codigo: 2,
+        mensagem: cat::ERRO_CONFIG_PROVEDOR.into(),
+    })?;
+    let consulta = if cli.ranking {
+        ConsultaProvedor::Ranking { top: cli.top }
+    } else if cli.estrutura {
+        ConsultaProvedor::Estrutura
+    } else {
+        match (&cli.alvo, cli.alvo_id) {
+            (Some(a), None) => ConsultaProvedor::Raio { alvo: a.clone() },
+            (None, Some(alvo_id)) => ConsultaProvedor::RaioId { alvo_id },
+            _ => {
+                return Err(SaidaErro {
+                    codigo: 2,
+                    mensagem: cat::ERRO_OPCOES_PROVEDOR.into(),
+                });
+            }
+        }
+    };
+    let texto = lente_infra::extracao::ler_texto(config).map_err(|e| err_arquivo(config, e))?;
+    analisar_provedor(cli.provedor.as_deref().unwrap(), &texto, consulta).map_err(|e| SaidaErro {
+        codigo: if e.categoria() == "parametros" { 2 } else { 1 },
+        mensagem: e.to_string(),
+    })
 }
 
 /// Pipeline do modo estrutura (prompt 0031, ampliado pelo 0034). Sem alvo
@@ -198,7 +269,16 @@ fn run_comparar(cli: &args::Cli) -> Result<String, SaidaErro> {
         Escopo::SeuCodigo
     };
     let modo_uses = escolher_modo_uses(cli);
-    match lente_wiring::comparar(antes, depois, escopo, modo_uses) {
+    let mapa = match cli.mapa_correspondencia.as_deref() {
+        Some(path) => Some(
+            lente_infra::ler_mapa_correspondencia(path).map_err(|e| SaidaErro {
+                codigo: 2,
+                mensagem: e.to_string(),
+            })?,
+        ),
+        None => None,
+    };
+    match lente_wiring::comparar(antes, depois, escopo, modo_uses, mapa.as_ref()) {
         Ok(comp) => {
             let modo = saida::Modo {
                 text: cli.text,
@@ -216,10 +296,8 @@ fn run_comparar(cli: &args::Cli) -> Result<String, SaidaErro> {
             };
             Err(SaidaErro {
                 codigo: 1,
-                mensagem: cat::COMPARAR_ERRO_LADO.render(&[
-                    ("lado", lado),
-                    ("detalhe", &erro::traduzir(&e.erro, &ctx)),
-                ]),
+                mensagem: cat::COMPARAR_ERRO_LADO
+                    .render(&[("lado", lado), ("detalhe", &erro::traduzir(&e.erro, &ctx))]),
             })
         }
     }
@@ -290,8 +368,7 @@ fn run_diff(cli: &args::Cli) -> Result<String, SaidaErro> {
 fn construir_fonte(cli: &args::Cli) -> Result<FonteGrafo, SaidaErro> {
     match (&cli.grafo, &cli.pacote) {
         (Some(path), None) => {
-            let conteudo = std::fs::read_to_string(path)
-                .map_err(|e| err_arquivo(path, e))?;
+            let conteudo = std::fs::read_to_string(path).map_err(|e| err_arquivo(path, e))?;
             Ok(FonteGrafo::Json(conteudo))
         }
         (None, Some(p)) => Ok(FonteGrafo::Pacote(p.clone())),
@@ -350,10 +427,7 @@ mod tests {
         use std::sync::atomic::{AtomicUsize, Ordering};
         static SEQ: AtomicUsize = AtomicUsize::new(0);
         let seq = SEQ.fetch_add(1, Ordering::SeqCst);
-        let dir = std::env::temp_dir().join(format!(
-            "lente_cli_test_{}",
-            std::process::id()
-        ));
+        let dir = std::env::temp_dir().join(format!("lente_cli_test_{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join(format!("g_{}.json", seq));
         std::fs::write(&path, conteudo).unwrap();
@@ -362,6 +436,9 @@ mod tests {
 
     fn cli_padrao(grafo: std::path::PathBuf) -> args::Cli {
         args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: Some(grafo),
             pacote: None,
             alvo: None,
@@ -381,6 +458,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         }
     }
@@ -426,7 +504,10 @@ mod tests {
         cli.alvo = Some("nao::existe".to_string());
         let err = run(cli).unwrap_err();
         assert_eq!(err.codigo, 1);
-        assert!(err.mensagem.contains("Alvo 'nao::existe' não existe no grafo"));
+        assert!(
+            err.mensagem
+                .contains("Alvo 'nao::existe' não existe no grafo")
+        );
     }
 
     #[test]
@@ -441,6 +522,9 @@ mod tests {
     #[test]
     fn run_sem_grafo_e_sem_pacote_da_erro_de_validacao() {
         let mut cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: None,
             alvo: Some("foo".to_string()),
@@ -460,6 +544,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         cli.alvo = Some("foo".to_string());
@@ -472,7 +557,12 @@ mod tests {
     #[test]
     fn run_arquivo_inexistente_da_erro_de_pipeline() {
         let cli = args::Cli {
-            grafo: Some(std::path::PathBuf::from("/tmp/__naoexiste_lente_cli__.json")),
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
+            grafo: Some(std::path::PathBuf::from(
+                "/tmp/__naoexiste_lente_cli__.json",
+            )),
             pacote: None,
             alvo: Some("x".to_string()),
             alvo_id: None,
@@ -491,6 +581,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         let err = run(cli).unwrap_err();
@@ -504,6 +595,9 @@ mod tests {
     #[ignore]
     fn e2e_pacote_lente_core_alvo_erro_raio_funciona() {
         let cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: Some("lente_core".to_string()),
             alvo: Some("lente_core::domain::raio::ErroRaio".to_string()),
@@ -523,6 +617,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E deve funcionar");
@@ -685,6 +780,9 @@ mod tests {
     #[ignore]
     fn e2e_estrutura_lente_core_texto() {
         let cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: Some("lente_core".to_string()),
             alvo: None,
@@ -704,6 +802,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E estrutura deve funcionar");
@@ -720,6 +819,9 @@ mod tests {
         let saida = std::env::temp_dir().join("lente-e2e-estrutura-0071.html");
         let _ = std::fs::remove_file(&saida);
         let cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: Some("lente_core".to_string()),
             alvo: None,
@@ -739,6 +841,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         let msg = run(cli).expect("E2E --html deve funcionar");
@@ -763,7 +866,10 @@ mod tests {
             "default da vista é seu-codigo"
         );
         assert!(!html.contains("\"core::fmt\""), "sysroot fora do recorte");
-        assert!(html.contains("--completo"), "cabeçalho diz como obter o completo");
+        assert!(
+            html.contains("--completo"),
+            "cabeçalho diz como obter o completo"
+        );
         // Prompt 0073: raio por módulo embutido (índices na ordem) e coerente —
         // `entities::grafo` é dependido por vários (montante não-vazio).
         assert!(html.contains("\"raios\":["), "raios embutidos");
@@ -802,11 +908,18 @@ mod tests {
     fn e2e_comparar_lente_core_vs_si_mesmo() {
         let raiz = raiz_lente_core();
         let s = run(cli_comparar(raiz.clone(), raiz)).expect("comparar vs si mesmo");
-        assert!(s.contains("só-antes: 0"), "paridade total — sem só-antes:\n{}", s);
+        assert!(
+            s.contains("só-antes: 0"),
+            "paridade total — sem só-antes:\n{}",
+            s
+        );
         assert!(s.contains("só-depois: 0"), "paridade total — sem só-depois");
         assert!(!s.contains("pareados: 0"), "deve haver pareados");
         assert!(s.contains("antes=crate"), "modo crate declarado");
-        assert!(s.contains("chave=normalizada"), "crate×crate usa chave normalizada");
+        assert!(
+            s.contains("chave=normalizada"),
+            "crate×crate usa chave normalizada"
+        );
     }
 
     /// E2E (prompt 0075): o **workspace** da lente contra ele mesmo — detecção de
@@ -821,14 +934,34 @@ mod tests {
             .expect("workspace root")
             .to_path_buf();
         let s = run(cli_comparar(raiz.clone(), raiz)).expect("comparar workspace vs si");
-        assert!(s.contains("antes=workspace"), "modo workspace declarado:\n{}", s);
-        assert!(s.contains("chave=path_completo"), "workspace usa path completo");
-        assert!(s.contains("só-antes: 0") && s.contains("só-depois: 0"), "paridade total");
+        assert!(
+            s.contains("antes=workspace"),
+            "modo workspace declarado:\n{}",
+            s
+        );
+        assert!(
+            s.contains("chave=path_completo"),
+            "workspace usa path completo"
+        );
+        assert!(
+            s.contains("só-antes: 0") && s.contains("só-depois: 0"),
+            "paridade total"
+        );
         assert!(!s.contains("pareados: 0"), "deve haver pareados");
-        assert!(s.contains("0 fantasma(s)) · depois=workspace (") , "0 fantasmas (0045):\n{}", s);
+        assert!(
+            s.contains("0 fantasma(s)) · depois=workspace ("),
+            "0 fantasmas (0045):\n{}",
+            s
+        );
         // Prompt 0078: nível de item — contra si mesmo, item sem-par é vazio.
-        assert!(s.contains("Itens (chave de identidade K4"), "seção de itens");
-        assert!(s.contains("sem-par antes: 0  ·  sem-par depois: 0"), "itens: paridade total");
+        assert!(
+            s.contains("Itens (chave de identidade K4"),
+            "seção de itens"
+        );
+        assert!(
+            s.contains("sem-par antes: 0  ·  sem-par depois: 0"),
+            "itens: paridade total"
+        );
     }
 
     /// E2E (prompt 0074): `lente_core` contra uma **cópia com um módulo a mais** —
@@ -877,6 +1010,9 @@ mod tests {
         let saida = std::env::temp_dir().join("lente-e2e-estrutura-0072-completo.html");
         let _ = std::fs::remove_file(&saida);
         let cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: Some("lente_core".to_string()),
             alvo: None,
@@ -896,6 +1032,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         run(cli).expect("E2E --html --completo deve funcionar");
@@ -913,6 +1050,9 @@ mod tests {
     #[ignore]
     fn e2e_ranking_lente_core_texto() {
         let cli = args::Cli {
+            analise_artefatos: None,
+            provedor: None,
+            config_provedor: None,
             grafo: None,
             pacote: Some("lente_core".to_string()),
             alvo: None,
@@ -932,6 +1072,7 @@ mod tests {
             comparar: false,
             antes: None,
             depois: None,
+            mapa_correspondencia: None,
             verbose: false,
         };
         let s = run(cli).expect("E2E ranking deve funcionar");
@@ -956,5 +1097,42 @@ mod tests {
                 linha
             );
         }
+    }
+
+    #[test]
+    fn provedor_externo_rejeita_opcoes_rust_antes_de_ler_config() {
+        let cli = args::Cli::try_parse_from([
+            "lente",
+            "--provedor",
+            "python",
+            "--config-provedor",
+            "/ausente",
+            "--ranking",
+            "--filtrar-stdlib",
+        ])
+        .unwrap();
+        let e = run(cli).unwrap_err();
+        assert_eq!(e.codigo, 2);
+        assert_eq!(e.mensagem, cat::ERRO_OPCOES_PROVEDOR);
+        let cli = args::Cli::try_parse_from([
+            "lente",
+            "--provedor",
+            "rust",
+            "--config-provedor",
+            "/ausente",
+            "--ranking",
+        ])
+        .unwrap();
+        assert_eq!(run(cli).unwrap_err().codigo, 2);
+    }
+    #[test]
+    fn selecao_rust_explicita_preserva_saida_anterior() {
+        let cli = args::Cli::try_parse_from(["lente", "--provedor", "rust", "--ranking"]).unwrap();
+        let mut legado = cli.clone();
+        legado.provedor = None;
+        assert_eq!(
+            run(cli).unwrap_err().mensagem,
+            run(legado).unwrap_err().mensagem
+        );
     }
 }

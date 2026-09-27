@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_wiring` — a fiação (L4)
-Hash do Código: c7507381
+Hash do Código: 9454c7da
 
 **Camada**: L4 — Fiação (composição). Importa L1/L2/L3 (é o topo, compõe tudo).
 **Unidade**: `04_wiring/src/lib.rs` (crate `lente_wiring`).
@@ -20,15 +20,39 @@ as camadas abaixo.
 
 ## Comportamento e invariantes
 
+- ADR-0007: obtenção unitária e extração Rust por membro/diretório atravessam a fronteira de provedores; analise oferece preparação injetável e consultas sobre o mesmo grafo. Canonicalização delegada ao L3. ErroLente::Provedor preserva contexto e causa.
+
+- `montar_grafo_workspace` etiqueta cada `GrafoCrate` com `grafo.crate_name`
+  e devolve `crates_por_pacote: BTreeMap<String, String>` (pacote Cargo → crate
+  canônico) dos grafos incluídos. O pacote permanece na seleção Cargo e em
+  `FalhaCrate.crate_name` (nome histórico do campo de diagnóstico).
+- A comparação reutiliza esse mapa no filtro `seu-codigo`, sem enumerar membros
+  novamente. O censo conta sucessos + falhas, incluindo os pacotes que falharam.
+- **Limitação**: sem extração/resolução válida, o pacote fica em `falhas`, fora
+  do mapa e da união. Não se presume identidade normalizando seu nome. Referências
+  a esse crate podem sair no filtro `seu-codigo` e não são reconhecidas como
+  fantasmas de membro; os diagnósticos declaram a análise parcial.
+
+- `FalhaCrate` é reexportado de L1 (preserva o caminho público `lente_wiring::FalhaCrate`). `analisar_diff` propaga integralmente `GrafoWorkspace.falhas` até `ResultadoDiff`, junto aos raios, censo e fantasmas disponíveis.
+- A finalização da montagem exige ao menos um grafo extraído/resolvido, independentemente da quantidade de nós. Zero sucessos (inclusive zero membros) retorna `ErroLente::NenhumCrateAnalisado(Vec<FalhaCrate>)`, cujo Display preserva nomes e motivos. A regra vale para todos os consumidores da montagem do workspace.
+- Testes sem fork: todos extraem → completa; um falha → parcial preservando raio e motivo; todos falham → erro com todos os motivos.
+
 - **Pipelines** (`pub fn`):
   - `calcular_raio_de_alvo(fonte, alvo, escopo) -> Result<Raio, ErroLente>`.
   - `rankear_pacote(fonte, n, escopo) -> Result<Vec<ItemRanking>, _>`.
   - `analisar_estrutura(fonte, escopo, modo_uses) -> Result<EstruturaModulos, _>`.
   - `montar_grafo_workspace(raiz) -> Result<GrafoWorkspace, _>` (enumera→extrai
-    cacheado→resolve por crate→une).
+    cacheado→resolve por crate→une). Compartilha uma `CacheExtracao` por rodada;
+    contexto Rust continua consultado por membro. Bypass do L3 é respeitado. Antes de cada extração, consulta
+    `versao_toolchain(&membro.dir)` e passa a versão à chave do cache, sem
+    reutilizar a versão da raiz ou de outro membro. Falhas de descoberta
+    continuam propagadas como `ErroLente::Workspace`. A comparação aplica
+    esse mesmo pipeline independentemente a cada lado que seja workspace;
+    lados que sejam crates mantêm a extração direta, sem cache.
   - `analisar_diff(raiz) -> Result<ResultadoDiff, _>` (canonicaliza a raiz; ler_diff
     + grafo de workspace + mapear_diff + raio por tocado).
-- **`GrafoWorkspace`** (`pub struct`: `grafo` + `fantasmas`).
+- **`GrafoWorkspace`** (`pub struct`: `grafo`, `fantasmas`, `falhas`,
+  `crates_por_pacote`).
 - **`ErroLente`** (`pub enum`) — o **erro agregado da composição** (ver abaixo).
 - **Re-exports**: o vocabulário L1 (`Escopo`/`ModoUses`/`FonteGrafo`/`AlvoBusca` de
   `consulta`; `ResultadoDiff`/`TocadoComRaio`/`RaioCombinado`/`combinar_raios`;
@@ -59,11 +83,24 @@ Dado um ErroFork Quando ? num pipeline Então ErroLente::Fork (agregação via F
 ```
 
 ## Interface Snapshot
+
+Reexporta `lente_infra::analises` para as bocas CLI/MCP, com protocolo idêntico.
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"},{"name":"comparar","params":["&std::path::Path","&std::path::Path","Escopo","ModoUses"],"return_type":"Result<Comparacao, ErroComparar>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff"]},{"name":"FalhaCrate","kind":"struct","members":["crate_name","motivo"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas","falhas"]},{"name":"ErroComparar","kind":"struct","members":["lado","erro"]}],"reexports":["lente_core::domain::resultado_diff::{\n    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking","lente_comparacao::{\n    ArestaComparada, Comparacao, ComparacaoItens, ItemAmbiguo, ItemPareado, ItemSemPar, Lado,\n    ResumoCiclos,\n}"]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"},{"name":"comparar","params":["&std::path::Path","&std::path::Path","Escopo","ModoUses","Option<&MapaCorrespondencia>"],"return_type":"Result<Comparacao, ErroComparar>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff","NenhumCrateAnalisado"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas","falhas","crates_por_pacote"]},{"name":"ErroComparar","kind":"struct","members":["lado","erro"]}],"reexports":["lente_infra::analises","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::resultado_diff::{\n    CompletudeDiff, FalhaCrate, RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking","lente_comparacao::{\n    AlegacaoDeclarada, ArestaComparada, Comparacao, ComparacaoItens, CorrespondenciaAplicada,\n    ItemAmbiguo, ItemPareado, ItemSemPar, Lado, RelacaoDeclarada, ResultadoMapa, ResumoCiclos,\n}"]} -->
 
 ## Histórico de Revisões
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-09-26 | Distinguir pacote Cargo de crate canônico da extração; contrato de identidade e limites de membros com falha. | `04_wiring/src/lib.rs` |
+| 2026-09-26 | Toolchain consultado por membro em cada raiz; teste de propagação até o cache. | `04_wiring/src/lib.rs` |
+| 2026-08-26 | P0079: `comparar` recebe mapa declarativo opcional já lido pelo L3 e o injeta no pareamento puro; ausência preserva o pipeline anterior. | `04_wiring/src/lib.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0065) da fiação. `ErroLente` documentado como erro de composição L4 (V12=1 intencional). Código inalterado. | `04_wiring/src/lib.rs` |
+
+| 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |
+
+## Integração aditiva de provedores (2026-09-26)
+
+Expõe módulo provedores: composição aditiva de ExtratorGrafo com análise de grafos externos, sem resolução/filtro Rust. Contrato próprio em wiring-provedores.md. Fluxos legados mantidos.
+
+Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.

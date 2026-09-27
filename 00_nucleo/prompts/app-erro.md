@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::erro` — tradução do erro agregado (L4)
-Hash do Código: 81209ccf
+Hash do Código: 199ea3e7
 
 **Camada**: L4 — Fiação (app). Conhece o `ErroLente` (L4) e usa o catálogo (L2).
 **Unidade**: `04_wiring/app/src/erro.rs` (crate `lente_app`).
@@ -18,6 +18,10 @@ porque é lá que o `ErroLente` é legitimamente conhecido — é o que **tirou 
 `ErroLente` da CLI** sem movê-lo de camada (Estágio 3 do refactor V3+V12).
 
 ## Comportamento e invariantes
+
+- ADR-0007: erros de provedor usam a moldura de processamento do grafo com contexto e causa completos.
+
+- `NenhumCrateAnalisado` é traduzido usando `ERRO_WORKSPACE`, incorporando o Display com todos os nomes/motivos; o app mantém saída de erro (exit 1) em vez de JSON de sucesso vazio.
 
 - **`traduzir(erro, ctx) -> String`** — `match` exaustivo sobre o `ErroLente`:
   cada variante (`Fork`/`Adaptador`/`Resolucao`/`Raio`/`IdInexistente`/
@@ -50,3 +54,5 @@ Dado ErroLente::Workspace(_) Então a moldura ERRO_WORKSPACE com o detalhe
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0065) da tradução do ErroLente. Código inalterado. | `04_wiring/app/src/erro.rs` |
+
+| 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |

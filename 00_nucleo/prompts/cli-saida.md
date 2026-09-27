@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: efec12e0
+Hash do Código: 2f20e0a5
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -20,6 +20,10 @@ catálogo L2. **Não importa o L4** (`lente_wiring`) — a inversão foi fechada
 refactor 0055–0057.
 
 ## Comportamento e invariantes
+
+- JSON do diff acrescenta `completude: "completa" | "parcial"` e `falhas: [{"crate_name": ..., "motivo": ...}]` (vazia no caso completo). Os campos anteriores mantêm forma e significado, restritos ao grafo disponível.
+- Todas as vistas públicas do diff começam pela completude. Em análise parcial, listam nomes/motivos e avisam que pouco ou nenhum impacto observado não garante ausência de impacto. O censo também se refere ao grafo disponível.
+- Teste com zero tocados distingue completo de parcial no JSON e nas três vistas e preserva motivos com aspas/quebras de linha.
 
 - **`formatar(raio, alvo, escopo, modo)`** — o per-nó (texto ou JSON; `--verbose`
   inclui os impactados).
@@ -56,4 +60,7 @@ Dado diff só-arquivo-novo Então a vista resumo lidera com o jusante (ênfase a
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-08-26 | P0079: saída textual e JSON separam correspondências declaradas, unknown e proveniência/hash do mapa; alegação nunca é rotulada como veredito funcional. | `02_shell/cli/src/saida.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0063) dos formatadores. Código inalterado. | `02_shell/cli/src/saida.rs` |
+
+| 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |

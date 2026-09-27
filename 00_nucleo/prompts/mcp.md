@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_mcp` — a boca MCP (L4)
-Hash do Código: d6c4f79c
+Hash do Código: 0716dc5b
 
 **Camada**: L4 — Fiação (ponto de entrada). Importa L4 (`lente_wiring`), L2
 (`lente_cli`) e L1 (`lente_core`); compõe, não cria domínio.
@@ -20,6 +20,15 @@ serialização: devolve **o mesmo JSON** que a CLI (`lente_cli`), do mesmo pipel
 (`lente_wiring`).
 
 ## Comportamento e invariantes
+
+- Ferramenta aditiva `analisar_artefatos`: recebe a configuração estrita L3,
+  retorna o mesmo JSON da CLI; violação/inconclusivo de regras são resultados,
+  não falhas de transporte. Não inicia servidor DSM.
+
+- ADR-0007: leitura da entrada JSON delegada ao helper L4/L3, sem alterar argumentos da ferramenta.
+
+- `impacto_do_diff` preserva exatamente o JSON da CLI, incluindo `completude` e `falhas` por crate. Resultado parcial continua consultável com `isError: false`; nenhum crate analisado produz `isError: true`, com nomes e motivos do erro do wiring.
+- A descrição da ferramenta anuncia essa semântica. Testes cobrem o serializador de impacto usado pela ferramenta e o envelope MCP para completa, parcial e falha total, sem depender do fork.
 
 - **Protocolo**: JSON-RPC 2.0 **à mão** sobre stdio (uma mensagem por linha),
   síncrono, sem SDK nem async (razão no laudo 0070). Trata `initialize`
@@ -61,3 +70,11 @@ Dado E2E por stdio (initialize→call impacto_do_diff) Então o conteúdo é o J
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
 | 2026-06-10 | Nucleação (prompt 0070) da boca MCP: binário `lente-mcp` (L4) servindo `impacto_do_diff`/`raio_do_alvo`/`ranking` por JSON-RPC/stdio à mão; reusa `lente_wiring` (pipelines) + `lente_cli` (montagem JSON); descrições declaram o limite estrutural. | `04_wiring/mcp/src/main.rs`, `04_wiring/mcp/Cargo.toml` |
+
+| 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |
+
+## Integração aditiva de provedores (2026-09-26)
+
+Agora são quatro ferramentas: analisar_provedor soma-se às três anteriores. Configuração objeto e consulta tipada estritas; mesmo envelope JSON que CLI. Metadados, capacidades e cobertura preservados; parcial isError=false, erro isError=true com categoria. Ferramentas legadas aceitam provedor rust opcional e rejeitam outros. Nove testes reais opt-in cobrem seis provedores, parcial, pacote adulterado e consultas de raio/estrutura.
+
+Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.

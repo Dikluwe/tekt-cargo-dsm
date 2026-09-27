@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-erro.md
-//! @prompt-hash 8f884580
+//! @prompt-hash 8b6551a8
 //! @layer L4
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!
 //! Tradução de `lente_wiring::ErroLente` em mensagens de catálogo.
 //!
@@ -24,9 +24,7 @@ pub struct ContextoErro {
 /// Traduz `ErroLente` em mensagem pronta para stderr.
 pub fn traduzir(erro: &ErroLente, ctx: &ContextoErro) -> String {
     match erro {
-        ErroLente::Fork(e) => {
-            cat::ERRO_FORK_AUSENTE.render(&[("detalhe", &format!("{}", e))])
-        }
+        ErroLente::Fork(e) => cat::ERRO_FORK_AUSENTE.render(&[("detalhe", &format!("{}", e))]),
         ErroLente::Adaptador(e) => {
             cat::ERRO_JSON_INVALIDO.render(&[("detalhe", &format!("{}", e))])
         }
@@ -34,24 +32,18 @@ pub fn traduzir(erro: &ErroLente, ctx: &ContextoErro) -> String {
             // O `ErroRaio` interno é `AlvoInexistente(Path)`; usamos o alvo
             // que o usuário pediu (que é o que ele entende), não o path
             // interno (que pode ter sido renomeado no pipeline).
-            cat::ERRO_ALVO_INEXISTENTE
-                .render(&[("alvo", ctx.alvo_informado.as_str())])
+            cat::ERRO_ALVO_INEXISTENTE.render(&[("alvo", ctx.alvo_informado.as_str())])
         }
-        ErroLente::IdInexistente(id) => {
-            cat::ERRO_ID_INEXISTENTE.render(&[("id", &id.to_string())])
-        }
-        ErroLente::Resolucao(e) => {
-            cat::ERRO_RESOLUCAO.render(&[("detalhe", &format!("{}", e))])
-        }
+        ErroLente::IdInexistente(id) => cat::ERRO_ID_INEXISTENTE.render(&[("id", &id.to_string())]),
+        ErroLente::Resolucao(e) => cat::ERRO_RESOLUCAO.render(&[("detalhe", &format!("{}", e))]),
         ErroLente::ForkSemUsesKind => {
             cat::ERRO_FORK_SEM_USES_KIND.render(&[("detalhe", &format!("{}", erro))])
         }
-        ErroLente::Workspace(e) => {
-            cat::ERRO_WORKSPACE.render(&[("detalhe", &format!("{}", e))])
+        ErroLente::Workspace(e) => cat::ERRO_WORKSPACE.render(&[("detalhe", &format!("{}", e))]),
+        ErroLente::NenhumCrateAnalisado(_) => {
+            cat::ERRO_WORKSPACE.render(&[("detalhe", &erro.to_string())])
         }
-        ErroLente::Diff(e) => {
-            cat::ERRO_DIFF.render(&[("detalhe", &format!("{}", e))])
-        }
+        ErroLente::Diff(e) => cat::ERRO_DIFF.render(&[("detalhe", &format!("{}", e))]),
     }
 }
 
@@ -84,9 +76,8 @@ mod tests {
 
     #[test]
     fn adaptador_traduz_com_detalhe_tecnico() {
-        let erro = ErroLente::Adaptador(lente_infra::ErroAdaptador::JsonInvalido(
-            "eof".to_string(),
-        ));
+        let erro =
+            ErroLente::Adaptador(lente_infra::ErroAdaptador::JsonInvalido("eof".to_string()));
         let m = traduzir(&erro, &ctx("x"));
         assert!(m.starts_with("Falha ao processar dados do grafo:"));
         assert!(m.contains("eof") || m.contains("JSON")); // detalhe técnico embutido

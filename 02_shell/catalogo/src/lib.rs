@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/catalogo.md
-//! @prompt-hash 28b667e5
+//! @prompt-hash 3a395ec3
 //! @layer L2
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
 //!          conteúdo de mensagens ao usuário é dado de L2; código nunca
 //!          carrega literais de apresentação.
@@ -61,38 +61,20 @@ impl Template {
 // ERROS — templates apresentados ao usuário
 // =============================================================================
 
-pub const ERRO_FORK_AUSENTE: Template = Template(
-    "Não foi possível invocar o cargo-modules: {detalhe}",
-);
-pub const ERRO_JSON_INVALIDO: Template = Template(
-    "Falha ao processar dados do grafo: {detalhe}",
-);
-pub const ERRO_ALVO_INEXISTENTE: Template = Template(
-    "Alvo '{alvo}' não existe no grafo",
-);
-pub const ERRO_ID_INEXISTENTE: Template = Template(
-    "Nó com id {id} não existe no grafo",
-);
-pub const ERRO_RESOLUCAO: Template = Template(
-    "Falha na resolução de colisão: {detalhe}",
-);
-pub const ERRO_GENERICO_PIPELINE: Template = Template(
-    "Falha no pipeline: {detalhe}",
-);
-pub const ERRO_WORKSPACE: Template = Template(
-    "Falha ao montar o grafo de workspace: {detalhe}",
-);
+pub const ERRO_FORK_AUSENTE: Template =
+    Template("Não foi possível invocar o cargo-modules: {detalhe}");
+pub const ERRO_JSON_INVALIDO: Template = Template("Falha ao processar dados do grafo: {detalhe}");
+pub const ERRO_ALVO_INEXISTENTE: Template = Template("Alvo '{alvo}' não existe no grafo");
+pub const ERRO_ID_INEXISTENTE: Template = Template("Nó com id {id} não existe no grafo");
+pub const ERRO_RESOLUCAO: Template = Template("Falha na resolução de colisão: {detalhe}");
+pub const ERRO_GENERICO_PIPELINE: Template = Template("Falha no pipeline: {detalhe}");
+pub const ERRO_WORKSPACE: Template = Template("Falha ao montar o grafo de workspace: {detalhe}");
 
 // Validações da CLI (não vêm do `ErroLente`).
-pub const ERRO_FONTE_NAO_INFORMADA: Template = Template(
-    "Informe --grafo <arquivo.json> ou --pacote <nome>",
-);
-pub const ERRO_ALVO_NAO_INFORMADO: Template = Template(
-    "Informe --alvo <path> ou --alvo-id <N>",
-);
-pub const ERRO_LER_ARQUIVO: Template = Template(
-    "Não foi possível ler {arquivo}: {detalhe}",
-);
+pub const ERRO_FONTE_NAO_INFORMADA: Template =
+    Template("Informe --grafo <arquivo.json> ou --pacote <nome>");
+pub const ERRO_ALVO_NAO_INFORMADO: Template = Template("Informe --alvo <path> ou --alvo-id <N>");
+pub const ERRO_LER_ARQUIVO: Template = Template("Não foi possível ler {arquivo}: {detalhe}");
 
 // =============================================================================
 // ROTULOS — usados no texto humano e nas chaves do JSON
@@ -143,8 +125,7 @@ pub const HELP_HTML: &str =
     "Gera a DSM de estrutura como HTML autocontido e imprime o caminho (só com --estrutura)";
 pub const HELP_SAIDA: &str = "Caminho do HTML (--html). Default: lente-estrutura.html no cwd";
 /// Prompt 0072: a vista `--html` tem default `seu-codigo`; esta flag restaura o `completo`.
-pub const HELP_COMPLETO: &str =
-    "Inclui sysroot/stdlib na vista --html (restaura o escopo completo; default da vista é seu-codigo)";
+pub const HELP_COMPLETO: &str = "Inclui sysroot/stdlib na vista --html (restaura o escopo completo; default da vista é seu-codigo)";
 /// Dica de escopo no cabeçalho da vista quando o recorte filtrado está ativo (0072).
 pub const DSM_ESCOPO_DICA: &str =
     " (sysroot/stdlib ocultos — use --completo para o escopo completo)";
@@ -155,16 +136,13 @@ pub const DSM_ESCRITO: Template = Template("Vista DSM escrita em {caminho} — a
 /// Falha de I/O ao gravar o HTML.
 pub const DSM_ERRO_ESCRITA: Template =
     Template("não consegui gravar a vista em {caminho}: {detalhe}");
-pub const HELP_RANKING: &str =
-    "Top-N por impacto no pacote. Conflita com --alvo/--alvo-id.";
+pub const HELP_RANKING: &str = "Top-N por impacto no pacote. Conflita com --alvo/--alvo-id.";
 pub const HELP_TOP: &str = "Quantos itens no top-N do ranking (default 10)";
 pub const HELP_FILTRAR_STDLIB: &str =
     "Filtra stdlib (core/std/alloc/proc_macro/test). Default: escopo completo (com stdlib).";
-pub const HELP_ESTRUTURA: &str =
-    "Estrutura do pacote: módulos, dependências e ciclos (vista global tipo DSM). \
+pub const HELP_ESTRUTURA: &str = "Estrutura do pacote: módulos, dependências e ciclos (vista global tipo DSM). \
      Conflita com --ranking/--alvo/--alvo-id.";
-pub const HELP_SO_REFERENCIA: &str =
-    "Conta só arestas `Uses` de referência (uso de tipo direto). Descarta \
+pub const HELP_SO_REFERENCIA: &str = "Conta só arestas `Uses` de referência (uso de tipo direto). Descarta \
      declarações `use` no nível do módulo (Limite 4). Só efeito com \
      --estrutura. Default: todas as `Uses`.";
 
@@ -192,9 +170,8 @@ pub const JSON_IMPACTO: &str = "impacto";
 pub const JSON_PATH: &str = "path";
 
 /// Erro de validação de CLI: --ranking não combina com --alvo/--alvo-id.
-pub const ERRO_RANKING_COM_ALVO: Template = Template(
-    "Use --ranking OU --alvo/--alvo-id, não os dois",
-);
+pub const ERRO_RANKING_COM_ALVO: Template =
+    Template("Use --ranking OU --alvo/--alvo-id, não os dois");
 
 // =============================================================================
 // ESCOPO — prompt 0030 (rótulos comuns às duas saídas)
@@ -259,13 +236,13 @@ pub const HELP_COMPARAR: &str =
     "Compara a estrutura de duas raízes (--antes/--depois): projeto vs refatoração";
 pub const HELP_ANTES: &str = "Raiz do lado antes (--comparar): diretório de crate";
 pub const HELP_DEPOIS: &str = "Raiz do lado depois (--comparar): diretório de crate";
+pub const HELP_MAPA_CORRESPONDENCIA: &str =
+    "Mapa TOML opcional de movimentos e correspondências documentadas";
 /// Faltam --antes e/ou --depois no modo comparar.
-pub const COMPARAR_FALTA_RAIZ: &str =
-    "informe as duas raízes: --antes <dir> e --depois <dir>";
+pub const COMPARAR_FALTA_RAIZ: &str = "informe as duas raízes: --antes <dir> e --depois <dir>";
 /// Cabeçalho do texto da comparação.
-pub const COMPARAR_CABECALHO: Template = Template(
-    "Paridade: {antes} (antes) × {depois} (depois) — escopo={escopo}, uses={uses}",
-);
+pub const COMPARAR_CABECALHO: Template =
+    Template("Paridade: {antes} (antes) × {depois} (depois) — escopo={escopo}, uses={uses}");
 /// O limite honesto do pareamento (sai na saída, não escondido — prompt 0074).
 pub const COMPARAR_LIMITE: &str = "Pareamento por path normalizado na raiz do crate \
     (crate renomeado pareia; módulo movido aparece sem-par dos dois lados — não há \
@@ -299,6 +276,22 @@ pub const JSON_CICLOS_DEPOIS: &str = "ciclos_depois";
 pub const JSON_QUANTIDADE: &str = "quantidade";
 pub const JSON_MAIOR: &str = "maior";
 pub const JSON_LIMITE_PAREAMENTO: &str = "limite_pareamento";
+pub const JSON_MAPA_CORRESPONDENCIA: &str = "mapa_correspondencia";
+pub const JSON_CAMINHO: &str = "caminho";
+pub const JSON_SHA256: &str = "sha256";
+pub const JSON_REGRAS_PREFIXO: &str = "regras_prefixo";
+pub const JSON_PREFIXOS_APLICADOS: &str = "prefixos_aplicados";
+pub const JSON_CORRESPONDENCIAS: &str = "correspondencias";
+pub const JSON_DIAGNOSTICOS: &str = "diagnosticos";
+pub const JSON_RELACAO: &str = "relacao";
+pub const JSON_ALEGACAO: &str = "alegacao";
+pub const JSON_ANTES: &str = "antes";
+pub const JSON_DEPOIS: &str = "depois";
+pub const JSON_EVIDENCIAS: &str = "evidencias";
+pub const JSON_NOTA: &str = "nota";
+pub const JSON_ESTADO: &str = "estado";
+pub const COMPARAR_TIT_MAPA: &str =
+    "Mapa de correspondência (alegações documentais, não veredito funcional):";
 // Prompt 0075 — proveniência declarada (modo/chave/crates/fantasmas por lado).
 pub const JSON_CHAVE: &str = "chave";
 pub const JSON_MODO_ANTES: &str = "modo_antes";
@@ -310,14 +303,12 @@ pub const JSON_FANTASMAS_DEPOIS: &str = "fantasmas_depois";
 // Prompt 0075 — crates não extraídos (resiliência: pulados e reportados).
 pub const JSON_FALHAS_ANTES: &str = "falhas_antes";
 pub const JSON_FALHAS_DEPOIS: &str = "falhas_depois";
-pub const COMPARAR_TIT_FALHAS: &str =
-    "Crates não extraídos (pulados — não entram no censo):";
+pub const COMPARAR_TIT_FALHAS: &str = "Crates não extraídos (pulados — não entram no censo):";
 // Prompt 0076 — third-party removido do censo (lado-workspace, seu-codigo).
 pub const JSON_THIRD_PARTY_ANTES: &str = "third_party_antes";
 pub const JSON_THIRD_PARTY_DEPOIS: &str = "third_party_depois";
-pub const COMPARAR_THIRD_PARTY: Template = Template(
-    "Third-party fora do censo (só membros): antes {antes} nós · depois {depois} nós",
-);
+pub const COMPARAR_THIRD_PARTY: Template =
+    Template("Third-party fora do censo (só membros): antes {antes} nós · depois {depois} nós");
 // Prompt 0078 — nível de item (chave K4).
 pub const JSON_ITENS: &str = "itens";
 pub const JSON_ITENS_PAREADOS: &str = "pareados";
@@ -329,7 +320,8 @@ pub const JSON_TRAIT: &str = "trait";
 pub const JSON_NOME: &str = "nome";
 pub const JSON_CANDIDATOS_ANTES: &str = "candidatos_antes";
 pub const JSON_CANDIDATOS_DEPOIS: &str = "candidatos_depois";
-pub const COMPARAR_TIT_ITENS: &str = "Itens (chave de identidade K4 — kind, trait, pai-tipo::nome):";
+pub const COMPARAR_TIT_ITENS: &str =
+    "Itens (chave de identidade K4 — kind, trait, pai-tipo::nome):";
 pub const COMPARAR_ITENS_RESUMO: Template = Template(
     "  pareados: {pareados}  ·  ambíguos: {ambiguos} chaves  ·  sem-par antes: {sp_antes}  ·  sem-par depois: {sp_depois}",
 );
@@ -360,15 +352,13 @@ pub const ESTRUTURA_ORDEM_LINHA_BLOCO: &str = "  ◆";
 // DIFF — prompt 0047 (modo --diff: o que o diff toca, view-agnóstico → JSON)
 // =============================================================================
 
-pub const HELP_DIFF: &str =
-    "Mapeia o diff do repositório (git) aos nós que ele toca e emite o impacto \
+pub const HELP_DIFF: &str = "Mapeia o diff do repositório (git) aos nós que ele toca e emite o impacto \
      em JSON. Opera na raiz do repo (ver --repo). Mutuamente exclusivo com os \
      outros modos.";
 pub const HELP_REPO: &str =
     "Raiz do repositório a analisar no modo --diff (default: diretório atual)";
 
-pub const ERRO_DIFF: Template =
-    Template("Falha ao analisar o diff do repositório: {detalhe}");
+pub const ERRO_DIFF: Template = Template("Falha ao analisar o diff do repositório: {detalhe}");
 
 /// Chaves do JSON do modo `--diff` (view-agnóstico). Esquema:
 /// `{ tocados: [{path, id, classificacao, montante, jusante}],
@@ -417,6 +407,17 @@ pub const DIFF_ITEM_DEPENDE_DE: &str = "depende de";
 /// Vista `camadas`.
 pub const DIFF_CAMADAS_TOCADOS_POR_CRATE: &str = "tocados por crate:";
 pub const DIFF_CAMADAS_POR_CRATE: &str = "pode quebrar, por crate:";
+
+/// Seleção explícita; ausência conserva o fluxo Rust/JSON histórico.
+pub const HELP_PROVEDOR: &str = "Provedor: rust, python, typescript, zig, c, cpp, go ou pacote-analise. Externos são ferramentas opcionais experimentais.";
+pub const HELP_ANALISE_ARTEFATOS: &str = "Configuração JSON de snapshots, regras, preparação DSM ou caminho DSM. Fluxo exclusivo; preserva códigos 1 (violação) e 2 (inconclusivo) de regras.";
+pub const HELP_CONFIG_PROVEDOR: &str = "JSON de configuração do provedor externo (caminhos absolutos, parâmetros específicos, verificador e timeout_ms). Ver docs/adaptadores.md.";
+pub const ERRO_CONFIG_PROVEDOR: &str =
+    "provedor externo exige --config-provedor; rust não aceita configuração externa";
+pub const ERRO_OPCOES_PROVEDOR: &str = "provedor externo aceita --ranking, --estrutura ou --alvo/--alvo-id e JSON; não combina com fonte Rust/JSON legada, diff, comparação, filtros Rust, HTML ou texto";
+pub const MCP_DESCRICAO_PROVEDOR: &str = "Análise ESTRUTURAL por provedor experimental opcional: python/typescript/zig/c/cpp/go ou pacote-analise verificável. Requer ferramentas preparadas e configuração explícita. Retorna análise e metadados originais, cobertura, diagnósticos e verificação. NÃO implica quebra comportamental nem completude semântica. Mesmo envelope JSON da CLI --provedor. Não executa código do projeto.";
+pub const MCP_ERRO_PROVEDOR_LEGADO: &str =
+    "esta ferramenta preserva Rust/JSON; para outros provedores use analisar_provedor";
 
 #[cfg(test)]
 mod tests {
@@ -474,3 +475,14 @@ mod tests {
         assert_eq!(m, "Alvo 'foo::bar' não existe no grafo");
     }
 }
+
+// Completude da extração no modo diff.
+pub const JSON_COMPLETUDE: &str = "completude";
+pub const JSON_FALHAS: &str = "falhas";
+pub const JSON_CRATE_NAME: &str = "crate_name";
+pub const JSON_MOTIVO: &str = "motivo";
+pub const DIFF_COMPLETA: &str = "completa";
+pub const DIFF_PARCIAL: &str = "parcial";
+pub const DIFF_ANALISE_COMPLETA: &str = "Análise completa: todos os crates foram analisados.\n";
+pub const DIFF_ANALISE_PARCIAL: &str = "Análise parcial: há crates não analisados; pouco ou nenhum impacto observado não garante ausência de impacto.\n";
+pub const DIFF_FALHA: Template = Template("  {crate}: {motivo}\n");

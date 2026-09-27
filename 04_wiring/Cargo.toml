@@ -17,3 +17,8 @@ lente_filtro = { path = "../01_core/filtro" }
 lente_ranking = { path = "../01_core/ranking" }
 lente_estrutura = { path = "../01_core/estrutura" }
 lente_comparacao = { path = "../01_core/comparacao" }
+
+# Composição do envelope comum de análise CLI/MCP (ADR-0008).
+lente_cli = { path = "../02_shell/cli" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

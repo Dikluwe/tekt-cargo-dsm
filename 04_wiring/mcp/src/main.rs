@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/mcp.md
-//! @prompt-hash 7298f739
+//! @prompt-hash 387dcab6
 //! @layer L4
-//! @updated 2026-06-10
+//! @updated 2026-09-26
 //!
 //! Boca **MCP** da lente (prompt 0070; Momento B da proposta §4): um servidor
 //! por **stdio** que anuncia ferramentas e as executa, para um agente perguntar
@@ -74,7 +74,11 @@ fn tratar(req: &Value) -> Option<Value> {
         "tools/list" => Some(ok(id, lista_ferramentas())),
         "tools/call" => Some(ok(id, chamar_ferramenta(req))),
         "ping" => Some(ok(id, json!({}))),
-        outro => Some(erro(id, -32601, &format!("método não suportado: {}", outro))),
+        outro => Some(erro(
+            id,
+            -32601,
+            &format!("método não suportado: {}", outro),
+        )),
     }
 }
 
@@ -109,17 +113,64 @@ fn lista_ferramentas() -> Value {
     json!({
         "tools": [
             {
+                "name": "analisar_artefatos",
+                "description": "Executa análise ESTRUTURAL de snapshots, regras ou DSM sobre arquivos existentes. NÃO comprova correção comportamental. Preserva cobertura e diagnósticos. Violação e inconclusivo são resultados com codigo_saida 1/2, não erros de transporte. Não inicia servidor DSM.",
+                "inputSchema": {
+                    "type":"object", "additionalProperties":false,
+                    "required":["executavel","timeout_ms","consulta"],
+                    "properties":{
+                        "executavel":{"type":"string","description":"Executável preparado, caminho absoluto."},
+                        "timeout_ms":{"type":"integer","minimum":1,"maximum":3600000},
+                        "consulta":{"type":"object","required":["modo"],"properties":{
+                            "modo":{"type":"string","enum":["snapshots","regras","dsm","caminho-dsm"]},
+                            "entrada":{"type":"string"},"baseline":{"type":"string"},"atual":{"type":"string"},"regras":{"type":"string"},"data":{"type":"string"},
+                            "pacote":{"type":"string"},"consumidor":{"type":"integer","minimum":0},"alterado":{"type":"integer","minimum":0}
+                        },"additionalProperties":false}
+                    }
+                }
+            },
+            {
+                "name": "analisar_provedor",
+                "description": lente_catalogo::MCP_DESCRICAO_PROVEDOR,
+                "inputSchema": {
+                    "type":"object", "additionalProperties":false,
+                    "required":["provedor","configuracao","consulta"],
+                    "properties": {
+                        "provedor":{"type":"string","enum":["python","typescript","zig","c","cpp","go","pacote-analise"]},
+                        "configuracao":{
+                            "type":"object", "additionalProperties":false,
+                            "description":lente_catalogo::HELP_CONFIG_PROVEDOR,
+                            "required":["verificador","timeout_ms","parametros"],
+                            "properties":{
+                                "executavel":{"type":["string","null"]}, "helper":{"type":["string","null"]},
+                                "verificador":{"type":"string"}, "timeout_ms":{"type":"integer","minimum":1,"maximum":3600000},
+                                "permitir_metadados_sem_vinculo":{"type":"boolean"}, "incluir_ambiente":{"type":"boolean"},
+                                "parametros":{"type":"object"}
+                            }
+                        },
+                        "consulta":{"oneOf":[
+                            {"type":"object","additionalProperties":false,"required":["modo","top"],"properties":{"modo":{"const":"ranking"},"top":{"type":"integer","minimum":0}}},
+                            {"type":"object","additionalProperties":false,"required":["modo","alvo"],"properties":{"modo":{"const":"raio"},"alvo":{"type":"string","minLength":1}}},
+                            {"type":"object","additionalProperties":false,"required":["modo","alvo_id"],"properties":{"modo":{"const":"raio-id"},"alvo_id":{"type":"integer","minimum":0}}},
+                            {"type":"object","additionalProperties":false,"required":["modo"],"properties":{"modo":{"const":"estrutura"}}}
+                        ]}
+                    }
+                }
+            },
+            {
                 "name": "impacto_do_diff",
                 "description": "Raio de impacto ESTRUTURAL do diff da árvore de trabalho \
                     (o que mudou no git). Mostra quem depende dos itens tocados, via arestas \
                     `Uses` do grafo de dependências — quem está no raio de impacto. NÃO afirma \
                     que vai quebrar nem vê impacto comportamental; o humano julga. Devolve o \
                     mesmo JSON do `lente --diff` (tocados com raio, raio combinado, censo, \
-                    fantasmas). Escopo: `completo` (inclui sysroot/stdlib no raio) — o recorte \
+                    fantasmas, completude e falhas por crate). Se parcial, os dados disponíveis \
+                    não garantem ausência de impacto; nenhum crate analisado retorna erro. Escopo: `completo` (inclui sysroot/stdlib no raio) — o recorte \
                     `seu-codigo` ainda não tem parâmetro aqui (ver laudo 0072).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
+                        "provedor": { "type":"string", "enum":["rust"] },
                         "raiz": { "type": "string", "description": "Raiz do repositório. Default: diretório atual do servidor." }
                     }
                 }
@@ -133,6 +184,7 @@ fn lista_ferramentas() -> Value {
                 "inputSchema": {
                     "type": "object",
                     "properties": {
+                        "provedor": { "type":"string", "enum":["rust"] },
                         "pacote": { "type": "string", "description": "Nome do pacote — invoca o fork cargo-modules. Use isto OU `grafo`." },
                         "grafo": { "type": "string", "description": "Caminho de um grafo.json pronto. Use isto OU `pacote`." },
                         "alvo": { "type": "string", "description": "Path canônico do alvo (ex.: crate::mod::Item). Use isto OU `alvo_id`." },
@@ -149,6 +201,7 @@ fn lista_ferramentas() -> Value {
                 "inputSchema": {
                     "type": "object",
                     "properties": {
+                        "provedor": { "type":"string", "enum":["rust"] },
                         "pacote": { "type": "string", "description": "Nome do pacote — invoca o fork. Use isto OU `grafo`." },
                         "grafo": { "type": "string", "description": "Caminho de um grafo.json pronto. Use isto OU `pacote`." },
                         "top": { "type": "integer", "description": "N do top-N. Default 10." },
@@ -172,28 +225,72 @@ fn chamar_ferramenta(req: &Value) -> Value {
     let args = params.and_then(|p| p.get("arguments")).unwrap_or(&vazio);
 
     let res = match nome {
+        "analisar_artefatos" => lente_wiring::analises::analisar_artefatos(&args.to_string())
+            .map(|r| r.json)
+            .map_err(|e| e.to_string()),
+        "analisar_provedor" => ferramenta_provedor(args),
         "impacto_do_diff" => ferramenta_impacto_do_diff(args),
         "raio_do_alvo" => ferramenta_raio_do_alvo(args),
         "ranking" => ferramenta_ranking(args),
         outro => Err(format!("ferramenta desconhecida: {}", outro)),
     };
+    resposta_ferramenta(res)
+}
+
+fn resposta_ferramenta(res: Result<String, String>) -> Value {
     match res {
         Ok(texto) => json!({ "content": [{ "type": "text", "text": texto }], "isError": false }),
         Err(msg) => json!({ "content": [{ "type": "text", "text": msg }], "isError": true }),
     }
 }
 
+fn ferramenta_provedor(args: &Value) -> Result<String, String> {
+    let obj = args.as_object().ok_or("parametros: esperado objeto")?;
+    if obj
+        .keys()
+        .any(|k| !["provedor", "configuracao", "consulta"].contains(&k.as_str()))
+    {
+        return Err("parametros: campo desconhecido".into());
+    }
+    let provedor = args["provedor"]
+        .as_str()
+        .ok_or("parametros: falta provedor")?;
+    let consulta =
+        serde_json::from_value(args["consulta"].clone()).map_err(|e| format!("parametros: {e}"))?;
+    lente_wiring::provedores::analisar_provedor(
+        provedor,
+        &args["configuracao"].to_string(),
+        consulta,
+    )
+    .map_err(|e| e.to_string())
+}
+
+fn validar_provedor_legado(args: &Value) -> Result<(), String> {
+    if args.get("provedor").is_some_and(|p| p != "rust") || args.get("configuracao").is_some() {
+        return Err(lente_catalogo::MCP_ERRO_PROVEDOR_LEGADO.into());
+    }
+    Ok(())
+}
+
 fn ferramenta_impacto_do_diff(args: &Value) -> Result<String, String> {
+    validar_provedor_legado(args)?;
     let raiz = match args.get("raiz").and_then(|v| v.as_str()) {
         Some(p) => std::path::PathBuf::from(p),
         None => std::env::current_dir().map_err(|e| format!("não obtive o cwd: {}", e))?,
     };
-    analisar_diff(&raiz)
+    serializar_impacto_do_diff(analisar_diff(&raiz))
+}
+
+fn serializar_impacto_do_diff(
+    resultado: Result<lente_wiring::ResultadoDiff, lente_wiring::ErroLente>,
+) -> Result<String, String> {
+    resultado
         .map(|r| formatar_diff(&r))
         .map_err(|e| format!("{}", e))
 }
 
 fn ferramenta_raio_do_alvo(args: &Value) -> Result<String, String> {
+    validar_provedor_legado(args)?;
     let fonte = construir_fonte(args)?;
     let escopo = parse_escopo(args)?;
     let (alvo, pedido) = construir_alvo(args)?;
@@ -203,18 +300,31 @@ fn ferramenta_raio_do_alvo(args: &Value) -> Result<String, String> {
                 &raio,
                 &pedido,
                 escopo,
-                &Modo { text: false, verbose: true },
+                &Modo {
+                    text: false,
+                    verbose: true,
+                },
             )
         })
         .map_err(|e| format!("{}", e))
 }
 
 fn ferramenta_ranking(args: &Value) -> Result<String, String> {
+    validar_provedor_legado(args)?;
     let fonte = construir_fonte(args)?;
     let escopo = parse_escopo(args)?;
     let top = args.get("top").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
     rankear_pacote(fonte, top, escopo)
-        .map(|itens| formatar_ranking(&itens, escopo, &Modo { text: false, verbose: false }))
+        .map(|itens| {
+            formatar_ranking(
+                &itens,
+                escopo,
+                &Modo {
+                    text: false,
+                    verbose: false,
+                },
+            )
+        })
         .map_err(|e| format!("{}", e))
 }
 
@@ -270,6 +380,57 @@ mod tests {
     // --- Envelope JSON-RPC (puro, sem subprocesso/fork) ---
 
     #[test]
+    fn impacto_diff_preserva_completude_e_erro_no_envelope_mcp() {
+        use lente_wiring::{ErroLente, FalhaCrate, RaioCombinado, ResultadoDiff};
+        let falha = FalhaCrate {
+            crate_name: "b".into(),
+            motivo: "falha do fork".into(),
+        };
+        for falhas in [vec![], vec![falha.clone()]] {
+            let r = ResultadoDiff {
+                falhas: falhas.clone(),
+                tocados: vec![],
+                combinado: RaioCombinado {
+                    montante: vec![],
+                    jusante: vec![],
+                },
+                ligados: vec!["/a/src/lib.rs".into()],
+                soltos: vec![],
+                nao_fonte: vec![],
+                fantasmas: vec![],
+            };
+            let esperado: Value = serde_json::from_str(&formatar_diff(&r)).unwrap();
+            let resposta = resposta_ferramenta(serializar_impacto_do_diff(Ok(r)));
+            assert_eq!(resposta["isError"], false);
+            let dados: Value =
+                serde_json::from_str(resposta["content"][0]["text"].as_str().unwrap()).unwrap();
+            assert_eq!(dados, esperado);
+            assert_eq!(
+                dados["completude"],
+                if falhas.is_empty() {
+                    "completa"
+                } else {
+                    "parcial"
+                }
+            );
+            assert_eq!(dados["falhas"].as_array().unwrap().len(), falhas.len());
+            if !falhas.is_empty() {
+                assert_eq!(dados["falhas"][0]["motivo"], falha.motivo);
+            }
+        }
+        let resposta = resposta_ferramenta(serializar_impacto_do_diff(Err(
+            ErroLente::NenhumCrateAnalisado(vec![falha]),
+        )));
+        assert_eq!(resposta["isError"], true);
+        assert!(
+            resposta["content"][0]["text"]
+                .as_str()
+                .unwrap()
+                .contains("nenhum crate pôde ser analisado; b: falha do fork")
+        );
+    }
+
+    #[test]
     fn initialize_ecoa_a_versao_do_cliente() {
         let req = json!({"jsonrpc":"2.0","id":1,"method":"initialize",
             "params":{"protocolVersion":"2025-03-26"}});
@@ -302,11 +463,12 @@ mod tests {
     }
 
     #[test]
-    fn tools_list_traz_as_tres_com_limite_estrutural_na_descricao() {
+    fn tools_list_traz_as_cinco_com_limite_estrutural_na_descricao() {
         let req = json!({"jsonrpc":"2.0","id":2,"method":"tools/list"});
         let resp = tratar(&req).unwrap();
         let tools = resp["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 3);
+        assert_eq!(tools.len(), 5);
+        assert!(tools.iter().any(|t| t["name"] == "analisar_artefatos"));
         let nomes: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         assert!(nomes.contains(&"impacto_do_diff"));
         assert!(nomes.contains(&"raio_do_alvo"));
@@ -380,5 +542,167 @@ mod tests {
             "params":{"name":"raio_do_alvo","arguments":{"alvo":"crate::a"}}});
         let resp = tratar(&req).unwrap();
         assert_eq!(resp["result"]["isError"], true);
+    }
+
+    #[test]
+    fn provedor_rejeita_argumentos_antes_de_executar() {
+        let e = ferramenta_provedor(&json!({"provedor":"python","configuracao":{},"consulta":{"modo":"ranking","top":1},"grafo":"ignorado"})).unwrap_err();
+        assert!(e.contains("campo desconhecido"));
+        assert!(
+            ferramenta_ranking(&json!({"provedor":"go"}))
+                .unwrap_err()
+                .contains("analisar_provedor")
+        );
+    }
+
+    fn real_config(nome: &str) -> (std::path::PathBuf, Value) {
+        let dir = std::env::var_os("LENTE_TEST_CONFIG_DIR")
+            .expect("configure LENTE_TEST_CONFIG_DIR; veja docs/adaptadores.md");
+        let file = std::path::PathBuf::from(dir).join(format!("{nome}.json"));
+        let config = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
+        (file, config)
+    }
+    fn real_equivalencia(nome: &str) {
+        let (file, config) = real_config(nome);
+        let cli = std::env::var_os("LENTE_TEST_CLI").expect("configure LENTE_TEST_CLI");
+        let output = std::process::Command::new(cli)
+            .args(["--provedor", nome, "--config-provedor"])
+            .arg(file)
+            .args(["--ranking", "--top", "10"])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let esperado: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert!(
+            !esperado["analise"]["ranking"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+        let req = json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analisar_provedor","arguments":{"provedor":nome,"configuracao":config,"consulta":{"modo":"ranking","top":10}}}});
+        let resposta = tratar(&req).unwrap();
+        assert_eq!(resposta["result"]["isError"], false, "{resposta}");
+        let recebido: Value =
+            serde_json::from_str(resposta["result"]["content"][0]["text"].as_str().unwrap())
+                .unwrap();
+        assert_eq!(recebido, esperado, "CLI/MCP divergem para {nome}");
+        assert_eq!(recebido["extracao"]["verificacao"]["integrity"], "verified");
+        assert!(recebido["extracao"]["metadados_originais"].is_object());
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_python() {
+        real_equivalencia("python");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_typescript() {
+        real_equivalencia("typescript");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_zig() {
+        real_equivalencia("zig");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_c() {
+        real_equivalencia("c");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_cpp() {
+        real_equivalencia("cpp");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional: preparar configs e executar explicitamente"]
+    fn real_go() {
+        real_equivalencia("go");
+    }
+    #[test]
+    #[ignore = "ferramenta opcional Python e verificador; preparar configs"]
+    fn real_parcial_preserva_dados_e_motivos() {
+        let (_, config) = real_config("python-parcial");
+        let res = ferramenta_provedor(&json!({"provedor":"python","configuracao":config,"consulta":{"modo":"ranking","top":10}})).unwrap();
+        let r: Value = serde_json::from_str(&res).unwrap();
+        assert_eq!(
+            r["extracao"]["verificacao"]["summary"]["execution"]["value"],
+            "partial"
+        );
+        assert_eq!(r["extracao"]["codigo_saida_adaptador"], 1);
+        assert!(
+            !r["extracao"]["metadados_originais"]["diagnostics"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(r["analise"]["ranking"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    #[ignore = "verificador opcional: pacote válido, adulterado e CLI/MCP reais"]
+    fn real_pacote_verificado_e_adulterado() {
+        let (file, config) = real_config("python");
+        let dir = file.parent().unwrap();
+        let pacote = dir.join(format!("pacote-teste-{}", std::process::id()));
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../lab/pacote-analise/fixtures");
+        let status = std::process::Command::new(config["verificador"].as_str().unwrap())
+            .arg("create")
+            .arg("--graph")
+            .arg(fixture.join("graph.json"))
+            .arg("--metadata")
+            .arg(fixture.join("metadata.json"))
+            .arg("--out")
+            .arg(&pacote)
+            .output()
+            .unwrap();
+        assert!(
+            status.status.success(),
+            "{}",
+            String::from_utf8_lossy(&status.stderr)
+        );
+        let config = json!({"verificador":config["verificador"],"timeout_ms":30000,"parametros":{"diretorio":pacote}});
+        std::fs::write(dir.join("pacote-analise.json"), config.to_string()).unwrap();
+        real_equivalencia("pacote-analise");
+        std::fs::write(pacote.join("graph.json"), "{}").unwrap();
+        let e = ferramenta_provedor(&json!({"provedor":"pacote-analise","configuracao":config,"consulta":{"modo":"ranking","top":10}})).unwrap_err();
+        assert!(e.contains("saida_invalida"), "{e}");
+        std::fs::remove_dir_all(pacote).unwrap();
+    }
+
+    #[test]
+    #[ignore = "Python/verificador opcionais: consultas de raio e estrutura"]
+    fn real_raio_estrutura() {
+        let (file, config) = real_config("python");
+        for (flags, consulta) in [
+            (
+                vec!["--alvo-id", "0"],
+                json!({"modo":"raio-id","alvo_id":0}),
+            ),
+            (vec!["--estrutura"], json!({"modo":"estrutura"})),
+        ] {
+            let output = std::process::Command::new(std::env::var_os("LENTE_TEST_CLI").unwrap())
+                .args(["--provedor", "python", "--config-provedor"])
+                .arg(&file)
+                .args(flags)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let cli: Value = serde_json::from_slice(&output.stdout).unwrap();
+            let mcp = ferramenta_provedor(
+                &json!({"provedor":"python","configuracao":config,"consulta":consulta}),
+            )
+            .unwrap();
+            assert_eq!(cli, serde_json::from_str::<Value>(&mcp).unwrap());
+        }
     }
 }

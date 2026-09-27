@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash d791eafe
+//! @prompt-hash 550b69b6
 //! @layer L2
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!
 //! Formatação do `Raio` para stdout. Quatro modos (matriz `--text` ×
 //! `--verbose`); todos os literais visíveis ao usuário vêm do
@@ -21,10 +21,10 @@ use lente_core::domain::raio::{Classificacao, Raio};
 use lente_core::entities::grafo::Path as PathGrafo;
 // Estágio 1 (0055) + Estágio 2 (0056): todo este vocabulário vem agora do L1 —
 // a CLi não importa mais tipos da fachada `lente_wiring` aqui.
-use lente_core::domain::consulta::{Escopo, ModoUses};
-use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
-use lente_estrutura::{DependenciaModulo, EstruturaModulos, RaioModulo};
 use lente_comparacao::{ArestaComparada, Comparacao};
+use lente_core::domain::consulta::{Escopo, ModoUses};
+use lente_core::domain::resultado_diff::{CompletudeDiff, ResultadoDiff, TocadoComRaio};
+use lente_estrutura::{DependenciaModulo, EstruturaModulos, RaioModulo};
 use lente_ranking::ItemRanking;
 
 use crate::args::Vista;
@@ -157,11 +157,7 @@ fn formatar_texto(raio: &Raio, alvo_pedido: &AlvoPedido, escopo: Escopo, verbose
             cat::ROTULO_ALVO_PEDIDO,
             alvo_pedido_texto(alvo_pedido)
         ));
-        s.push_str(&format!(
-            "{}:\t{}\n",
-            cat::ROTULO_ALVO_RESOLVIDO,
-            raio.alvo
-        ));
+        s.push_str(&format!("{}:\t{}\n", cat::ROTULO_ALVO_RESOLVIDO, raio.alvo));
     } else {
         s.push_str(&format!("{}:\t{}\n", cat::ROTULO_ALVO, raio.alvo));
     }
@@ -237,10 +233,7 @@ fn formatar_ranking_json(itens: &[ItemRanking], escopo: Escopo) -> String {
         cat::JSON_ESCOPO.to_string(),
         serde_json::Value::String(escopo_texto(escopo).to_string()),
     );
-    root.insert(
-        cat::JSON_RANKING.to_string(),
-        serde_json::Value::Array(arr),
-    );
+    root.insert(cat::JSON_RANKING.to_string(), serde_json::Value::Array(arr));
     serde_json::Value::Object(root).to_string()
 }
 
@@ -399,8 +392,11 @@ fn raios_para_indices(estrut: &EstruturaModulos) -> serde_json::Value {
         .enumerate()
         .map(|(i, p)| (p.as_str(), i))
         .collect();
-    let raio_de: HashMap<&str, &RaioModulo> =
-        estrut.raios.iter().map(|r| (r.modulo.as_str(), r)).collect();
+    let raio_de: HashMap<&str, &RaioModulo> = estrut
+        .raios
+        .iter()
+        .map(|r| (r.modulo.as_str(), r))
+        .collect();
     let to_idx = |ps: &[PathGrafo]| -> serde_json::Value {
         serde_json::Value::Array(
             ps.iter()
@@ -462,10 +458,7 @@ pub fn formatar_estrutura_html(
     // Prompt 0073: raio por módulo embutido como ÍNDICES na `ordem` (compacto —
     // a tela já tem `ordem`; paths cheios dobrariam o arquivo). Paralelo a
     // `ordem`: raios[i] = {m:[...], j:[...]} para o módulo em ordem[i].
-    map.insert(
-        cat::JSON_RAIOS.to_string(),
-        raios_para_indices(estrut),
-    );
+    map.insert(cat::JSON_RAIOS.to_string(), raios_para_indices(estrut));
     map.insert(
         cat::JSON_RAIO_SEMANTICA.to_string(),
         serde_json::Value::String(cat::DSM_RAIO_SEMANTICA.to_string()),
@@ -543,6 +536,27 @@ fn formatar_estrutura_texto(
 pub fn formatar_diff(resultado: &ResultadoDiff) -> String {
     let mut root = serde_json::Map::new();
 
+    let completude = match resultado.completude() {
+        CompletudeDiff::Completa => cat::DIFF_COMPLETA,
+        CompletudeDiff::Parcial => cat::DIFF_PARCIAL,
+    };
+    root.insert(cat::JSON_COMPLETUDE.into(), serde_json::json!(completude));
+    root.insert(
+        cat::JSON_FALHAS.into(),
+        serde_json::Value::Array(
+            resultado
+                .falhas
+                .iter()
+                .map(|f| {
+                    serde_json::json!({
+                        cat::JSON_CRATE_NAME: f.crate_name,
+                        cat::JSON_MOTIVO: f.motivo,
+                    })
+                })
+                .collect(),
+        ),
+    );
+
     // tocados: cada nó tocado + resumo do seu raio.
     let tocados: Vec<serde_json::Value> = resultado
         .tocados
@@ -572,7 +586,10 @@ pub fn formatar_diff(resultado: &ResultadoDiff) -> String {
             serde_json::Value::Object(o)
         })
         .collect();
-    root.insert(cat::JSON_TOCADOS.to_string(), serde_json::Value::Array(tocados));
+    root.insert(
+        cat::JSON_TOCADOS.to_string(),
+        serde_json::Value::Array(tocados),
+    );
 
     // combinado: a união (path + profundidade).
     let mut comb = serde_json::Map::new();
@@ -584,11 +601,20 @@ pub fn formatar_diff(resultado: &ResultadoDiff) -> String {
         cat::JSON_JUSANTE.to_string(),
         pares_path_profundidade(&resultado.combinado.jusante),
     );
-    root.insert(cat::JSON_COMBINADO.to_string(), serde_json::Value::Object(comb));
+    root.insert(
+        cat::JSON_COMBINADO.to_string(),
+        serde_json::Value::Object(comb),
+    );
 
     // censo do untracked.
-    root.insert(cat::JSON_LIGADOS.to_string(), lista_de_paths(&resultado.ligados));
-    root.insert(cat::JSON_SOLTOS.to_string(), lista_de_paths(&resultado.soltos));
+    root.insert(
+        cat::JSON_LIGADOS.to_string(),
+        lista_de_paths(&resultado.ligados),
+    );
+    root.insert(
+        cat::JSON_SOLTOS.to_string(),
+        lista_de_paths(&resultado.soltos),
+    );
     root.insert(
         cat::JSON_NAO_FONTE.to_string(),
         lista_de_paths(&resultado.nao_fonte),
@@ -665,11 +691,21 @@ fn lista_de_paths(paths: &[std::path::PathBuf]) -> serde_json::Value {
 
 /// Roteia a vista escolhida. Sem `--vista`, o `run_diff` emite o JSON (0047).
 pub fn formatar_diff_vista(resultado: &ResultadoDiff, vista: Vista) -> String {
-    match vista {
+    let mut s = match resultado.completude() {
+        CompletudeDiff::Completa => cat::DIFF_ANALISE_COMPLETA.to_string(),
+        CompletudeDiff::Parcial => cat::DIFF_ANALISE_PARCIAL.to_string(),
+    };
+    for falha in &resultado.falhas {
+        s.push_str(
+            &cat::DIFF_FALHA.render(&[("crate", &falha.crate_name), ("motivo", &falha.motivo)]),
+        );
+    }
+    s.push_str(&match vista {
         Vista::Resumo => formatar_diff_resumo(resultado),
         Vista::Item => formatar_diff_item(resultado),
         Vista::Camadas => formatar_diff_camadas(resultado),
-    }
+    });
+    s
 }
 
 /// O crate de um path = o 1º segmento (antes do primeiro `::`).
@@ -893,9 +929,18 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
         ("modo_antes", &comp.proveniencia.modo_antes),
         ("modo_depois", &comp.proveniencia.modo_depois),
         ("crates_antes", &comp.proveniencia.crates_antes.to_string()),
-        ("crates_depois", &comp.proveniencia.crates_depois.to_string()),
-        ("fantasmas_antes", &comp.proveniencia.fantasmas_antes.len().to_string()),
-        ("fantasmas_depois", &comp.proveniencia.fantasmas_depois.len().to_string()),
+        (
+            "crates_depois",
+            &comp.proveniencia.crates_depois.to_string(),
+        ),
+        (
+            "fantasmas_antes",
+            &comp.proveniencia.fantasmas_antes.len().to_string(),
+        ),
+        (
+            "fantasmas_depois",
+            &comp.proveniencia.fantasmas_depois.len().to_string(),
+        ),
         ("chave", &comp.chave),
     ]));
     s.push('\n');
@@ -950,7 +995,11 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
         }
     };
     lista(&mut s, cat::COMPARAR_TIT_SEM_PAR_ANTES, &comp.sem_par_antes);
-    lista(&mut s, cat::COMPARAR_TIT_SEM_PAR_DEPOIS, &comp.sem_par_depois);
+    lista(
+        &mut s,
+        cat::COMPARAR_TIT_SEM_PAR_DEPOIS,
+        &comp.sem_par_depois,
+    );
 
     let arestas = |s: &mut String, titulo: &str, ar: &[DependenciaModulo]| {
         if !ar.is_empty() {
@@ -958,12 +1007,25 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
             s.push_str(titulo);
             s.push('\n');
             for d in ar {
-                s.push_str(&format!("  {} → {} (peso {})\n", d.de.as_str(), d.para.as_str(), d.peso));
+                s.push_str(&format!(
+                    "  {} → {} (peso {})\n",
+                    d.de.as_str(),
+                    d.para.as_str(),
+                    d.peso
+                ));
             }
         }
     };
-    arestas(&mut s, cat::COMPARAR_TIT_ARESTAS_SO_ANTES, &comp.arestas_so_antes);
-    arestas(&mut s, cat::COMPARAR_TIT_ARESTAS_SO_DEPOIS, &comp.arestas_so_depois);
+    arestas(
+        &mut s,
+        cat::COMPARAR_TIT_ARESTAS_SO_ANTES,
+        &comp.arestas_so_antes,
+    );
+    arestas(
+        &mut s,
+        cat::COMPARAR_TIT_ARESTAS_SO_DEPOIS,
+        &comp.arestas_so_depois,
+    );
 
     // Maiores deltas de peso entre as arestas comuns (|depois - antes|), top 10.
     let mut deltas: Vec<&ArestaComparada> = comp.arestas_comuns.iter().collect();
@@ -1030,16 +1092,50 @@ fn formatar_comparacao_texto(comp: &Comparacao, escopo: Escopo, modo_uses: ModoU
     // Sem-par agregado por crate (1º segmento do path) — "o que falta migrar".
     let mut por_crate: BTreeMap<String, (usize, usize)> = BTreeMap::new();
     for i in &it.sem_par_antes {
-        por_crate.entry(crate_de(&i.path).to_string()).or_default().0 += 1;
+        por_crate
+            .entry(crate_de(&i.path).to_string())
+            .or_default()
+            .0 += 1;
     }
     for i in &it.sem_par_depois {
-        por_crate.entry(crate_de(&i.path).to_string()).or_default().1 += 1;
+        por_crate
+            .entry(crate_de(&i.path).to_string())
+            .or_default()
+            .1 += 1;
     }
     if !por_crate.is_empty() {
         s.push_str(cat::COMPARAR_TIT_SEM_PAR_CRATE);
         s.push('\n');
         for (c, (a, d)) in &por_crate {
             s.push_str(&format!("    {}: antes {} · depois {}\n", c, a, d));
+        }
+    }
+    if !it.mapa.caminho.is_empty() {
+        s.push('\n');
+        s.push_str(cat::COMPARAR_TIT_MAPA);
+        s.push('\n');
+        s.push_str(&format!(
+            "  {} · sha256 {}\n",
+            it.mapa.caminho, it.mapa.sha256
+        ));
+        s.push_str(&format!(
+            "  prefixos: {} regra(s), {} par(es) aplicado(s)\n",
+            it.mapa.regras_prefixo,
+            it.mapa.prefixos_aplicados.len()
+        ));
+        let aplicadas = it
+            .mapa
+            .correspondencias
+            .iter()
+            .filter(|c| c.estado == "aplicada")
+            .count();
+        let unknown = it.mapa.correspondencias.len() - aplicadas;
+        s.push_str(&format!(
+            "  correspondências: {} aplicada(s), {} unknown\n",
+            aplicadas, unknown
+        ));
+        for d in &it.mapa.diagnosticos {
+            s.push_str(&format!("  unknown: {d}\n"));
         }
     }
     s
@@ -1051,8 +1147,14 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
     let n = |v: usize| Value::Number(v.into());
     let mut root = serde_json::Map::new();
     root.insert(cat::JSON_ESCOPO.to_string(), s(escopo_texto(escopo)));
-    root.insert(cat::JSON_MODO_USES.to_string(), s(modo_uses_texto(modo_uses)));
-    root.insert(cat::JSON_LIMITE_PAREAMENTO.to_string(), s(cat::COMPARAR_LIMITE));
+    root.insert(
+        cat::JSON_MODO_USES.to_string(),
+        s(modo_uses_texto(modo_uses)),
+    );
+    root.insert(
+        cat::JSON_LIMITE_PAREAMENTO.to_string(),
+        s(cat::COMPARAR_LIMITE),
+    );
     root.insert(cat::JSON_NOME_ANTES.to_string(), s(&comp.nome_antes));
     root.insert(cat::JSON_NOME_DEPOIS.to_string(), s(&comp.nome_depois));
     // Prompt 0075: proveniência declarada (aditivo ao esquema do 0074).
@@ -1063,13 +1165,31 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
     root.insert(cat::JSON_CRATES_ANTES.to_string(), n(pv.crates_antes));
     root.insert(cat::JSON_CRATES_DEPOIS.to_string(), n(pv.crates_depois));
     let paths_de = |v: &[PathGrafo]| Value::Array(v.iter().map(|p| s(p.as_str())).collect());
-    root.insert(cat::JSON_FANTASMAS_ANTES.to_string(), paths_de(&pv.fantasmas_antes));
-    root.insert(cat::JSON_FANTASMAS_DEPOIS.to_string(), paths_de(&pv.fantasmas_depois));
+    root.insert(
+        cat::JSON_FANTASMAS_ANTES.to_string(),
+        paths_de(&pv.fantasmas_antes),
+    );
+    root.insert(
+        cat::JSON_FANTASMAS_DEPOIS.to_string(),
+        paths_de(&pv.fantasmas_depois),
+    );
     let strs_de = |v: &[String]| Value::Array(v.iter().map(|x| s(x)).collect());
-    root.insert(cat::JSON_FALHAS_ANTES.to_string(), strs_de(&pv.falhas_antes));
-    root.insert(cat::JSON_FALHAS_DEPOIS.to_string(), strs_de(&pv.falhas_depois));
-    root.insert(cat::JSON_THIRD_PARTY_ANTES.to_string(), n(pv.third_party_antes));
-    root.insert(cat::JSON_THIRD_PARTY_DEPOIS.to_string(), n(pv.third_party_depois));
+    root.insert(
+        cat::JSON_FALHAS_ANTES.to_string(),
+        strs_de(&pv.falhas_antes),
+    );
+    root.insert(
+        cat::JSON_FALHAS_DEPOIS.to_string(),
+        strs_de(&pv.falhas_depois),
+    );
+    root.insert(
+        cat::JSON_THIRD_PARTY_ANTES.to_string(),
+        n(pv.third_party_antes),
+    );
+    root.insert(
+        cat::JSON_THIRD_PARTY_DEPOIS.to_string(),
+        n(pv.third_party_depois),
+    );
 
     let pareados: Vec<Value> = comp
         .pareados
@@ -1084,8 +1204,14 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
     root.insert(cat::JSON_PAREADOS.to_string(), Value::Array(pareados));
 
     let paths = |v: &[PathGrafo]| Value::Array(v.iter().map(|p| s(p.as_str())).collect());
-    root.insert(cat::JSON_SEM_PAR_ANTES.to_string(), paths(&comp.sem_par_antes));
-    root.insert(cat::JSON_SEM_PAR_DEPOIS.to_string(), paths(&comp.sem_par_depois));
+    root.insert(
+        cat::JSON_SEM_PAR_ANTES.to_string(),
+        paths(&comp.sem_par_antes),
+    );
+    root.insert(
+        cat::JSON_SEM_PAR_DEPOIS.to_string(),
+        paths(&comp.sem_par_depois),
+    );
 
     let comuns: Vec<Value> = comp
         .arestas_comuns
@@ -1114,8 +1240,14 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
                 .collect(),
         )
     };
-    root.insert(cat::JSON_ARESTAS_SO_ANTES.to_string(), deps(&comp.arestas_so_antes));
-    root.insert(cat::JSON_ARESTAS_SO_DEPOIS.to_string(), deps(&comp.arestas_so_depois));
+    root.insert(
+        cat::JSON_ARESTAS_SO_ANTES.to_string(),
+        deps(&comp.arestas_so_antes),
+    );
+    root.insert(
+        cat::JSON_ARESTAS_SO_DEPOIS.to_string(),
+        deps(&comp.arestas_so_depois),
+    );
 
     let ciclos = |c: &lente_comparacao::ResumoCiclos| {
         let mut o = serde_json::Map::new();
@@ -1123,8 +1255,14 @@ fn formatar_comparacao_json(comp: &Comparacao, escopo: Escopo, modo_uses: ModoUs
         o.insert(cat::JSON_MAIOR.to_string(), n(c.maior));
         Value::Object(o)
     };
-    root.insert(cat::JSON_CICLOS_ANTES.to_string(), ciclos(&comp.ciclos_antes));
-    root.insert(cat::JSON_CICLOS_DEPOIS.to_string(), ciclos(&comp.ciclos_depois));
+    root.insert(
+        cat::JSON_CICLOS_ANTES.to_string(),
+        ciclos(&comp.ciclos_antes),
+    );
+    root.insert(
+        cat::JSON_CICLOS_DEPOIS.to_string(),
+        ciclos(&comp.ciclos_depois),
+    );
 
     // Prompt 0078: o nível de item completo (insumo da tela e do agente).
     root.insert(cat::JSON_ITENS.to_string(), itens_json(&comp.itens));
@@ -1158,8 +1296,14 @@ fn itens_json(it: &lente_comparacao::ComparacaoItens) -> serde_json::Value {
             o.insert(cat::JSON_KIND.to_string(), s(&a.kind));
             o.insert(cat::JSON_TRAIT.to_string(), s(&a.trait_));
             o.insert(cat::JSON_NOME.to_string(), s(&a.nome_qualificado));
-            o.insert(cat::JSON_CANDIDATOS_ANTES.to_string(), arr(&a.candidatos_antes));
-            o.insert(cat::JSON_CANDIDATOS_DEPOIS.to_string(), arr(&a.candidatos_depois));
+            o.insert(
+                cat::JSON_CANDIDATOS_ANTES.to_string(),
+                arr(&a.candidatos_antes),
+            );
+            o.insert(
+                cat::JSON_CANDIDATOS_DEPOIS.to_string(),
+                arr(&a.candidatos_depois),
+            );
             Value::Object(o)
         })
         .collect();
@@ -1180,8 +1324,77 @@ fn itens_json(it: &lente_comparacao::ComparacaoItens) -> serde_json::Value {
     let mut o = serde_json::Map::new();
     o.insert(cat::JSON_ITENS_PAREADOS.to_string(), Value::Array(pareados));
     o.insert(cat::JSON_ITENS_AMBIGUOS.to_string(), Value::Array(ambiguos));
-    o.insert(cat::JSON_ITENS_SEM_PAR_ANTES.to_string(), sem_par(&it.sem_par_antes));
-    o.insert(cat::JSON_ITENS_SEM_PAR_DEPOIS.to_string(), sem_par(&it.sem_par_depois));
+    o.insert(
+        cat::JSON_ITENS_SEM_PAR_ANTES.to_string(),
+        sem_par(&it.sem_par_antes),
+    );
+    o.insert(
+        cat::JSON_ITENS_SEM_PAR_DEPOIS.to_string(),
+        sem_par(&it.sem_par_depois),
+    );
+    if !it.mapa.caminho.is_empty() {
+        let rel = |r: lente_comparacao::RelacaoDeclarada| match r {
+            lente_comparacao::RelacaoDeclarada::UmParaUm => "um-para-um",
+            lente_comparacao::RelacaoDeclarada::Divisao => "divisao",
+            lente_comparacao::RelacaoDeclarada::Consolidacao => "consolidacao",
+            lente_comparacao::RelacaoDeclarada::Grupo => "grupo",
+        };
+        let aleg = |a: lente_comparacao::AlegacaoDeclarada| match a {
+            lente_comparacao::AlegacaoDeclarada::DeclaradaFechada => "declarada-fechada",
+            lente_comparacao::AlegacaoDeclarada::Parcial => "parcial",
+            lente_comparacao::AlegacaoDeclarada::Ausente => "ausente",
+            lente_comparacao::AlegacaoDeclarada::ForaDeEscopo => "fora-de-escopo",
+            lente_comparacao::AlegacaoDeclarada::Unknown => "unknown",
+        };
+        let mut m = serde_json::Map::new();
+        m.insert(cat::JSON_CAMINHO.to_string(), s(&it.mapa.caminho));
+        m.insert(cat::JSON_SHA256.to_string(), s(&it.mapa.sha256));
+        m.insert(
+            cat::JSON_REGRAS_PREFIXO.to_string(),
+            Value::Number(it.mapa.regras_prefixo.into()),
+        );
+        m.insert(
+            cat::JSON_PREFIXOS_APLICADOS.to_string(),
+            Value::Array(
+                it.mapa
+                    .prefixos_aplicados
+                    .iter()
+                    .map(|p| {
+                        let mut x = serde_json::Map::new();
+                        x.insert(cat::JSON_DE.to_string(), s(&p.path_antes));
+                        x.insert(cat::JSON_PARA.to_string(), s(&p.path_depois));
+                        Value::Object(x)
+                    })
+                    .collect(),
+            ),
+        );
+        m.insert(
+            cat::JSON_CORRESPONDENCIAS.to_string(),
+            Value::Array(
+                it.mapa
+                    .correspondencias
+                    .iter()
+                    .map(|c| {
+                        let mut x = serde_json::Map::new();
+                        x.insert(cat::JSON_ID.to_string(), s(&c.id));
+                        x.insert(cat::JSON_ANTES.to_string(), arr(&c.antes));
+                        x.insert(cat::JSON_DEPOIS.to_string(), arr(&c.depois));
+                        x.insert(cat::JSON_RELACAO.to_string(), s(rel(c.relacao)));
+                        x.insert(cat::JSON_ALEGACAO.to_string(), s(aleg(c.alegacao)));
+                        x.insert(cat::JSON_EVIDENCIAS.to_string(), arr(&c.evidencias));
+                        x.insert(cat::JSON_NOTA.to_string(), s(&c.nota));
+                        x.insert(cat::JSON_ESTADO.to_string(), s(&c.estado));
+                        Value::Object(x)
+                    })
+                    .collect(),
+            ),
+        );
+        m.insert(
+            cat::JSON_DIAGNOSTICOS.to_string(),
+            arr(&it.mapa.diagnosticos),
+        );
+        o.insert(cat::JSON_MAPA_CORRESPONDENCIA.to_string(), Value::Object(m));
+    }
     Value::Object(o)
 }
 
@@ -1229,7 +1442,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
             Escopo::Completo,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"alvo\":\"foo::bar\""));
         assert!(!s.contains("alvo_pedido"));
@@ -1245,7 +1461,10 @@ mod tests {
             &r,
             &AlvoPedido::Id(20),
             Escopo::Completo,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"alvo_pedido\":\"id=20\""));
         assert!(s.contains("\"alvo_resolvido\":\"M::T::<Display>::fmt\""));
@@ -1259,7 +1478,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("alvo".to_string()),
             Escopo::Completo,
-            &Modo { text: false, verbose: true },
+            &Modo {
+                text: false,
+                verbose: true,
+            },
         );
         // ordem alfabética crescente:
         let i_a = s.find("a::user").unwrap();
@@ -1275,7 +1497,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
             Escopo::Completo,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Alvo:\tfoo::bar"));
         assert!(!s.contains("Alvo pedido"));
@@ -1291,7 +1516,10 @@ mod tests {
             &r,
             &AlvoPedido::Id(47),
             Escopo::Completo,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Alvo pedido:\tid=47"));
         assert!(s.contains("Alvo resolvido:\tM::T::<Debug>::fmt"));
@@ -1304,7 +1532,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("alvo".to_string()),
             Escopo::Completo,
-            &Modo { text: true, verbose: true },
+            &Modo {
+                text: true,
+                verbose: true,
+            },
         );
         assert!(s.contains("Impactados:"));
         assert!(s.contains("  a\n"));
@@ -1333,7 +1564,10 @@ mod tests {
         let s = formatar_ranking(
             &ranking_amostra(),
             Escopo::Completo,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         // Sanidade: chave `ranking` + entradas estruturadas + escopo declarado.
         assert!(s.contains("\"ranking\":"));
@@ -1351,7 +1585,10 @@ mod tests {
         let s = formatar_ranking(
             &ranking_amostra(),
             Escopo::SeuCodigo,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Ranking de impacto"));
         // Pós-0030: o escopo aparece no cabeçalho.
@@ -1366,8 +1603,22 @@ mod tests {
     #[test]
     fn ranking_vazio_nao_panica() {
         let v: Vec<ItemRanking> = vec![];
-        let _ = formatar_ranking(&v, Escopo::Completo, &Modo { text: true, verbose: false });
-        let _ = formatar_ranking(&v, Escopo::Completo, &Modo { text: false, verbose: false });
+        let _ = formatar_ranking(
+            &v,
+            Escopo::Completo,
+            &Modo {
+                text: true,
+                verbose: false,
+            },
+        );
+        let _ = formatar_ranking(
+            &v,
+            Escopo::Completo,
+            &Modo {
+                text: false,
+                verbose: false,
+            },
+        );
     }
 
     // ---- prompt 0030: saída do raio declara o escopo ------------------------
@@ -1379,7 +1630,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
             Escopo::Completo,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"escopo\":\"completo\""));
     }
@@ -1391,7 +1645,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
             Escopo::SeuCodigo,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"escopo\":\"seu-codigo\""));
     }
@@ -1403,7 +1660,10 @@ mod tests {
             &r,
             &AlvoPedido::Path("foo::bar".to_string()),
             Escopo::SeuCodigo,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Escopo:\tseu-codigo"));
     }
@@ -1414,11 +1674,7 @@ mod tests {
 
     fn estrutura_amostra() -> EstruturaModulos {
         EstruturaModulos {
-            modulos: vec![
-                Path::from("k"),
-                Path::from("k::a"),
-                Path::from("k::b"),
-            ],
+            modulos: vec![Path::from("k"), Path::from("k::a"), Path::from("k::b")],
             dependencias: vec![
                 DependenciaModulo {
                     de: Path::from("k::a"),
@@ -1453,11 +1709,7 @@ mod tests {
             ],
             // Prompt 0035: amostra de ordem + bloco para os testes de saída.
             // Ordem da DSM: k (crate, sem deps) → {k::a, k::b} (bloco).
-            ordem: vec![
-                Path::from("k"),
-                Path::from("k::a"),
-                Path::from("k::b"),
-            ],
+            ordem: vec![Path::from("k"), Path::from("k::a"), Path::from("k::b")],
             blocos: vec![vec![Path::from("k::a"), Path::from("k::b")]],
         }
     }
@@ -1468,7 +1720,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"escopo\":\"completo\""));
         assert!(s.contains("\"modo_uses\":\"todas\""));
@@ -1538,8 +1793,14 @@ mod tests {
                 peso: 1,
             }],
             arestas_so_depois: vec![],
-            ciclos_antes: lente_comparacao::ResumoCiclos { quantidade: 1, maior: 5 },
-            ciclos_depois: lente_comparacao::ResumoCiclos { quantidade: 0, maior: 0 },
+            ciclos_antes: lente_comparacao::ResumoCiclos {
+                quantidade: 1,
+                maior: 5,
+            },
+            ciclos_depois: lente_comparacao::ResumoCiclos {
+                quantidade: 0,
+                maior: 0,
+            },
             chave: "path_completo".to_string(),
             proveniencia: lente_comparacao::Proveniencia {
                 modo_antes: "workspace".to_string(),
@@ -1565,7 +1826,10 @@ mod tests {
                     kind: "fn".to_string(),
                     trait_: String::new(),
                     nome_qualificado: "new".to_string(),
-                    candidatos_antes: vec!["velho::a::X::new".to_string(), "velho::a::Y::new".to_string()],
+                    candidatos_antes: vec![
+                        "velho::a::X::new".to_string(),
+                        "velho::a::Y::new".to_string(),
+                    ],
                     candidatos_depois: vec!["novo::b::X::new".to_string()],
                 }],
                 sem_par_antes: vec![lente_comparacao::ItemSemPar {
@@ -1575,6 +1839,7 @@ mod tests {
                     path: "velho::a::sumiu".to_string(),
                 }],
                 sem_par_depois: vec![],
+                mapa: lente_comparacao::ResultadoMapa::default(),
             },
         }
     }
@@ -1585,7 +1850,10 @@ mod tests {
             &comparacao_amostra(),
             Escopo::SeuCodigo,
             ModoUses::Todas,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("velho") && s.contains("novo"));
         assert!(s.contains("escopo=seu-codigo"));
@@ -1616,13 +1884,18 @@ mod tests {
             &comparacao_amostra(),
             Escopo::SeuCodigo,
             ModoUses::Todas,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"nome_antes\":\"velho\""));
         assert!(s.contains("\"pareados\":[{\"de\":\"velho::a\",\"para\":\"novo::a\"}]"));
         assert!(s.contains("\"sem_par_antes\":[\"velho::sumiu\"]"));
         assert!(s.contains("\"peso_antes\":2") && s.contains("\"peso_depois\":7"));
-        assert!(s.contains("\"arestas_so_antes\":[{\"de\":\"velho::a\",\"para\":\"velho::c\",\"peso\":1}]"));
+        assert!(s.contains(
+            "\"arestas_so_antes\":[{\"de\":\"velho::a\",\"para\":\"velho::c\",\"peso\":1}]"
+        ));
         // serde_json::Map ordena as chaves (BTreeMap): maior < quantidade.
         assert!(s.contains("\"ciclos_antes\":{\"maior\":5,\"quantidade\":1}"));
         assert!(s.contains("\"limite_pareamento\":"));
@@ -1641,7 +1914,10 @@ mod tests {
         // Prompt 0078: nível de item no JSON (pareado com os dois paths).
         assert!(s.contains("\"itens\":{"));
         assert!(s.contains("\"nome\":\"Counter\""));
-        assert!(s.contains("\"de\":\"velho::a::Counter\"") && s.contains("\"para\":\"novo::b::Counter\""));
+        assert!(
+            s.contains("\"de\":\"velho::a::Counter\"")
+                && s.contains("\"para\":\"novo::b::Counter\"")
+        );
         assert!(s.contains("\"candidatos_antes\":["));
     }
 
@@ -1666,7 +1942,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::SeuCodigo,
             ModoUses::Todas,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Estrutura de módulos"));
         assert!(s.contains("escopo: seu-codigo"));
@@ -1688,7 +1967,10 @@ mod tests {
             &e,
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("nenhum ciclo"));
     }
@@ -1701,7 +1983,10 @@ mod tests {
             &e,
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"ciclos\":[]"));
     }
@@ -1714,7 +1999,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::Completo,
             ModoUses::SoReferencia,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         assert!(s.contains("\"modo_uses\":\"so-referencia\""));
     }
@@ -1725,7 +2013,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::Completo,
             ModoUses::SoReferencia,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("uses: so-referencia"));
     }
@@ -1738,7 +2029,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: false, verbose: false },
+            &Modo {
+                text: false,
+                verbose: false,
+            },
         );
         // Ordem: ["k", "k::a", "k::b"] — sequência exata da DSM.
         assert!(s.contains("\"ordem\":[\"k\",\"k::a\",\"k::b\"]"));
@@ -1752,7 +2046,10 @@ mod tests {
             &estrutura_amostra(),
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         // Título da seção.
         assert!(s.contains("Ordem da DSM"));
@@ -1770,7 +2067,10 @@ mod tests {
             &e,
             Escopo::Completo,
             ModoUses::Todas,
-            &Modo { text: true, verbose: false },
+            &Modo {
+                text: true,
+                verbose: false,
+            },
         );
         assert!(s.contains("Ordem da DSM"));
         assert!(!s.contains("◆"));
@@ -1781,9 +2081,9 @@ mod tests {
     #[test]
     fn diff_json_tem_o_esquema_e_e_desserializavel() {
         use lente_core::domain::mapeamento::NoTocado;
-        use lente_core::entities::grafo::Path;
         use lente_core::domain::resultado_diff::{RaioCombinado, ResultadoDiff, TocadoComRaio};
         use lente_core::domain::uniao::Fantasma;
+        use lente_core::entities::grafo::Path;
         use std::collections::HashMap;
 
         let mut montante = HashMap::new();
@@ -1799,6 +2099,7 @@ mod tests {
             owns_filhos: Vec::new(),
         };
         let resultado = ResultadoDiff {
+            falhas: Vec::new(),
             tocados: vec![TocadoComRaio {
                 tocado: NoTocado {
                     id: 1,
@@ -1857,7 +2158,10 @@ mod tests {
             classificacao: c,
             uses_entrada: mont.len(),
             uses_saida: jus.len(),
-            montante: mont.iter().map(|(p, d)| (PathGrafo::from(*p), *d)).collect(),
+            montante: mont
+                .iter()
+                .map(|(p, d)| (PathGrafo::from(*p), *d))
+                .collect(),
             jusante: jus.iter().map(|(p, d)| (PathGrafo::from(*p), *d)).collect(),
             owns_pai: None,
             owns_filhos: Vec::new(),
@@ -1870,6 +2174,7 @@ mod tests {
     fn resultado_amostra() -> ResultadoDiff {
         use lente_core::domain::resultado_diff::{RaioCombinado, TocadoComRaio};
         ResultadoDiff {
+            falhas: Vec::new(),
             tocados: vec![
                 TocadoComRaio {
                     tocado: no_tocado(1, "lente_core::No"),
@@ -1903,6 +2208,38 @@ mod tests {
                 std::path::PathBuf::from("/r/X.md"),
             ],
             fantasmas: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn diff_sem_impacto_distingue_completo_de_parcial_em_todas_as_saidas() {
+        let mut r = resultado_amostra();
+        r.tocados.clear();
+        r.combinado.montante.clear();
+        r.combinado.jusante.clear();
+        let completo: serde_json::Value = serde_json::from_str(&formatar_diff(&r)).unwrap();
+        assert_eq!(completo["completude"], "completa");
+        assert_eq!(completo["falhas"], serde_json::json!([]));
+        for vista in [Vista::Resumo, Vista::Item, Vista::Camadas] {
+            assert!(formatar_diff_vista(&r, vista).starts_with("Análise completa:"));
+        }
+        r.falhas
+            .push(lente_core::domain::resultado_diff::FalhaCrate {
+                crate_name: "ausente".into(),
+                motivo: "extração falhou: \"erro\"\ncausa".into(),
+            });
+        let parcial: serde_json::Value = serde_json::from_str(&formatar_diff(&r)).unwrap();
+        assert_eq!(parcial["completude"], "parcial");
+        assert_eq!(parcial["falhas"][0]["crate_name"], "ausente");
+        assert_eq!(parcial["falhas"][0]["motivo"], r.falhas[0].motivo);
+        assert_eq!(parcial["tocados"], completo["tocados"]);
+        assert_eq!(parcial["ligados"], completo["ligados"]);
+        for vista in [Vista::Resumo, Vista::Item, Vista::Camadas] {
+            let texto = formatar_diff_vista(&r, vista);
+            assert!(texto.starts_with("Análise parcial:"));
+            assert!(texto.contains("não garante ausência de impacto"));
+            assert!(texto.contains("ausente"));
+            assert!(texto.contains(&r.falhas[0].motivo));
         }
     }
 
@@ -1957,7 +2294,10 @@ mod tests {
         let s = formatar_diff_resumo(&r);
         let pos_jus = s.find("depende de (jusante)").unwrap();
         let pos_mont = s.find("pode quebrar (montante)").unwrap();
-        assert!(pos_jus < pos_mont, "arquivo novo deve liderar com o jusante");
+        assert!(
+            pos_jus < pos_mont,
+            "arquivo novo deve liderar com o jusante"
+        );
     }
 
     #[test]
@@ -1997,11 +2337,21 @@ mod tests {
     #[test]
     fn roteamento_vista_chama_o_renderizador_certo() {
         let r = resultado_amostra();
-        assert_eq!(formatar_diff_vista(&r, Vista::Resumo), formatar_diff_resumo(&r));
-        assert_eq!(formatar_diff_vista(&r, Vista::Item), formatar_diff_item(&r));
+        assert_eq!(
+            formatar_diff_vista(&r, Vista::Resumo),
+            format!("{}{}", cat::DIFF_ANALISE_COMPLETA, formatar_diff_resumo(&r))
+        );
+        assert_eq!(
+            formatar_diff_vista(&r, Vista::Item),
+            format!("{}{}", cat::DIFF_ANALISE_COMPLETA, formatar_diff_item(&r))
+        );
         assert_eq!(
             formatar_diff_vista(&r, Vista::Camadas),
-            formatar_diff_camadas(&r)
+            format!(
+                "{}{}",
+                cat::DIFF_ANALISE_COMPLETA,
+                formatar_diff_camadas(&r)
+            )
         );
     }
 }

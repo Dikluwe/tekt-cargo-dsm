@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::args` — os argumentos da CLI (L2)
-Hash do Código: a887e4c9
+Hash do Código: 5c0722d7
 
 **Camada**: L2 — Casca (apresentação pura). Os textos de ajuda vêm do
 `lente_catalogo` (ADR-0002).
@@ -20,11 +20,16 @@ resultados no `saida`.
 
 ## Comportamento e invariantes
 
+- `--analise-artefatos CONFIG.json` é um fluxo exclusivo de snapshots/regras/DSM.
+  Não combina com flags dos fluxos legados ou de extração de provedores.
+
 - **`Cli`** (`#[derive(Parser)]`) — as flags: fonte (`--grafo`/`--pacote`,
   mutuamente exclusivas), alvo (`--alvo`/`--alvo-id`), modos (`--ranking`/`--top`,
   `--estrutura`/`--so-referencia`, `--diff`/`--repo`/`--vista`), escopo
   (`--filtrar-stdlib`), saída (`--text`/`--verbose`). Os modos são mutuamente
   exclusivos via `conflicts_with_all`; `--vista` `requires --diff`.
+- **P0079:** `--mapa-correspondencia <arquivo.toml>` requer `--comparar` e injeta
+  correspondências documentadas sem alterar o comportamento quando ausente.
 - **`Vista`** (`#[derive(ValueEnum)]`) — `Resumo`/`Item`/`Camadas` (do `--diff`,
   prompt 0048).
 - **Todos os `help`/`about`** vêm do `lente_catalogo` — **nenhum literal de
@@ -45,10 +50,16 @@ Dado --vista camadas Então Vista::Camadas
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","completo","comparar","antes","depois","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0063) dos argumentos. Código inalterado. | `02_shell/cli/src/args.rs` |
+
+## Integração aditiva de provedores (2026-09-26)
+
+Adiciona --provedor (rust/python/typescript/zig/c/cpp/go/pacote-analise) e --config-provedor. Ausência de seleção mantém fluxo anterior; validação semântica e execução pertencem ao L4/L3.
+
+Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.

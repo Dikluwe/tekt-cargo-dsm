@@ -252,6 +252,7 @@ dependencies = [
 name = "lente_infra"
 version = "0.0.0"
 dependencies = [
+ "lente_comparacao",
  "lente_core",
  "serde",
  "serde_json",
@@ -270,6 +271,7 @@ dependencies = [
 name = "lente_mcp"
 version = "0.1.0"
 dependencies = [
+ "lente_catalogo",
  "lente_cli",
  "lente_core",
  "lente_wiring",
@@ -294,6 +296,7 @@ dependencies = [
 name = "lente_wiring"
 version = "0.0.0"
 dependencies = [
+ "lente_cli",
  "lente_comparacao",
  "lente_core",
  "lente_estrutura",
@@ -302,6 +305,8 @@ dependencies = [
  "lente_investiga",
  "lente_ranking",
  "lente_resolve",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

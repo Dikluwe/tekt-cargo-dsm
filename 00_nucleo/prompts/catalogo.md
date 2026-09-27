@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: 2b3d1675
+Hash do Código: 6559c02b
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -20,6 +20,10 @@ constantes; a tradução técnica (o `Display` dos erros) entra como `{detalhe}`
 das molduras.
 
 ## Comportamento e invariantes
+
+- Ajuda `HELP_ANALISE_ARTEFATOS` descreve fluxo exclusivo e códigos de regras.
+
+- Completude do diff: chaves `completude`, `falhas`, `crate_name`, `motivo`; valores `completa`/`parcial`; cabeçalhos explícitos e aviso de que ausência de impacto observado em análise parcial não garante ausência de impacto; template por crate com motivo.
 
 - **`Template`** — `struct Template(&'static str)` com `render(&[(&str, &str)]) ->
   String`: substitui `{placeholder}` por valores; placeholder ausente fica literal.
@@ -54,4 +58,13 @@ Dado UTF-8 multibyte no texto Então render preserva
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-08-26 | P0079: vocabulário estável da flag, proveniência, relações, alegações e diagnósticos do mapa de correspondência. | `02_shell/catalogo/src/lib.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0063) do catálogo. Código inalterado. | `02_shell/catalogo/src/lib.rs` |
+
+| 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |
+
+## Integração aditiva de provedores (2026-09-26)
+
+Vocabulário da seleção explícita de provedor, configuração, incompatibilidades e descrição da ferramenta MCP aditiva. Helpers opcionais experimentais são declarados na interface.
+
+Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.

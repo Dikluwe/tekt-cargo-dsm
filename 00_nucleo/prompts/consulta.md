@@ -18,6 +18,8 @@ assinaturas, e a CLI deixa de depender da fachada L4.
 
 ## Comportamento e invariantes
 
+- FonteGrafo permanece Json/Pacote para compatibilidade. A fronteira explícita de extração é L3/L4 (ADR-0007); o envelope puro vive em domain::extracao.
+
 - **`FonteGrafo`** — `Json(String)` (JSON pronto) ou `Pacote(String)` (nome do
   pacote; a fiação invoca o fork).
 - **`AlvoBusca`** — `PorPath(Path)` ou `PorId(usize)`.

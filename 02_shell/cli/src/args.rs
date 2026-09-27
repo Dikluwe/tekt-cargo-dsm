@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash e9472355
+//! @prompt-hash 4a9420e7
 //! @layer L2
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!
 //! Argumentos da CLI. Todos os textos `help`/`about` vêm do
 //! `lente_catalogo` (ADR-0002).
@@ -27,6 +27,14 @@ pub enum Vista {
 #[derive(Parser, Debug, Clone)]
 #[command(name = "lente", about = lente_catalogo::ABOUT_CLI)]
 pub struct Cli {
+    /// Consulta sobre artefatos já extraídos; fluxo exclusivo.
+    #[arg(long, exclusive = true, help = lente_catalogo::HELP_ANALISE_ARTEFATOS)]
+    pub analise_artefatos: Option<std::path::PathBuf>,
+    #[arg(long, value_parser = ["rust", "python", "typescript", "zig", "c", "cpp", "go", "pacote-analise"], help = lente_catalogo::HELP_PROVEDOR)]
+    pub provedor: Option<String>,
+    #[arg(long, requires = "provedor", help = lente_catalogo::HELP_CONFIG_PROVEDOR)]
+    pub config_provedor: Option<std::path::PathBuf>,
+
     /// JSON pronto.
     #[arg(long, conflicts_with = "pacote", help = lente_catalogo::HELP_GRAFO)]
     pub grafo: Option<std::path::PathBuf>,
@@ -142,6 +150,10 @@ pub struct Cli {
     /// Raiz do lado **depois** no modo `--comparar` (diretório de crate).
     #[arg(long, requires = "comparar", help = lente_catalogo::HELP_DEPOIS)]
     pub depois: Option<std::path::PathBuf>,
+
+    /// Mapa TOML de correspondências documentadas (P0079).
+    #[arg(long = "mapa-correspondencia", requires = "comparar", help = lente_catalogo::HELP_MAPA_CORRESPONDENCIA)]
+    pub mapa_correspondencia: Option<std::path::PathBuf>,
 
     /// Inclui lista completa de impactados.
     #[arg(long, help = lente_catalogo::HELP_VERBOSE)]

@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::main` — o ponto de entrada (L4)
-Hash do Código: 4805b2ee
+Hash do Código: df353ce6
 
 **Camada**: L4 — Fiação (app/ponto de composição). Importa L1/L2/L4.
 **Unidade**: `04_wiring/app/src/main.rs` (crate `lente_app`, o binário `lente`).
@@ -20,6 +20,12 @@ os formatadores (`lente_cli::saida`, L2) — devolvendo a saída no canal certo
 do L4** (a CLI virou lib pura no 0057).
 
 ## Comportamento e invariantes
+
+- O fluxo exclusivo `--analise-artefatos` chama o componente L3 `analises`, imprime
+  JSON em stdout e preserva códigos de domínio 1/2 das regras. Erros de transporte
+  e configuração usam stderr; entrada inválida desse fluxo retorna 3.
+
+- ADR-0007: leitura da entrada JSON delegada ao L3, mantendo flags e tratamento de erro de arquivo existentes.
 
 - **`main()`** — `Cli::parse()` → `run(cli)` → imprime o `Ok(String)` (stdout,
   exit 0) ou a mensagem de erro (stderr, exit code).
@@ -51,4 +57,11 @@ Dado um erro do pipeline Quando run Então SaidaErro com mensagem do catálogo
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-08-26 | P0079: `run_comparar` lê o mapa opcional via L3 e o injeta no wiring; erro de arquivo/parse sai como erro de uso, sem executar comparação parcial. | `04_wiring/app/src/main.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0065) do ponto de entrada. Código inalterado. | `04_wiring/app/src/main.rs` |
+
+## Integração aditiva de provedores (2026-09-26)
+
+Seleção externa roteia antes dos modos legados. Rejeita diff/comparação/filtros Rust/HTML/texto/fontes legadas antes de ler configuração ou extrair. Consulta raio/ranking/estrutura usa envelope comum do wiring. --provedor rust mantém fluxo anterior.
+
+Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
