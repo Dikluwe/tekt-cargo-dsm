@@ -19,7 +19,9 @@ dados L1 (`DiffEstruturado`, de `lente_core`). Cobre rastreados e untracked.
 - **`ler_diff(raiz) -> Result<DiffEstruturado, ErroDiff>`**:
   - **Rastreados**: `git diff HEAD --unified=0`, parseado por `parse_diff` (pura) em
     faixas do **lado novo**.
-  - **Untracked**: `git ls-files --others --exclude-standard`; hunk sintético "tudo
+  - **Untracked**: `git ls-files --others --exclude-standard -z`; registros
+    separados por NUL, preservando espaços, acentos, tabs e quebras de linha
+    dos nomes (sem `trim`); hunk sintético "tudo
     adicionado" (`{1, n_linhas}`, contagem por bytes).
   - Caminhos normalizados para **absolutos** (casam `No.position.file`).
 - **`invocar_git(args, dir)`** (privado) — **primitiva única de git** (o `git` é

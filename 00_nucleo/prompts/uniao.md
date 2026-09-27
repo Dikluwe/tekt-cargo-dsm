@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `uniao` — a união de grafos por path (domain)
-Hash do Código: 46fdae35
+Hash do Código: 5aaa8f2c
 
 **Camada**: L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
 **Unidade**: `01_core/core/src/domain/uniao.rs` (crate `lente_core`).
@@ -17,6 +17,13 @@ casando nós **por path** (não por id — instável entre extrações). É a fu
 motor multi-crate.
 
 ## Comportamento e invariantes
+
+- A etiqueta de `GrafoCrate` deve ser o `Grafo.crate_name` da extração: nome
+  canônico do crate, inclusive `[lib].name`, nunca `[package].name`. A escolha
+  de definições continua literal por primeiro segmento do path; não normaliza
+  pacote para contornar uma etiqueta incorreta.
+- Só grafos incluídos participam do conjunto de membros da união. Sem extração
+  válida, referências a esse membro não podem ser classificadas como fantasmas.
 
 - **`unir_grafos(Vec<GrafoCrate>) -> ResultadoUniao`**:
   - **Definição vence referência**: para cada path, o nó cujo **1º segmento do
@@ -53,4 +60,5 @@ Dado o mesmo conjunto 2× Então grafos iguais (determinístico)
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-09-26 | Distinguir pacote Cargo de crate canônico da extração; contrato de identidade e limites de membros com falha. | `01_core/core/src/domain/uniao.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0059) da união por path. Código inalterado. | `01_core/core/src/domain/uniao.rs` |

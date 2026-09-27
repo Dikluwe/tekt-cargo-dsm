@@ -10,7 +10,6 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use lente_core::entities::grafo::{Grafo, Kind, No, Relation};
 use lente_filtro::{filtrar_nao_membros, filtrar_stdlib};
-use lente_infra::enumerar_membros;
 use lente_wiring::montar_grafo_workspace;
 
 fn kind_txt(k: Kind) -> &'static str {
@@ -67,8 +66,7 @@ fn medir_lado(raiz: &std::path::Path) -> Lado {
         eprintln!("FALHA ao montar workspace de {}: {}", raiz.display(), e);
         std::process::exit(1);
     });
-    let membros = enumerar_membros(raiz).unwrap_or_default();
-    let nomes: Vec<String> = membros.iter().map(|m| m.nome.clone()).collect();
+    let nomes: Vec<String> = gw.crates_por_pacote.values().cloned().collect();
     let sem_sysroot = filtrar_stdlib(&gw.grafo);
     let antes = sem_sysroot.nodes.len();
     let so_membros = filtrar_nao_membros(&sem_sysroot, &nomes);

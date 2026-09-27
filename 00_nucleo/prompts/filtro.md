@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_filtro` — esconder o ruído (filtros do grafo)
-Hash do Código: 50954d02
+Hash do Código: 7cc705e4
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/filtro/src/lib.rs` (crate `lente_filtro`, arquivo único).
@@ -15,6 +15,12 @@ Dois **filtros puros** sobre o `Grafo`, que escondem ruído sem mudar a topologi
 do que sobra: a stdlib (sysroot) e as arestas `Uses` de import.
 
 ## Comportamento e invariantes
+
+- **`filtrar_nao_membros(grafo, membros)`** recebe nomes **canônicos de crate**
+  obtidos da extração e compara literalmente com o primeiro segmento dos paths.
+  O chamador transporta a relação pacote→crate; substituir hífen por underscore
+  não resolve `[lib].name`. Remove nós externos e arestas incidentes, preserva
+  definições e representantes de fantasmas dos membros conhecidos.
 
 - **`filtrar_stdlib(grafo) -> Grafo`**: esconde os nós de **sysroot** (`core::*`/
   `std::*`/`alloc::*`/…) por **prefixo do path** (ADR-0002 D3), e as arestas
@@ -46,4 +52,5 @@ Dado arestas Uses Import e Reference Quando filtrar_so_referencia Então só as 
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-09-26 | Distinguir pacote Cargo de crate canônico da extração; contrato de identidade e limites de membros com falha. | `01_core/filtro/src/lib.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0060) dos filtros. Código inalterado. | `01_core/filtro/src/lib.rs` |

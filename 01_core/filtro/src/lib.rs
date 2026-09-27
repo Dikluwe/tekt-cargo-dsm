@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/filtro.md
-//! @prompt-hash 3f8a55d4
+//! @prompt-hash 301c869b
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!          ampliado por prompt 00_nucleo/prompt/0034-modo-uses-estrutura.md
 //! Spec:    00_nucleo/specs/forma-organizada.md (Limite 2 — fronteira fina)
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md (D3 preservada)
@@ -78,16 +78,9 @@ pub fn filtrar_stdlib(grafo: &Grafo) -> Grafo {
     }
 }
 
-/// Primeiro segmento de um path, normalizado para underscore (prompt 0076).
-/// Os nomes de membro vêm do `Cargo.toml` com hífen (`typst-macros`); os paths
-/// do fork usam underscore (`typst_macros`) — normalizar casa os dois.
-fn primeiro_segmento_norm(path: &Path) -> String {
-    let s = path.as_str();
-    let primeiro = match s.find("::") {
-        Some(i) => &s[..i],
-        None => s,
-    };
-    primeiro.replace('-', "_")
+/// Primeiro segmento canônico do path emitido pela extração.
+fn primeiro_segmento(path: &Path) -> &str {
+    path.as_str().split("::").next().unwrap_or("")
 }
 
 /// **Filtra third-party num lado-workspace** (prompt 0076): remove os nós cujo
@@ -95,7 +88,8 @@ fn primeiro_segmento_norm(path: &Path) -> String {
 /// arestas que os tocam. Num grafo de workspace, "seu código" são os membros;
 /// sysroot e deps externas (`comemo`, `ecow`, …) saem do censo.
 ///
-/// `membros` são os nomes de pacote (hífen ou underscore — normalizados aqui).
+/// `membros` são nomes canônicos de crate vindos da extração, não nomes de
+/// pacote Cargo. Não se infere `[lib].name` normalizando hífens.
 /// **Limite 2 seguro por construção** (laudos 0025/0027): o fork nomeia o impl
 /// do alvo pelo lado do alvo (`lente_core::…::fmt`, não `core::…::fmt`), então um
 /// impl de membro para trait externo tem path de **membro** e fica. **Fantasmas
@@ -104,11 +98,11 @@ fn primeiro_segmento_norm(path: &Path) -> String {
 ///
 /// `Grafo.crate_name` e os `id` preservados; 0 arestas soltas; idempotente.
 pub fn filtrar_nao_membros(grafo: &Grafo, membros: &[String]) -> Grafo {
-    let set: HashSet<String> = membros.iter().map(|m| m.replace('-', "_")).collect();
+    let set: HashSet<&str> = membros.iter().map(String::as_str).collect();
     let mut ids_removidos: HashSet<usize> = HashSet::new();
     let mut nodes_novos = Vec::with_capacity(grafo.nodes.len());
     for n in &grafo.nodes {
-        if set.contains(&primeiro_segmento_norm(&n.path)) {
+        if set.contains(&primeiro_segmento(&n.path)) {
             nodes_novos.push(n.clone());
         } else {
             ids_removidos.insert(n.id);
@@ -164,9 +158,7 @@ pub fn filtrar_so_referencia(grafo: &Grafo) -> Grafo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lente_core::entities::grafo::{
-        Aresta, Kind, Modificadores, No, Relation, Visibility,
-    };
+    use lente_core::entities::grafo::{Aresta, Kind, Modificadores, No, Relation, Visibility};
 
     /// Cria nó de teste mínimo. Os campos não exercitados ficam no default
     /// do tipo (Modificadores Default, sem trait/trait_ref/cfg/macro_kind).
@@ -206,13 +198,7 @@ mod tests {
         }
     }
 
-    fn aresta_uses(
-        id_from: usize,
-        from: &str,
-        id_to: usize,
-        to: &str,
-        kind: UsesKind,
-    ) -> Aresta {
+    fn aresta_uses(id_from: usize, from: &str, id_to: usize, to: &str, kind: UsesKind) -> Aresta {
         Aresta {
             from: Path::from(from),
             id_from,
@@ -269,7 +255,11 @@ mod tests {
         let f = filtrar_stdlib(&g);
 
         // O impl do alvo permanece, com id e trait preservados.
-        let impl_alvo = f.nodes.iter().find(|n| n.id == 20).expect("impl preservado");
+        let impl_alvo = f
+            .nodes
+            .iter()
+            .find(|n| n.id == 20)
+            .expect("impl preservado");
         assert_eq!(impl_alvo.path.as_str(), "meu::T::fmt");
         assert_eq!(impl_alvo.trait_.as_deref(), Some("Display"));
 
@@ -297,8 +287,20 @@ mod tests {
         g.edges = vec![
             aresta(1, "meu", 2, "meu::usuario", Relation::Owns),
             // dois sentidos para garantir cobertura
-            aresta(2, "meu::usuario", 50, "alloc::alloc::Global", Relation::Uses),
-            aresta(50, "alloc::alloc::Global", 2, "meu::usuario", Relation::Uses),
+            aresta(
+                2,
+                "meu::usuario",
+                50,
+                "alloc::alloc::Global",
+                Relation::Uses,
+            ),
+            aresta(
+                50,
+                "alloc::alloc::Global",
+                2,
+                "meu::usuario",
+                Relation::Uses,
+            ),
         ];
 
         let f = filtrar_stdlib(&g);
@@ -438,7 +440,11 @@ mod tests {
     #[test]
     fn filtrar_so_referencia_preserva_uses_reference_e_descarta_import() {
         let g = grafo_uses_misto();
-        let antes_uses: usize = g.edges.iter().filter(|a| a.relation == Relation::Uses).count();
+        let antes_uses: usize = g
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Uses)
+            .count();
         assert_eq!(antes_uses, 2);
 
         let f = filtrar_so_referencia(&g);
@@ -456,9 +462,17 @@ mod tests {
     #[test]
     fn filtrar_so_referencia_preserva_todas_as_owns() {
         let g = grafo_uses_misto();
-        let antes_owns = g.edges.iter().filter(|a| a.relation == Relation::Owns).count();
+        let antes_owns = g
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Owns)
+            .count();
         let f = filtrar_so_referencia(&g);
-        let depois_owns = f.edges.iter().filter(|a| a.relation == Relation::Owns).count();
+        let depois_owns = f
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Owns)
+            .count();
         assert_eq!(antes_owns, depois_owns, "Owns intactas");
     }
 
@@ -468,10 +482,7 @@ mod tests {
         // Política deste filtro (puro): descarta — só `Reference` sobrevive.
         // O diagnóstico de fork-antigo é responsabilidade da fiação.
         let mut g = Grafo::new("meu");
-        g.nodes = vec![
-            no(1, "meu::a", Kind::Fn),
-            no(2, "meu::b", Kind::Fn),
-        ];
+        g.nodes = vec![no(1, "meu::a", Kind::Fn), no(2, "meu::b", Kind::Fn)];
         g.edges = vec![aresta(1, "meu::a", 2, "meu::b", Relation::Uses)]; // sem kind
         let f = filtrar_so_referencia(&g);
         assert!(
@@ -523,22 +534,25 @@ mod tests {
         assert_eq!(f.edges.len(), 1, "a aresta que tocava ecow::x sai");
         // 0 soltas: toda aresta tem as duas pontas em nós presentes.
         let ids: HashSet<usize> = f.nodes.iter().map(|n| n.id).collect();
-        assert!(f.edges.iter().all(|a| ids.contains(&a.id_from) && ids.contains(&a.id_to)));
+        assert!(
+            f.edges
+                .iter()
+                .all(|a| ids.contains(&a.id_from) && ids.contains(&a.id_to))
+        );
     }
 
-    /// Normalização: membro `typst-macros` (hífen no Cargo.toml) casa o path
-    /// `typst_macros::kw` (underscore do fork).
+    /// O chamador transporta a identidade canônica da extração.
     #[test]
-    fn membro_com_hifen_casa_path_com_underscore() {
+    fn membro_recebe_nome_canonico_da_extracao() {
         let mut g = Grafo::new("typst_macros");
         g.nodes = vec![
             no(1, "typst_macros", Kind::Crate),
             no(2, "typst_macros::kw", Kind::Mod),
             no(3, "serde::de", Kind::Mod),
         ];
-        let f = filtrar_nao_membros(&g, &["typst-macros".to_string()]);
+        let f = filtrar_nao_membros(&g, &["typst_macros".to_string()]);
         let paths: Vec<&str> = f.nodes.iter().map(|n| n.path.as_str()).collect();
-        assert!(paths.contains(&"typst_macros::kw"), "membro fica apesar do hífen");
+        assert!(paths.contains(&"typst_macros::kw"), "membro canônico fica");
         assert!(!paths.contains(&"serde::de"), "third-party sai");
     }
 

@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-traducao.md
-//! @prompt-hash 382a4093
+//! @prompt-hash e3eb83d8
 //! @layer L3
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //!           (antes: prompt 00_nucleo/prompt/0003-adaptador_l3.md)
 //!
 //! Tradução dos DTOs do JSON para os tipos do `lente_core`, validando os enums
@@ -16,7 +16,7 @@
 //!
 //! Função pura sobre estruturas em memória — testável sem subprocesso.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use lente_core::entities::grafo::{
     Aresta, Grafo, Kind, Modificadores, No, Path, Posicao, Relation, UsesKind, Visibility,
@@ -81,6 +81,7 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
         });
     }
 
+    let paths_por_id: HashMap<usize, &Path> = nodes.iter().map(|no| (no.id, &no.path)).collect();
     let mut edges: Vec<Aresta> = Vec::with_capacity(dto.edges.len());
     for aresta_dto in dto.edges {
         let from = Path::from(aresta_dto.from);
@@ -99,6 +100,18 @@ pub(crate) fn traduzir(dto: GrafoDTO) -> Result<Grafo, ErroAdaptador> {
                 id: aresta_dto.id_to,
                 contexto: "id_to".to_string(),
             });
+        }
+
+        for (id, path, contexto) in [
+            (aresta_dto.id_from, &from, "from"),
+            (aresta_dto.id_to, &to, "to"),
+        ] {
+            if paths_por_id[&id] != path {
+                return Err(ErroAdaptador::JsonInvalido(format!(
+                    "invariante violado — {contexto}={path} diverge do path {} do id {id}",
+                    paths_por_id[&id]
+                )));
+            }
         }
 
         // `uses_kind` (prompt 0034): só preenche para arestas `Uses`. Para
@@ -171,6 +184,26 @@ mod tests {
             id_to,
             relation: relation.to_string(),
             uses_kind: None,
+        }
+    }
+
+    #[test]
+    fn rejeita_texto_de_aresta_incompativel_com_id() {
+        for (from, to, contexto) in [
+            ("t::errado", "t::b", "from"),
+            ("t::a", "t::errado", "to"),
+        ] {
+            let dto = GrafoDTO {
+                crate_name: "t".to_string(),
+                nodes: vec![
+                    no_dto(1, "t::a", "fn", "pub"),
+                    no_dto(2, "t::b", "fn", "pub"),
+                ],
+                edges: vec![aresta_dto(from, 1, to, 2, "uses")],
+            };
+            let erro = traduzir(dto).unwrap_err();
+            assert!(matches!(erro, ErroAdaptador::JsonInvalido(_)));
+            assert!(erro.to_string().contains(contexto));
         }
     }
 

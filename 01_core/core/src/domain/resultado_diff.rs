@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/resultado-diff.md
-//! @prompt-hash 9855f2a5
+//! @prompt-hash 236e6faa
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. **Sem `serde`.**
 //!
@@ -40,9 +40,26 @@ pub struct RaioCombinado {
     pub jusante: Vec<(Path, usize)>,
 }
 
-/// O resultado completo do modo `--diff`, view-agnóstico (prompt 0047).
+/// Falha de extração ou resolução de um membro do workspace.
+/// Dado puro: o motivo técnico é convertido em texto na fronteira L4.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FalhaCrate {
+    pub crate_name: String,
+    pub motivo: String,
+}
+
+/// Completude da extração dos membros, sem prometer cobertura comportamental.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompletudeDiff {
+    Completa,
+    Parcial,
+}
+
+/// O resultado do modo `--diff`, view-agnóstico (prompt 0047).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResultadoDiff {
+    /// Membros ausentes do grafo, com o motivo original.
+    pub falhas: Vec<FalhaCrate>,
     /// Cada nó tocado + seu raio (para a vista por-item).
     pub tocados: Vec<TocadoComRaio>,
     /// A união dos raios (para a vista resumo).
@@ -57,6 +74,17 @@ pub struct ResultadoDiff {
     pub fantasmas: Vec<Fantasma>,
 }
 
+impl ResultadoDiff {
+    /// Derivada das falhas para impedir um estado completo com falhas ocultas.
+    pub fn completude(&self) -> CompletudeDiff {
+        if self.falhas.is_empty() {
+            CompletudeDiff::Completa
+        } else {
+            CompletudeDiff::Parcial
+        }
+    }
+}
+
 /// Une os raios de vários nós num [`RaioCombinado`]: para `montante` e
 /// `jusante`, a união por path com a **profundidade mínima** (o mais próximo),
 /// ordenada por path. Puro e determinístico.
@@ -69,9 +97,7 @@ pub fn combinar_raios(raios: &[Raio]) -> RaioCombinado {
 
 /// Une vários mapas path→profundidade mantendo a menor profundidade por path.
 /// O `BTreeMap` dá a ordenação por path (determinística) de graça.
-fn combinar_mapas<'a>(
-    mapas: impl Iterator<Item = &'a HashMap<Path, usize>>,
-) -> Vec<(Path, usize)> {
+fn combinar_mapas<'a>(mapas: impl Iterator<Item = &'a HashMap<Path, usize>>) -> Vec<(Path, usize)> {
     let mut menor: BTreeMap<Path, usize> = BTreeMap::new();
     for mapa in mapas {
         for (path, &prof) in mapa {
@@ -95,20 +121,13 @@ mod tests {
 
     /// Raio mínimo com montante/jusante dados (os demais campos não importam
     /// para `combinar_raios`).
-    fn raio_de(
-        alvo: &str,
-        montante: &[(&str, usize)],
-        jusante: &[(&str, usize)],
-    ) -> Raio {
+    fn raio_de(alvo: &str, montante: &[(&str, usize)], jusante: &[(&str, usize)]) -> Raio {
         Raio {
             alvo: Path::from(alvo),
             classificacao: Classificacao::Intermediario,
             uses_entrada: montante.len(),
             uses_saida: jusante.len(),
-            montante: montante
-                .iter()
-                .map(|(p, d)| (Path::from(*p), *d))
-                .collect(),
+            montante: montante.iter().map(|(p, d)| (Path::from(*p), *d)).collect(),
             jusante: jusante.iter().map(|(p, d)| (Path::from(*p), *d)).collect(),
             owns_pai: None,
             owns_filhos: Vec::new(),

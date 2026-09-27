@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-diff.md
-//! @prompt-hash 509a4c17
+//! @prompt-hash 2f564d50
 //! @layer L3
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Camada:  L3 — Infraestrutura. I/O (subprocesso `git`) permitido.
 //!
 //! A **entrada** do modo `--diff`: lê um diff e o estrutura na forma de dados
@@ -91,8 +91,8 @@ pub fn ler_diff(raiz: &Path) -> Result<DiffEstruturado, ErroDiff> {
     }
 
     // 2. Untracked: hunk sintético "tudo adicionado", lendo o arquivo do disco.
-    let lista = invocar_git(&["ls-files", "--others", "--exclude-standard"], raiz)?;
-    for rel in lista.lines().map(str::trim).filter(|l| !l.is_empty()) {
+    let lista = invocar_git(&["ls-files", "--others", "--exclude-standard", "-z"], raiz)?;
+    for rel in lista.split('\0').filter(|l| !l.is_empty()) {
         let caminho = raiz.join(rel);
         let n = contar_linhas(&caminho)?;
         let linhas_alteradas = if n == 0 {
@@ -305,8 +305,15 @@ mod tests {
         // Modifica o rastreado (linha 2) e cria um untracked com 2 linhas.
         std::fs::write(dir.join("a.txt"), "l1\nMODIFICADA\nl3\n").unwrap();
         std::fs::write(dir.join("novo.rs"), "fn x() {}\nfn y() {}\n").unwrap();
+        let nomes_especiais = ["ação.rs", " nome com espaços.rs ", "linha\nnova.rs", "tab\t.rs"];
+        for nome in nomes_especiais {
+            std::fs::write(dir.join(nome), "fn exemplo() {}\n").unwrap();
+        }
 
         let diff = ler_diff(&dir).expect("ler_diff deve funcionar");
+        for nome in nomes_especiais {
+            assert!(diff.arquivos.iter().any(|a| a.caminho == dir.join(nome)));
+        }
 
         let a = diff
             .arquivos

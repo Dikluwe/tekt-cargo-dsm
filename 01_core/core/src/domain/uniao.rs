@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/uniao.md
-//! @prompt-hash c43b96e2
+//! @prompt-hash b1b97de9
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0002-modelagem-do-grafo.md
 //! Camada:  L1 — Núcleo. Apenas stdlib. Sem I/O. Sem deps externas.
@@ -41,7 +41,8 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use crate::entities::grafo::{Aresta, Grafo, No, Path, Relation, UsesKind};
 
 /// Um grafo de crate etiquetado com o nome do seu crate (a etiqueta permite
-/// distinguir definição de referência na união).
+/// distinguir definição de referência na união). Deve ser `grafo.crate_name`,
+/// emitido pela extração, nunca `[package].name` nem uma normalização dele.
 #[derive(Debug, Clone)]
 pub struct GrafoCrate {
     pub crate_name: String,
@@ -90,14 +91,12 @@ pub fn unir_grafos(grafos: Vec<GrafoCrate>) -> ResultadoUniao {
     let mut fantasmas: Vec<Fantasma> = Vec::new();
     for (path, copias) in &copias_por_path {
         let dono = path.split("::").next().unwrap_or("");
-        let definicoes: Vec<&(&str, &No)> =
-            copias.iter().filter(|(etq, _)| *etq == dono).collect();
+        let definicoes: Vec<&(&str, &No)> = copias.iter().filter(|(etq, _)| *etq == dono).collect();
         let escolhido = if !definicoes.is_empty() {
             melhor_no(definicoes.into_iter().copied())
         } else {
             if membros.contains(dono) {
-                let mut refs: Vec<String> =
-                    copias.iter().map(|(etq, _)| etq.to_string()).collect();
+                let mut refs: Vec<String> = copias.iter().map(|(etq, _)| etq.to_string()).collect();
                 refs.sort();
                 refs.dedup();
                 fantasmas.push(Fantasma {
@@ -283,21 +282,40 @@ mod tests {
         let r = unir_grafos(vec![grafo_a, grafo_b]);
         assert!(r.fantasmas.is_empty(), "sem fantasma: B define Foo");
         // UM nó b::Foo, e é a definição (tem position).
-        let foo: Vec<&No> = r.grafo.nodes.iter().filter(|n| n.path.as_str() == "b::Foo").collect();
+        let foo: Vec<&No> = r
+            .grafo
+            .nodes
+            .iter()
+            .filter(|n| n.path.as_str() == "b::Foo")
+            .collect();
         assert_eq!(foo.len(), 1, "b::Foo deve ser único");
-        assert!(foo[0].position.is_some(), "vence a definição (com position)");
+        assert!(
+            foo[0].position.is_some(),
+            "vence a definição (com position)"
+        );
         // A aresta a::usa → b::Foo religa (0 soltas): ambos os endpoints existem.
-        let id_usa = r.grafo.nodes.iter().find(|n| n.path.as_str() == "a::usa").unwrap().id;
+        let id_usa = r
+            .grafo
+            .nodes
+            .iter()
+            .find(|n| n.path.as_str() == "a::usa")
+            .unwrap()
+            .id;
         let id_foo = foo[0].id;
         assert!(
-            r.grafo.edges.iter().any(|e| e.id_from == id_usa && e.id_to == id_foo
-                && e.relation == Relation::Uses),
+            r.grafo
+                .edges
+                .iter()
+                .any(|e| e.id_from == id_usa && e.id_to == id_foo && e.relation == Relation::Uses),
             "aresta cross-crate deve religar"
         );
         // Integridade: todo endpoint casa um nó.
         let ids: BTreeSet<usize> = r.grafo.nodes.iter().map(|n| n.id).collect();
         for e in &r.grafo.edges {
-            assert!(ids.contains(&e.id_from) && ids.contains(&e.id_to), "0 arestas soltas");
+            assert!(
+                ids.contains(&e.id_from) && ids.contains(&e.id_to),
+                "0 arestas soltas"
+            );
         }
     }
 
@@ -329,7 +347,14 @@ mod tests {
         let grafo_a = gc("a", vec![no(5, "b::Foo", "a", false)], vec![]);
         let grafo_b = gc("b", vec![no(9, "b::Foo", "b", true)], vec![]);
         let r = unir_grafos(vec![grafo_a, grafo_b]);
-        assert_eq!(r.grafo.nodes.iter().filter(|n| n.path.as_str() == "b::Foo").count(), 1);
+        assert_eq!(
+            r.grafo
+                .nodes
+                .iter()
+                .filter(|n| n.path.as_str() == "b::Foo")
+                .count(),
+            1
+        );
     }
 
     #[test]
@@ -399,11 +424,19 @@ mod tests {
         // não fantasma. Mantém representante.
         let grafo_a = gc(
             "a",
-            vec![no(0, "a::f", "a", true), no(1, "core::fmt::Display", "a", false)],
+            vec![
+                no(0, "a::f", "a", true),
+                no(1, "core::fmt::Display", "a", false),
+            ],
             vec![aresta("a::f", "core::fmt::Display", Relation::Uses)],
         );
         let r = unir_grafos(vec![grafo_a]);
         assert!(r.fantasmas.is_empty(), "core::* é externo, não fantasma");
-        assert!(r.grafo.nodes.iter().any(|n| n.path.as_str() == "core::fmt::Display"));
+        assert!(
+            r.grafo
+                .nodes
+                .iter()
+                .any(|n| n.path.as_str() == "core::fmt::Display")
+        );
     }
 }

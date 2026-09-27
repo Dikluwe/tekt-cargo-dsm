@@ -26,6 +26,9 @@ encontra o tipo de dados puro do L1.
     `crate_name` copiado a cada nó (o fork 0.27.0 não emite `crate` por nó).
   - **Invariantes**: `id` único (senão `IdDuplicado`); integridade referencial das
     arestas (`id_from`/`id_to` existem; senão `IdReferenciado`).
+  - `from` e `to` devem coincidir com o path do nó identificado pelo respectivo
+    ID; divergência gera `JsonInvalido` com contexto do endpoint. Paths
+    colidentes entre IDs diferentes continuam aceitos na forma crua.
 - Determinística; a falha é **na borda**, não silenciosa.
 
 ## Restrições (L3)
