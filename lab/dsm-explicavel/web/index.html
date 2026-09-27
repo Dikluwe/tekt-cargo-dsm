@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DSM explicável · Lente / Laboratório</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<a class="skip" href="#matrix">Ir para a matriz</a>
+<header><div class="brand"><span class="mark">L</span> LENTE <span class="divider">/</span> LABORATÓRIO</div><span class="pill">EXPERIMENTO · SOMENTE LEITURA</span></header>
+<main>
+<div class="title-row"><div><p class="eyebrow">ESTRUTURA → EVIDÊNCIA → IMPACTO</p><h1>Por trás de cada dependência.</h1><p class="intro">Explore a matriz, veja as relações de origem e investigue uma cadeia de impacto.</p></div><span class="version">DSM<br><strong>01</strong></span></div>
+<section id="analysis" class="metadata" aria-label="Metadados da análise"></section>
+<div id="state" class="notice" role="status">Carregando análise…</div>
+<div class="workspace">
+<section class="panel matrix-panel" id="matrix" tabindex="-1"><div class="section-heading"><div><p class="eyebrow">01 / MAPA DE DEPENDÊNCIAS</p><h2>Matriz entre módulos</h2></div><span id="count" class="small"></span></div>
+<p class="direction"><strong>Linha consome → coluna fornece</strong></p>
+<div id="matrix-scroll" class="matrix-scroll"></div>
+<p class="legend"><span class="swatch"></span> Registros Uses · “—” sem relação agregada · diagonal absorvida</p>
+<p class="hint">Teclado: Tab entra na matriz; setas movem o foco; Enter ou Espaço selecionam.</p></section>
+<aside class="panel evidence-panel" aria-labelledby="evidence-title"><p class="eyebrow">02 / INSPECIONAR CÉLULA</p><h2 id="evidence-title">Relações de origem</h2><div id="selection" aria-live="polite">Selecione uma célula para abrir suas evidências.</div><div id="evidence-list"></div><button id="more" class="secondary" hidden>Mostrar mais 20</button></aside>
+</div>
+<section class="panel query-panel"><div><p class="eyebrow">03 / EXPLICAR O IMPACTO</p><h2>Uma cadeia mínima, no grafo de itens</h2><p class="hint">Consumidor → dependências intermediárias → item alterado. Uma cadeia entre módulos não garante uma cadeia entre itens.</p></div>
+<form id="query"><label>Consumidor<select id="consumer" aria-label="Consumidor" required></select></label><span class="arrow" aria-hidden="true">→</span><label>Item alterado<select id="changed" aria-label="Item alterado" required></select></label><button id="query-button" type="submit">Consultar cadeia</button></form><div id="path-result" aria-live="polite">Escolha dois itens para consultar. Alcance estrutural não comprova quebra comportamental.</div></section>
+<section class="panel exclusions"><p class="eyebrow">04 / COBERTURA E LIMITES</p><h2>O que ficou fora da matriz</h2><p id="excluded-summary"></p><ul id="limitations"></ul><details id="excluded-details"><summary>Investigar relações excluídas, internas e itens sem contenedor</summary><div id="excluded-list"></div><button id="excluded-more" class="secondary" hidden>Mostrar mais 20</button></details><details id="diagnostics"><summary>Diagnósticos da análise</summary><ul id="diagnostic-list"></ul></details></section>
+<footer>Dados do snapshot recebido · Sem edição de grafo ou código · Sem recursos externos</footer>
+</main>
+</body></html>

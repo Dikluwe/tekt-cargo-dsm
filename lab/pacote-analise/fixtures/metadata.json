@@ -1,0 +1,12 @@
+{
+  "metadata_version": 1,
+  "provider": "experimental-python-ast",
+  "granularity": "module",
+  "execution": {
+    "status": "complete"
+  },
+  "semantic_coverage": "partial",
+  "graph_sha256": "4f08b837e9c0dc231e6d8755d8038a45659e3a699ffc87e39d39fff6e628133e",
+  "diagnostics": [],
+  "fixture": true
+}

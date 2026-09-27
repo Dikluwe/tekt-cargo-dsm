@@ -1,0 +1,59 @@
+{
+  "crate": "architecture-fixture",
+  "nodes": [
+    {
+      "id": 10,
+      "path": "current/app:A",
+      "name": "app:A",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 11,
+      "path": "current/data:B",
+      "name": "data:B",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 12,
+      "path": "current/data:C",
+      "name": "data:C",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 13,
+      "path": "current/util:D",
+      "name": "util:D",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 10,
+      "id_to": 11,
+      "from": "current/app:A",
+      "to": "current/data:B",
+      "relation": "uses",
+      "uses_kind": "import"
+    },
+    {
+      "id_from": 11,
+      "id_to": 12,
+      "from": "current/data:B",
+      "to": "current/data:C",
+      "relation": "uses",
+      "uses_kind": "import"
+    },
+    {
+      "id_from": 12,
+      "id_to": 11,
+      "from": "current/data:C",
+      "to": "current/data:B",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

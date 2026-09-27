@@ -1,0 +1,29 @@
+{
+  "crate": "example",
+  "nodes": [
+    {
+      "id": 0,
+      "path": "local::X",
+      "name": "X",
+      "kind": "mod",
+      "visibility": "priv"
+    },
+    {
+      "id": 1,
+      "path": "local::Y",
+      "name": "Y",
+      "kind": "mod",
+      "visibility": "priv"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 1,
+      "id_to": 0,
+      "from": "local::Y",
+      "to": "local::X",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

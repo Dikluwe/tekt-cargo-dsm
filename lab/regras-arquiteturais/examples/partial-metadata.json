@@ -1,0 +1,9 @@
+{
+  "provider": "fixture-static-import",
+  "execution": {
+    "status": "partial"
+  },
+  "diagnostics": [
+    "fixture intentionally incomplete"
+  ]
+}

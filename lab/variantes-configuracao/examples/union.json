@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "project": "example",
+  "configurations": [
+    "A",
+    "B"
+  ],
+  "per_configuration": [
+    {
+      "id": "A",
+      "granularity": "file",
+      "nature": "syntactic-import",
+      "extraction": "complete",
+      "diagnostics": [],
+      "nodes": [
+        {
+          "identity": "X",
+          "source_id": 0,
+          "source_path": "local::X",
+          "source_kind": "Mod"
+        },
+        {
+          "identity": "Y",
+          "source_id": 1,
+          "source_path": "local::Y",
+          "source_kind": "Mod"
+        },
+        {
+          "identity": "Z",
+          "source_id": 2,
+          "source_path": "local::Z",
+          "source_kind": "Mod"
+        }
+      ],
+      "relations": [
+        {
+          "from": "X",
+          "to": "Y",
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        {
+          "from": "Y",
+          "to": "Z",
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      ],
+      "analysis": {
+        "node_count": 3,
+        "relation_count": 2,
+        "uses_relation_count": 2,
+        "cyclic_sccs": [],
+        "condensation_order": [
+          "X",
+          "Y",
+          "Z"
+        ],
+        "cycle_examples": [],
+        "cycle_examples_exhaustive": false
+      }
+    },
+    {
+      "id": "B",
+      "granularity": "file",
+      "nature": "syntactic-import",
+      "extraction": "complete",
+      "diagnostics": [],
+      "nodes": [
+        {
+          "identity": "X",
+          "source_id": 0,
+          "source_path": "local::X",
+          "source_kind": "Mod"
+        },
+        {
+          "identity": "Y",
+          "source_id": 1,
+          "source_path": "local::Y",
+          "source_kind": "Mod"
+        }
+      ],
+      "relations": [
+        {
+          "from": "Y",
+          "to": "X",
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      ],
+      "analysis": {
+        "node_count": 2,
+        "relation_count": 1,
+        "uses_relation_count": 1,
+        "cyclic_sccs": [],
+        "condensation_order": [
+          "Y",
+          "X"
+        ],
+        "cycle_examples": [],
+        "cycle_examples_exhaustive": false
+      }
+    }
+  ],
+  "union": {
+    "view": "union-of-possibilities",
+    "granularity": "file",
+    "nature": "syntactic-import",
+    "nodes": [
+      {
+        "identity": "X",
+        "observed_in": [
+          "A",
+          "B"
+        ],
+        "observation_class": "all-provided-configurations",
+        "not_observed_in_complete": [],
+        "not_observed_in_partial_or_unknown": []
+      },
+      {
+        "identity": "Y",
+        "observed_in": [
+          "A",
+          "B"
+        ],
+        "observation_class": "all-provided-configurations",
+        "not_observed_in_complete": [],
+        "not_observed_in_partial_or_unknown": []
+      },
+      {
+        "identity": "Z",
+        "observed_in": [
+          "A"
+        ],
+        "observation_class": "some-provided-configurations",
+        "not_observed_in_complete": [
+          "B"
+        ],
+        "not_observed_in_partial_or_unknown": []
+      }
+    ],
+    "relations": [
+      {
+        "from": "X",
+        "to": "Y",
+        "relation": "uses",
+        "uses_kind": "import",
+        "observed_in": [
+          "A"
+        ],
+        "observation_class": "some-provided-configurations",
+        "not_observed_in_complete": [
+          "B"
+        ],
+        "not_observed_in_partial_or_unknown": []
+      },
+      {
+        "from": "Y",
+        "to": "X",
+        "relation": "uses",
+        "uses_kind": "import",
+        "observed_in": [
+          "B"
+        ],
+        "observation_class": "some-provided-configurations",
+        "not_observed_in_complete": [
+          "A"
+        ],
+        "not_observed_in_partial_or_unknown": []
+      },
+      {
+        "from": "Y",
+        "to": "Z",
+        "relation": "uses",
+        "uses_kind": "import",
+        "observed_in": [
+          "A"
+        ],
+        "observation_class": "some-provided-configurations",
+        "not_observed_in_complete": [
+          "B"
+        ],
+        "not_observed_in_partial_or_unknown": []
+      }
+    ],
+    "analysis": {
+      "node_count": 3,
+      "relation_count": 3,
+      "uses_relation_count": 3,
+      "cyclic_sccs": [
+        [
+          "X",
+          "Y"
+        ]
+      ],
+      "condensation_order": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "cycle_examples": [
+        {
+          "edges": [
+            {
+              "from": "X",
+              "to": "Y",
+              "relation": "uses",
+              "uses_kind": "import"
+            },
+            {
+              "from": "Y",
+              "to": "X",
+              "relation": "uses",
+              "uses_kind": "import"
+            }
+          ],
+          "common_configurations": [],
+          "observation": "not-observed-together-in-provided-configurations"
+        }
+      ],
+      "cycle_examples_exhaustive": false
+    }
+  },
+  "paths": [
+    {
+      "id": "observed-path",
+      "edges": [
+        {
+          "from": "X",
+          "to": "Y",
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        {
+          "from": "Y",
+          "to": "Z",
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      ],
+      "common_configurations": [
+        "A"
+      ],
+      "observation": "observed-together"
+    },
+    {
+      "id": "union-roundtrip",
+      "edges": [
+        {
+          "from": "X",
+          "to": "Y",
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        {
+          "from": "Y",
+          "to": "X",
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      ],
+      "common_configurations": [],
+      "observation": "not-observed-together-in-provided-configurations"
+    }
+  ],
+  "diagnostics": [],
+  "limits": [
+    "Todas significa somente todas as configurações fornecidas; a amostra não cobre necessariamente todas as possíveis.",
+    "Não observação, sobretudo em extração parcial/desconhecida, não prova ausência.",
+    "União de possibilidades não representa uma configuração executada; coocorrência não prova ativação runtime.",
+    "SCC é componente, não um único ciclo testemunhado. Exemplos de ciclos não são exaustivos.",
+    "Interseção vazia refere-se ao caminho concreto consultado, não a todos os caminhos/ciclos do SCC.",
+    "Identidade, projeto, completude, granularidade e natureza são declarações explícitas do usuário."
+  ]
+}

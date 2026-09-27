@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "antes": {
+    "versao": "v1",
+    "granularidade": "item",
+    "natureza": "reference",
+    "completude": "completa",
+    "diagnosticos": [],
+    "grafo": {
+      "crate": "demo",
+      "nodes": [
+        {"id": 1, "path": "demo::servico", "name": "servico", "kind": "fn", "visibility": "pub"},
+        {"id": 2, "path": "demo::consumidor", "name": "consumidor", "kind": "fn", "visibility": "pub"}
+      ],
+      "edges": [
+        {"id_from": 2, "id_to": 1, "from": "demo::consumidor", "to": "demo::servico", "relation": "uses", "uses_kind": "reference"}
+      ]
+    }
+  },
+  "depois": {
+    "versao": "v2",
+    "granularidade": "item",
+    "natureza": "reference",
+    "completude": "completa",
+    "diagnosticos": [],
+    "grafo": {
+      "crate": "demo",
+      "nodes": [
+        {"id": 20, "path": "demo::consumidor", "name": "consumidor", "kind": "fn", "visibility": "pub"}
+      ],
+      "edges": []
+    }
+  },
+  "correspondencias": [{"identidade": "consumidor", "antes": 2, "depois": 20}],
+  "mudancas": [{"tipo": "remocao", "antes": 1}]
+}

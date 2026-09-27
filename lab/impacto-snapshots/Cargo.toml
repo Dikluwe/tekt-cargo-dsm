@@ -1,0 +1,11 @@
+[package]
+name = "lente-impacto-snapshots"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[workspace]
+
+[dependencies]
+lente_core = { path = "../../01_core/core" }

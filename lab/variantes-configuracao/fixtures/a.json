@@ -1,0 +1,44 @@
+{
+  "crate": "example",
+  "nodes": [
+    {
+      "id": 0,
+      "path": "local::X",
+      "name": "X",
+      "kind": "mod",
+      "visibility": "priv"
+    },
+    {
+      "id": 1,
+      "path": "local::Y",
+      "name": "Y",
+      "kind": "mod",
+      "visibility": "priv"
+    },
+    {
+      "id": 2,
+      "path": "local::Z",
+      "name": "Z",
+      "kind": "mod",
+      "visibility": "priv"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 0,
+      "id_to": 1,
+      "from": "local::X",
+      "to": "local::Y",
+      "relation": "uses",
+      "uses_kind": "import"
+    },
+    {
+      "id_from": 1,
+      "id_to": 2,
+      "from": "local::Y",
+      "to": "local::Z",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

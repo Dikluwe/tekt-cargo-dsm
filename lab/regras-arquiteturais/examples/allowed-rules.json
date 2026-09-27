@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "enforcement": "all",
+  "rules": [
+    {
+      "id": "no-app-to-isolated",
+      "policy": {
+        "kind": "forbid_direct",
+        "from": {
+          "ids": [
+            "app:A"
+          ]
+        },
+        "to": {
+          "ids": [
+            "util:D"
+          ]
+        }
+      }
+    }
+  ]
+}

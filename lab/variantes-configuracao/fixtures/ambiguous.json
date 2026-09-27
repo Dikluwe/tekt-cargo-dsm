@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "project": "example",
+  "configurations": [
+    {
+      "id": "A",
+      "graph": "a.json",
+      "granularity": "file",
+      "nature": "syntactic-import",
+      "extraction": "complete",
+      "identity_map": [
+        {
+          "node_id": 0,
+          "identity": "X"
+        },
+        {
+          "node_id": 1,
+          "identity": "X"
+        },
+        {
+          "node_id": 2,
+          "identity": "Z"
+        }
+      ]
+    }
+  ]
+}

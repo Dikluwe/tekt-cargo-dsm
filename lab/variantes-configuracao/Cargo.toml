@@ -1,0 +1,15 @@
+[package]
+name = "lente-variantes-configuracao"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+
+[workspace]
+
+[dependencies]
+lente_core = { path = "../../01_core/core" }
+lente_estrutura = { path = "../../01_core/estrutura" }
+lente_infra = { path = "../../03_infra" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

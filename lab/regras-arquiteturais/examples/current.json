@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "graph": "current-graph.json",
+  "graph_sha256": "4f8b9bf0a84a7c3a759fc391087a5cadf7c2f87eb3977a9826b66f99eacebd9b",
+  "context": {
+    "project": "demo",
+    "provider": "fixture-static-import",
+    "provider_version": "1",
+    "granularity": "file",
+    "nature": "static-import",
+    "configuration": "fixture-default",
+    "scope": "four-explicit-elements"
+  },
+  "quality": {
+    "execution": "complete",
+    "coverage": "complete",
+    "capabilities": [
+      "direct_dependencies",
+      "reachability",
+      "cyclic_components"
+    ],
+    "diagnostics": []
+  },
+  "identities": [
+    {
+      "node_id": 10,
+      "identity": "app:A"
+    },
+    {
+      "node_id": 11,
+      "identity": "data:B"
+    },
+    {
+      "node_id": 12,
+      "identity": "data:C"
+    },
+    {
+      "node_id": 13,
+      "identity": "util:D"
+    }
+  ]
+}

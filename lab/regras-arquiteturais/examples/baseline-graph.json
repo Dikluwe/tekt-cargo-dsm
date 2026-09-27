@@ -1,0 +1,43 @@
+{
+  "crate": "architecture-fixture",
+  "nodes": [
+    {
+      "id": 0,
+      "path": "baseline/app:A",
+      "name": "app:A",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 1,
+      "path": "baseline/data:B",
+      "name": "data:B",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 2,
+      "path": "baseline/data:C",
+      "name": "data:C",
+      "kind": "mod",
+      "visibility": "pub"
+    },
+    {
+      "id": 3,
+      "path": "baseline/util:D",
+      "name": "util:D",
+      "kind": "mod",
+      "visibility": "pub"
+    }
+  ],
+  "edges": [
+    {
+      "id_from": 0,
+      "id_to": 1,
+      "from": "baseline/app:A",
+      "to": "baseline/data:B",
+      "relation": "uses",
+      "uses_kind": "import"
+    }
+  ]
+}

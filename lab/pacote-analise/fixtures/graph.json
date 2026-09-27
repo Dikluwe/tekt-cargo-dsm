@@ -1,0 +1,1 @@
+{"crate":"fixture","nodes":[{"id":0,"path":"a","name":"a","kind":"mod","visibility":"priv"},{"id":1,"path":"b","name":"b","kind":"mod","visibility":"priv"}],"edges":[{"from":"a","id_from":0,"to":"b","id_to":1,"relation":"uses","uses_kind":"import"}]}

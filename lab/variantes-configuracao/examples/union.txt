@@ -1,0 +1,41 @@
+Projeto declarado: example
+Configurações fornecidas: [A, B]
+Granularidade: file; natureza: syntactic-import
+
+Configuração A — extração Complete
+  Nó X = id 0 / local::X (Mod)
+  Nó Y = id 1 / local::Y (Mod)
+  Nó Z = id 2 / local::Z (Mod)
+  X -> Y [uses, import]
+  Y -> Z [uses, import]
+  3 nós, 2 relações (2 uses); 0 SCCs cíclicos.
+  Ordem da condensação: [X, Y, Z]
+
+Configuração B — extração Complete
+  Nó X = id 0 / local::X (Mod)
+  Nó Y = id 1 / local::Y (Mod)
+  Y -> X [uses, import]
+  2 nós, 1 relações (1 uses); 0 SCCs cíclicos.
+  Ordem da condensação: [Y, X]
+
+UNIÃO DE POSSIBILIDADES — não é uma configuração executada
+  Nó X: observada em [A, B] (todas as fornecidas); não observada em completas []; desconhecido em parciais/desconhecidas []
+  Nó Y: observada em [A, B] (todas as fornecidas); não observada em completas []; desconhecido em parciais/desconhecidas []
+  Nó Z: observada em [A] (algumas das fornecidas); não observada em completas [B]; desconhecido em parciais/desconhecidas []
+  X -> Y [uses, import]: observada em [A] (algumas das fornecidas); não observada em completas [B]; desconhecido em parciais/desconhecidas []
+  Y -> X [uses, import]: observada em [B] (algumas das fornecidas); não observada em completas [A]; desconhecido em parciais/desconhecidas []
+  Y -> Z [uses, import]: observada em [A] (algumas das fornecidas); não observada em completas [B]; desconhecido em parciais/desconhecidas []
+  3 nós, 3 relações (3 uses); 1 SCCs cíclicos.
+  SCC, conjunto de membros: [X, Y]
+  Exemplo de ciclo: X -> Y -> X (subtipos: import, import): nenhuma configuração fornecida observou este percurso integralmente
+  Ordem da condensação: [X, Y, Z]
+
+Caminho observed-path: X -> Y -> Z (subtipos: import, import): observado integralmente em [A]
+
+Caminho union-roundtrip: X -> Y -> X (subtipos: import, import): nenhuma configuração fornecida observou este percurso integralmente
+Limite: Todas significa somente todas as configurações fornecidas; a amostra não cobre necessariamente todas as possíveis.
+Limite: Não observação, sobretudo em extração parcial/desconhecida, não prova ausência.
+Limite: União de possibilidades não representa uma configuração executada; coocorrência não prova ativação runtime.
+Limite: SCC é componente, não um único ciclo testemunhado. Exemplos de ciclos não são exaustivos.
+Limite: Interseção vazia refere-se ao caminho concreto consultado, não a todos os caminhos/ciclos do SCC.
+Limite: Identidade, projeto, completude, granularidade e natureza são declarações explícitas do usuário.

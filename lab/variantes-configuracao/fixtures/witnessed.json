@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "project": "example",
+  "configurations": [
+    {
+      "id": "A",
+      "graph": "a.json",
+      "granularity": "file",
+      "nature": "syntactic-import",
+      "extraction": "complete",
+      "identity_map": [
+        {
+          "node_id": 0,
+          "identity": "X"
+        },
+        {
+          "node_id": 1,
+          "identity": "Y"
+        },
+        {
+          "node_id": 2,
+          "identity": "Z"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "graph": "c.json",
+      "granularity": "file",
+      "nature": "syntactic-import",
+      "extraction": "complete",
+      "identity_map": [
+        {
+          "node_id": 0,
+          "identity": "X"
+        },
+        {
+          "node_id": 1,
+          "identity": "Y"
+        }
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "id": "cycle-C",
+      "edges": [
+        {
+          "from": "X",
+          "to": "Y",
+          "relation": "uses",
+          "uses_kind": "import"
+        },
+        {
+          "from": "Y",
+          "to": "X",
+          "relation": "uses",
+          "uses_kind": "import"
+        }
+      ]
+    }
+  ]
+}

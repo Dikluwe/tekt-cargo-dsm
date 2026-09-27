@@ -1,0 +1,626 @@
+{
+  "format_version": 1,
+  "metadata": {
+    "provider": "Fixture Rust <local> & \"auditável\"",
+    "language": "Rust",
+    "granularity": "itens → módulos",
+    "configuration": "fixture de paginação / 45 relações ui → service",
+    "execution": "partial",
+    "semantic_coverage": "Imports dinâmicos não reconhecidos; macros não verificadas.",
+    "diagnostics": [
+      "Um arquivo não pôde ser extraído: src/legado.rs",
+      "Texto preservado: </script><img src=x onerror=alert(1)>"
+    ]
+  },
+  "graph": {
+    "crate": "app",
+    "nodes": [
+      {
+        "id": 1,
+        "path": "app",
+        "name": "app",
+        "kind": "crate",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 10,
+        "path": "app::ui",
+        "name": "app::ui",
+        "kind": "mod",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 11,
+        "path": "app::ui::render <&>",
+        "name": "app::ui::render <&>",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 12,
+        "path": "app::ui::helper",
+        "name": "app::ui::helper",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 20,
+        "path": "app::service",
+        "name": "app::service",
+        "kind": "mod",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 21,
+        "path": "app::service::load",
+        "name": "app::service::load",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 30,
+        "path": "app::storage",
+        "name": "app::storage",
+        "kind": "mod",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 31,
+        "path": "app::storage::save",
+        "name": "app::storage::save",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 40,
+        "path": "app::cache",
+        "name": "app::cache",
+        "kind": "mod",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 41,
+        "path": "app::cache::refresh",
+        "name": "app::cache::refresh",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      },
+      {
+        "id": 99,
+        "path": "external::<script>alert(\"x\")</script>",
+        "name": "external::<script>alert(\"x\")</script>",
+        "kind": "fn",
+        "visibility": "pub",
+        "position": {
+          "file": "declaration.rs",
+          "start_line": 4,
+          "end_line": 7
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id_from": 1,
+        "id_to": 10,
+        "from": "app",
+        "to": "app::ui",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 10,
+        "id_to": 11,
+        "from": "app::ui",
+        "to": "app::ui::render <&>",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 10,
+        "id_to": 12,
+        "from": "app::ui",
+        "to": "app::ui::helper",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 1,
+        "id_to": 20,
+        "from": "app",
+        "to": "app::service",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 20,
+        "id_to": 21,
+        "from": "app::service",
+        "to": "app::service::load",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 1,
+        "id_to": 30,
+        "from": "app",
+        "to": "app::storage",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 30,
+        "id_to": 31,
+        "from": "app::storage",
+        "to": "app::storage::save",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 1,
+        "id_to": 40,
+        "from": "app",
+        "to": "app::cache",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 40,
+        "id_to": 41,
+        "from": "app::cache",
+        "to": "app::cache::refresh",
+        "relation": "owns",
+        "uses_kind": null
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 12,
+        "id_to": 21,
+        "from": "app::ui::helper",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "import"
+      },
+      {
+        "id_from": 21,
+        "id_to": 31,
+        "from": "app::service::load",
+        "to": "app::storage::save",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 21,
+        "id_to": 41,
+        "from": "app::service::load",
+        "to": "app::cache::refresh",
+        "relation": "uses",
+        "uses_kind": null
+      },
+      {
+        "id_from": 41,
+        "id_to": 21,
+        "from": "app::cache::refresh",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 12,
+        "from": "app::ui::render <&>",
+        "to": "app::ui::helper",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 99,
+        "id_to": 31,
+        "from": "external::<script>alert(\"x\")</script>",
+        "to": "app::storage::save",
+        "relation": "uses",
+        "uses_kind": null
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      },
+      {
+        "id_from": 11,
+        "id_to": 21,
+        "from": "app::ui::render <&>",
+        "to": "app::service::load",
+        "relation": "uses",
+        "uses_kind": "reference"
+      }
+    ]
+  }
+}

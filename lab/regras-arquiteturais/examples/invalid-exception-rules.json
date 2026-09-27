@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "enforcement": "all",
+  "rules": [
+    {
+      "id": "no-app-to-data",
+      "policy": {
+        "kind": "forbid_direct",
+        "from": {
+          "ids": [
+            "app:A"
+          ]
+        },
+        "to": {
+          "ids": [
+            "data:B"
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-app-reaching-c",
+      "policy": {
+        "kind": "forbid_reachability",
+        "from": {
+          "ids": [
+            "app:A"
+          ]
+        },
+        "to": {
+          "ids": [
+            "data:C"
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-new-data-cycles",
+      "policy": {
+        "kind": "no_new_cycles",
+        "scope": {
+          "prefixes": [
+            "data:"
+          ]
+        }
+      }
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "migration-2026",
+      "rule_id": "no-app-to-data",
+      "scope": {
+        "kind": "pairs",
+        "from": {
+          "ids": [
+            "app:A"
+          ]
+        },
+        "to": {
+          "ids": [
+            "data:B"
+          ]
+        }
+      },
+      "justification": "",
+      "until": "2026-12-31"
+    }
+  ]
+}

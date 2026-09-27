@@ -1,0 +1,20 @@
+{
+  "crate": "example",
+  "nodes": [
+    {
+      "id": 0,
+      "path": "local::X",
+      "name": "X",
+      "kind": "mod",
+      "visibility": "priv"
+    },
+    {
+      "id": 1,
+      "path": "local::Y",
+      "name": "Y",
+      "kind": "mod",
+      "visibility": "priv"
+    }
+  ],
+  "edges": []
+}
