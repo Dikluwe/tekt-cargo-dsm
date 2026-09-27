@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash 7d319e02
+//! @prompt-hash 0c524c8e
 //! @layer L1
-//! @updated 2026-06-07
+//! @updated 2026-09-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 //!
@@ -656,6 +656,308 @@ fn mapa_modulo_contenedor(grafo: &Grafo) -> HashMap<usize, usize> {
     contenedor
 }
 
+/// Obstrução na cadeia de contenção. IDs só identificam este snapshot.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ProblemaContencao {
+    SemModulo,
+    NoAusente { id: usize },
+    MultiplosPais { item: usize, pais: Vec<usize> },
+    Ciclo { membros: Vec<usize> },
+}
+
+/// Um nó cuja contenção não pôde ser estabelecida com segurança.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ItemSemContenedor {
+    pub id: usize,
+    pub path: Path,
+    pub problemas: Vec<ProblemaContencao>,
+}
+
+/// Motivo explícito para uma relação não contribuir para uma célula.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MotivoNaoAgregavel {
+    /// Owns é hierarquia, não dependência Uses. Não contribui para o peso.
+    ContencaoOwns,
+    /// Problemas de cada endpoint, separadamente; vazio significa ponta válida.
+    ContencaoInvalida {
+        origem: Vec<ProblemaContencao>,
+        destino: Vec<ProblemaContencao>,
+    },
+}
+
+/// Partição exaustiva dos registros de arestas do snapshot recebido.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DestinoRelacao {
+    Agregada {
+        id_modulo_de: usize,
+        id_modulo_para: usize,
+    },
+    InternaAbsorvida {
+        id_modulo: usize,
+    },
+    NaoAgregavel(MotivoNaoAgregavel),
+}
+
+/// Evidência fiel. `indice_snapshot` endereça `grafo.edges[indice_snapshot]`,
+/// inclusive quando há registros idênticos. Não é identidade entre extrações.
+/// A posição de um nó não é convertida em posição da referência.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RelacaoDetalhada {
+    pub indice_snapshot: usize,
+    pub aresta: Aresta,
+    pub destino: DestinoRelacao,
+}
+
+/// Célula explicada da DSM. Peso = quantidade de registros Uses no snapshot,
+/// incluindo paralelas e todos os subtipos; não são ocorrências no código nem
+/// pares distintos. `evidencias` contém índices em `grafo.edges`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DependenciaDetalhada {
+    pub id_de: usize,
+    pub de: Path,
+    pub id_para: usize,
+    pub para: Path,
+    pub peso: usize,
+    pub evidencias: Vec<usize>,
+}
+
+/// Agregação com contabilidade completa: cada aresta aparece uma vez em
+/// `relacoes`; cada contribuição entre módulos pertence a uma única célula.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AgregacaoDetalhada {
+    pub dependencias: Vec<DependenciaDetalhada>,
+    pub relacoes: Vec<RelacaoDetalhada>,
+    pub itens_sem_contenedor: Vec<ItemSemContenedor>,
+}
+
+/// Agrega com evidências sem modificar a política das APIs legadas.
+///
+/// Exige IDs únicos, conforme o contrato de Grafo. Usa IDs para contenção e
+/// preserva paths verbatim. Valida toda a ancestralidade Owns, inclusive acima
+/// de módulos: ciclo ou múltiplos pais tornam o nó e seus descendentes não
+/// agregáveis, mesmo se os pais levarem ao mesmo módulo. Owns paralelos para
+/// o mesmo pai não criam ambiguidade. Nenhum pai é escolhido arbitrariamente.
+///
+/// Detecta SCCs Owns (inclusive auto-ciclos); registra as obstruções locais da
+/// primeira ancestralidade inválida alcançada. Nós fora dessas cadeias seguem
+/// agregáveis. Ausência de módulo é reportada também para nós sem Uses.
+/// Ordena por paths/IDs e discriminantes explícitos, nunca por Debug de enums.
+/// Permutar a entrada preserva a semântica, mas muda os índices das evidências.
+///
+/// Consulta das evidências de uma célula, inteiramente em memória:
+/// ```
+/// use lente_core::entities::grafo::Grafo;
+/// use lente_estrutura::agregar_por_modulo_detalhado;
+/// fn evidencias(grafo: &Grafo, de: usize, para: usize) {
+///     let detalhe = agregar_por_modulo_detalhado(grafo);
+///     if let Some(celula) = detalhe.dependencias.iter()
+///         .find(|d| d.id_de == de && d.id_para == para) {
+///         assert_eq!(celula.peso, celula.evidencias.len());
+///         for &indice in &celula.evidencias {
+///             let original = &grafo.edges[indice];
+///             assert_eq!(original.relation,
+///                 lente_core::entities::grafo::Relation::Uses);
+///             // original preserva IDs, paths, relation e uses_kind.
+///         }
+///     }
+/// }
+/// evidencias(&Grafo::new("exemplo"), 1, 2);
+/// ```
+pub fn agregar_por_modulo_detalhado(grafo: &Grafo) -> AgregacaoDetalhada {
+    let nos: HashMap<usize, &No> = grafo.nodes.iter().map(|n| (n.id, n)).collect();
+    let mut pais: HashMap<usize, BTreeSet<usize>> = HashMap::new();
+    for a in &grafo.edges {
+        if a.relation == Relation::Owns {
+            pais.entry(a.id_to).or_default().insert(a.id_from);
+        }
+    }
+    // Projeção local exclusivamente para reutilizar o Tarjan iterativo. As
+    // evidências originais não são alteradas e continuam com Relation::Owns.
+    let hierarquia = Grafo {
+        crate_name: grafo.crate_name.clone(),
+        nodes: grafo.nodes.clone(),
+        edges: grafo
+            .edges
+            .iter()
+            .filter(|a| a.relation == Relation::Owns)
+            .map(|a| Aresta {
+                relation: Relation::Uses,
+                ..a.clone()
+            })
+            .collect(),
+    };
+    let paths = nos.iter().map(|(&id, n)| (id, n.path.clone())).collect();
+    let mut problemas: HashMap<usize, Vec<ProblemaContencao>> = HashMap::new();
+    for (&id, ps) in &pais {
+        if ps.len() > 1 {
+            problemas
+                .entry(id)
+                .or_default()
+                .push(ProblemaContencao::MultiplosPais {
+                    item: id,
+                    pais: ps.iter().copied().collect(),
+                });
+        }
+    }
+    for mut membros in tarjan_sccs(&hierarquia, &paths) {
+        if membros.len() > 1
+            || membros
+                .first()
+                .is_some_and(|id| pais.get(id).is_some_and(|ps| ps.contains(id)))
+        {
+            membros.sort_unstable();
+            for &id in &membros {
+                problemas
+                    .entry(id)
+                    .or_default()
+                    .push(ProblemaContencao::Ciclo {
+                        membros: membros.clone(),
+                    });
+            }
+        }
+    }
+    let mut resolvidos: HashMap<usize, Result<Option<usize>, Vec<ProblemaContencao>>> =
+        HashMap::new();
+    let ids: BTreeSet<usize> = nos
+        .keys()
+        .copied()
+        .chain(grafo.edges.iter().flat_map(|a| [a.id_from, a.id_to]))
+        .collect();
+    for id in ids {
+        let mut atual = id;
+        let mut cadeia = Vec::new();
+        let mut resultado = loop {
+            if let Some(r) = resolvidos.get(&atual) {
+                break r.clone();
+            }
+            if !nos.contains_key(&atual) {
+                break Err(vec![ProblemaContencao::NoAusente { id: atual }]);
+            }
+            if let Some(p) = problemas.get(&atual) {
+                break Err(p.clone());
+            }
+            cadeia.push(atual);
+            match pais.get(&atual).and_then(|ps| ps.first()) {
+                Some(&pai) => atual = pai,
+                None => break Ok(None),
+            }
+        };
+        resolvidos.entry(atual).or_insert_with(|| resultado.clone());
+        for item in cadeia.into_iter().rev() {
+            if resultado.is_ok() && matches!(nos[&item].kind, Kind::Mod | Kind::Crate) {
+                resultado = Ok(Some(item));
+            }
+            resolvidos.insert(item, resultado.clone());
+        }
+    }
+    let erros = |id: usize| match &resolvidos[&id] {
+        Ok(Some(_)) => vec![],
+        Ok(None) => vec![ProblemaContencao::SemModulo],
+        Err(p) => p.clone(),
+    };
+    let mut itens_sem_contenedor: Vec<_> = grafo
+        .nodes
+        .iter()
+        .filter_map(|n| {
+            let problemas = erros(n.id);
+            (!problemas.is_empty()).then(|| ItemSemContenedor {
+                id: n.id,
+                path: n.path.clone(),
+                problemas,
+            })
+        })
+        .collect();
+    itens_sem_contenedor.sort_by(|a, b| (&a.path, a.id).cmp(&(&b.path, b.id)));
+    let mut relacoes: Vec<_> = grafo
+        .edges
+        .iter()
+        .enumerate()
+        .map(|(indice_snapshot, a)| {
+            let origem = erros(a.id_from);
+            let destino = erros(a.id_to);
+            let destino = if !origem.is_empty() || !destino.is_empty() {
+                DestinoRelacao::NaoAgregavel(MotivoNaoAgregavel::ContencaoInvalida {
+                    origem,
+                    destino,
+                })
+            } else if a.relation == Relation::Owns {
+                DestinoRelacao::NaoAgregavel(MotivoNaoAgregavel::ContencaoOwns)
+            } else {
+                let de = resolvidos[&a.id_from].as_ref().unwrap().unwrap();
+                let para = resolvidos[&a.id_to].as_ref().unwrap().unwrap();
+                if de == para {
+                    DestinoRelacao::InternaAbsorvida { id_modulo: de }
+                } else {
+                    DestinoRelacao::Agregada {
+                        id_modulo_de: de,
+                        id_modulo_para: para,
+                    }
+                }
+            };
+            RelacaoDetalhada {
+                indice_snapshot,
+                aresta: a.clone(),
+                destino,
+            }
+        })
+        .collect();
+    fn chave(a: &Aresta) -> (&Path, &Path, usize, usize, u8, u8) {
+        use lente_core::entities::grafo::UsesKind;
+        (
+            &a.from,
+            &a.to,
+            a.id_from,
+            a.id_to,
+            match a.relation {
+                Relation::Owns => 0,
+                Relation::Uses => 1,
+            },
+            match a.uses_kind {
+                None => 0,
+                Some(UsesKind::Reference) => 1,
+                Some(UsesKind::Import) => 2,
+            },
+        )
+    }
+    relacoes.sort_by(|a, b| {
+        chave(&a.aresta)
+            .cmp(&chave(&b.aresta))
+            .then(a.indice_snapshot.cmp(&b.indice_snapshot))
+    });
+    let mut celulas: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
+    for r in &relacoes {
+        if let DestinoRelacao::Agregada {
+            id_modulo_de,
+            id_modulo_para,
+        } = r.destino
+        {
+            celulas
+                .entry((id_modulo_de, id_modulo_para))
+                .or_default()
+                .push(r.indice_snapshot);
+        }
+    }
+    let mut dependencias: Vec<_> = celulas
+        .into_iter()
+        .map(|((id_de, id_para), evidencias)| DependenciaDetalhada {
+            id_de,
+            de: nos[&id_de].path.clone(),
+            id_para,
+            para: nos[&id_para].path.clone(),
+            peso: evidencias.len(),
+            evidencias,
+        })
+        .collect();
+    dependencias.sort_by(|a, b| {
+        (&a.de, &a.para, a.id_de, a.id_para).cmp(&(&b.de, &b.para, b.id_de, b.id_para))
+    });
+    AgregacaoDetalhada {
+        dependencias,
+        relacoes,
+        itens_sem_contenedor,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1200,5 +1502,399 @@ mod tests {
         // E o bloco do ciclo cobre os 3 módulos.
         assert_eq!(o.blocos.len(), 1);
         assert_eq!(o.blocos[0].len(), 3);
+    }
+
+    fn detalhado_fixture() -> Grafo {
+        use lente_core::entities::grafo::UsesKind;
+        let mut g = grafo_dois_modulos();
+        g.nodes.push(no(12, "k::a::f2", Kind::Fn));
+        g.nodes.push(no(99, "orfao", Kind::Fn));
+        g.edges
+            .push(aresta(10, "k::a", 12, "k::a::f2", Relation::Owns));
+        let mut uso = aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses);
+        uso.uses_kind = Some(UsesKind::Reference);
+        g.edges.extend([uso.clone(), uso.clone()]);
+        uso.uses_kind = Some(UsesKind::Import);
+        g.edges.push(uso);
+        g.edges
+            .push(aresta(12, "k::a::f2", 21, "k::b::g", Relation::Uses));
+        g.edges
+            .push(aresta(11, "k::a::f", 12, "k::a::f2", Relation::Uses));
+        g.edges
+            .push(aresta(99, "orfao", 11, "k::a::f", Relation::Uses));
+        g
+    }
+
+    #[test]
+    fn detalhe_celula_preserva_paralelas_subtipos_e_campos_originais() {
+        use lente_core::entities::grafo::{Posicao, UsesKind};
+        let mut g = detalhado_fixture();
+        g.nodes[2].position = Some(Posicao {
+            file: "declaracao.rs".into(),
+            start_line: 2,
+            end_line: 4,
+        });
+        let d = agregar_por_modulo_detalhado(&g);
+        assert_eq!(d.dependencias.len(), 1);
+        let celula = &d.dependencias[0];
+        assert_eq!((celula.id_de, celula.id_para, celula.peso), (10, 20, 4));
+        assert_eq!(
+            (&celula.de, &celula.para),
+            (&Path::from("k::a"), &Path::from("k::b"))
+        );
+        let evidencias: Vec<_> = celula.evidencias.iter().map(|&i| &g.edges[i]).collect();
+        assert_eq!(
+            evidencias
+                .iter()
+                .filter(|a| a.uses_kind == Some(UsesKind::Reference))
+                .count(),
+            2
+        );
+        assert_eq!(
+            evidencias
+                .iter()
+                .filter(|a| a.uses_kind == Some(UsesKind::Import))
+                .count(),
+            1
+        );
+        assert_eq!(
+            evidencias.iter().filter(|a| a.uses_kind.is_none()).count(),
+            1
+        );
+        for r in &d.relacoes {
+            assert_eq!(r.aresta, g.edges[r.indice_snapshot]);
+        }
+    }
+
+    #[test]
+    fn detalhe_internas_orfaos_e_owns_recebem_destinos_explicitos() {
+        let g = detalhado_fixture();
+        let d = agregar_por_modulo_detalhado(&g);
+        assert_eq!(
+            d.itens_sem_contenedor,
+            vec![ItemSemContenedor {
+                id: 99,
+                path: "orfao".into(),
+                problemas: vec![ProblemaContencao::SemModulo]
+            }]
+        );
+        assert_eq!(
+            d.relacoes
+                .iter()
+                .filter(|r| matches!(
+                    r.destino,
+                    DestinoRelacao::InternaAbsorvida { id_modulo: 10 }
+                ))
+                .count(),
+            1
+        );
+        assert_eq!(
+            d.relacoes
+                .iter()
+                .filter(|r| matches!(
+                    r.destino,
+                    DestinoRelacao::NaoAgregavel(MotivoNaoAgregavel::ContencaoOwns)
+                ))
+                .count(),
+            5
+        );
+        let orfa = d.relacoes.iter().find(|r| r.aresta.id_from == 99).unwrap();
+        assert_eq!(
+            orfa.destino,
+            DestinoRelacao::NaoAgregavel(MotivoNaoAgregavel::ContencaoInvalida {
+                origem: vec![ProblemaContencao::SemModulo],
+                destino: vec![]
+            })
+        );
+    }
+
+    #[test]
+    fn detalhe_multiplos_pais_nao_escolhe_mesmo_quando_convergem() {
+        let mut g = grafo_dois_modulos();
+        g.nodes.push(no(12, "k::a::T", Kind::Struct));
+        g.nodes.push(no(13, "k::a::f::filho", Kind::Fn));
+        g.edges.extend([
+            aresta(10, "k::a", 12, "k::a::T", Relation::Owns),
+            aresta(12, "k::a::T", 11, "k::a::f", Relation::Owns),
+            aresta(11, "k::a::f", 13, "k::a::f::filho", Relation::Owns),
+            aresta(13, "k::a::f::filho", 21, "k::b::g", Relation::Uses),
+        ]);
+        let d = agregar_por_modulo_detalhado(&g);
+        assert!(d.dependencias.is_empty());
+        assert_eq!(d.itens_sem_contenedor.len(), 2);
+        for item in d.itens_sem_contenedor {
+            assert_eq!(
+                item.problemas,
+                vec![ProblemaContencao::MultiplosPais {
+                    item: 11,
+                    pais: vec![10, 12]
+                }]
+            );
+        }
+    }
+
+    #[test]
+    fn detalhe_ciclos_de_modulos_e_auto_ciclo_invalidam_descendentes() {
+        let mut g = grafo_dois_modulos();
+        g.edges.retain(|a| !(a.id_from == 1 && a.id_to == 10));
+        g.edges.extend([
+            aresta(11, "k::a::f", 10, "k::a", Relation::Owns),
+            aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses),
+            aresta(21, "k::b::g", 21, "k::b::g", Relation::Owns),
+        ]);
+        let d = agregar_por_modulo_detalhado(&g);
+        assert!(d.dependencias.is_empty());
+        for id in [10, 11] {
+            assert_eq!(
+                d.itens_sem_contenedor
+                    .iter()
+                    .find(|i| i.id == id)
+                    .unwrap()
+                    .problemas,
+                vec![ProblemaContencao::Ciclo {
+                    membros: vec![10, 11]
+                }]
+            );
+        }
+        let p = &d
+            .itens_sem_contenedor
+            .iter()
+            .find(|i| i.id == 21)
+            .unwrap()
+            .problemas;
+        assert_eq!(
+            p,
+            &vec![
+                ProblemaContencao::MultiplosPais {
+                    item: 21,
+                    pais: vec![20, 21]
+                },
+                ProblemaContencao::Ciclo { membros: vec![21] }
+            ]
+        );
+    }
+
+    #[test]
+    fn detalhe_owns_paralelos_nao_sao_multiplos_pais() {
+        let mut g = grafo_dois_modulos();
+        g.edges.push(g.edges[1].clone());
+        g.edges
+            .push(aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses));
+        let d = agregar_por_modulo_detalhado(&g);
+        assert!(d.itens_sem_contenedor.is_empty());
+        assert_eq!(d.dependencias[0].peso, 1);
+    }
+
+    #[test]
+    fn detalhe_endpoint_e_pai_ausentes_sao_diagnosticados() {
+        let mut g = grafo_dois_modulos();
+        g.edges.retain(|a| a.id_to != 11);
+        g.edges
+            .push(aresta(404, "ausente", 11, "k::a::f", Relation::Owns));
+        g.edges
+            .push(aresta(11, "k::a::f", 405, "outro", Relation::Uses));
+        let d = agregar_por_modulo_detalhado(&g);
+        assert_eq!(
+            d.itens_sem_contenedor[0].problemas,
+            vec![ProblemaContencao::NoAusente { id: 404 }]
+        );
+        let r = d
+            .relacoes
+            .iter()
+            .find(|r| r.aresta.relation == Relation::Uses)
+            .unwrap();
+        assert_eq!(
+            r.destino,
+            DestinoRelacao::NaoAgregavel(MotivoNaoAgregavel::ContencaoInvalida {
+                origem: vec![ProblemaContencao::NoAusente { id: 404 }],
+                destino: vec![ProblemaContencao::NoAusente { id: 405 }]
+            })
+        );
+    }
+
+    fn conferir_contabilidade(g: &Grafo, d: &AgregacaoDetalhada) {
+        let mut todos: Vec<_> = d.relacoes.iter().map(|r| r.indice_snapshot).collect();
+        todos.sort_unstable();
+        assert_eq!(todos, (0..g.edges.len()).collect::<Vec<_>>());
+        let mut agregadas: Vec<_> = d
+            .relacoes
+            .iter()
+            .filter(|r| matches!(r.destino, DestinoRelacao::Agregada { .. }))
+            .map(|r| r.indice_snapshot)
+            .collect();
+        let mut evidencias: Vec<_> = d
+            .dependencias
+            .iter()
+            .flat_map(|d| {
+                assert_eq!(d.peso, d.evidencias.len());
+                d.evidencias.clone()
+            })
+            .collect();
+        agregadas.sort_unstable();
+        evidencias.sort_unstable();
+        assert_eq!(agregadas, evidencias);
+        for c in &d.dependencias {
+            for &i in &c.evidencias {
+                assert_eq!(
+                    d.relacoes
+                        .iter()
+                        .find(|r| r.indice_snapshot == i)
+                        .unwrap()
+                        .destino,
+                    DestinoRelacao::Agregada {
+                        id_modulo_de: c.id_de,
+                        id_modulo_para: c.id_para
+                    }
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn detalhe_contabilidade_e_permutacao_incluem_relacoes_identicas() {
+        let mut g = detalhado_fixture();
+        let antes = agregar_por_modulo_detalhado(&g);
+        conferir_contabilidade(&g, &antes);
+        for _ in 0..g.edges.len() {
+            g.edges.rotate_left(1);
+            g.nodes.reverse();
+            let depois = agregar_por_modulo_detalhado(&g);
+            conferir_contabilidade(&g, &depois);
+            assert_eq!(antes.itens_sem_contenedor, depois.itens_sem_contenedor);
+            assert_eq!(
+                antes
+                    .relacoes
+                    .iter()
+                    .map(|r| (&r.aresta, &r.destino))
+                    .collect::<Vec<_>>(),
+                depois
+                    .relacoes
+                    .iter()
+                    .map(|r| (&r.aresta, &r.destino))
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(antes.dependencias.len(), depois.dependencias.len());
+            for (a, b) in antes.dependencias.iter().zip(&depois.dependencias) {
+                assert_eq!(
+                    (a.id_de, &a.de, a.id_para, &a.para, a.peso),
+                    (b.id_de, &b.de, b.id_para, &b.para, b.peso)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn detalhe_regressao_pesos_e_arestas_legadas_em_grafos_validos() {
+        let mut g = detalhado_fixture();
+        g.nodes.retain(|n| n.id != 99);
+        g.edges.retain(|a| a.id_from != 99);
+        g.edges
+            .push(aresta(21, "k::b::g", 11, "k::a::f", Relation::Uses));
+        let salvo = g.clone();
+        let legado = agregar_por_modulo(&g);
+        let pesos = pesos_modulo_a_modulo(&g);
+        let d = agregar_por_modulo_detalhado(&g);
+        assert_eq!(g, salvo);
+        assert_eq!(legado, agregar_por_modulo(&g));
+        assert_eq!(
+            d.dependencias
+                .iter()
+                .map(|c| ((c.id_de, c.id_para), c.peso))
+                .collect::<HashMap<_, _>>(),
+            pesos
+        );
+        assert_eq!(
+            d.dependencias
+                .iter()
+                .map(|c| (c.id_de, c.id_para))
+                .collect::<BTreeSet<_>>(),
+            legado
+                .edges
+                .iter()
+                .filter(|a| a.relation == Relation::Uses)
+                .map(|a| (a.id_from, a.id_to))
+                .collect()
+        );
+    }
+
+    #[test]
+    fn detalhe_permutacao_de_hierarquia_invalida_e_descendente_de_ciclo() {
+        let mut g = grafo_dois_modulos();
+        g.nodes.push(no(12, "descendente", Kind::Fn));
+        g.nodes.push(no(99, "orfao_sem_arestas", Kind::Fn));
+        g.edges.extend([
+            aresta(11, "k::a::f", 10, "k::a", Relation::Owns),
+            aresta(11, "k::a::f", 12, "descendente", Relation::Owns),
+            aresta(12, "descendente", 21, "k::b::g", Relation::Uses),
+        ]);
+        let esperado = agregar_por_modulo_detalhado(&g);
+        assert!(esperado.dependencias.is_empty());
+        assert!(esperado.itens_sem_contenedor.iter().any(|i| i.id == 12
+            && i.problemas.contains(&ProblemaContencao::Ciclo {
+                membros: vec![10, 11]
+            })));
+        assert!(
+            esperado
+                .itens_sem_contenedor
+                .iter()
+                .any(|i| i.id == 99 && i.problemas == vec![ProblemaContencao::SemModulo])
+        );
+        for _ in 0..g.edges.len() {
+            g.edges.rotate_left(1);
+            g.nodes.rotate_left(1);
+            let d = agregar_por_modulo_detalhado(&g);
+            conferir_contabilidade(&g, &d);
+            assert_eq!(d.itens_sem_contenedor, esperado.itens_sem_contenedor);
+            assert_eq!(
+                d.relacoes
+                    .iter()
+                    .map(|r| (&r.aresta, &r.destino))
+                    .collect::<Vec<_>>(),
+                esperado
+                    .relacoes
+                    .iter()
+                    .map(|r| (&r.aresta, &r.destino))
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
+    #[test]
+    fn detalhe_contenedor_mais_proximo_em_cadeia_profunda_sem_recursao() {
+        let mut g = Grafo::new("k");
+        g.nodes.push(no(0, "modulo", Kind::Mod));
+        for i in 1..4096 {
+            g.nodes.push(no(i, &format!("item{i}"), Kind::Struct));
+            g.edges.push(aresta(
+                i - 1,
+                g.nodes[i - 1].path.as_str(),
+                i,
+                g.nodes[i].path.as_str(),
+                Relation::Owns,
+            ));
+        }
+        g.nodes.push(no(4096, "submodulo", Kind::Mod));
+        g.edges
+            .push(aresta(4095, "item4095", 4096, "submodulo", Relation::Owns));
+        g.edges
+            .push(aresta(4095, "item4095", 4096, "submodulo", Relation::Uses));
+        g.nodes.reverse();
+        let d = agregar_por_modulo_detalhado(&g);
+        assert!(d.itens_sem_contenedor.is_empty());
+        assert_eq!(
+            (
+                d.dependencias[0].id_de,
+                d.dependencias[0].id_para,
+                d.dependencias[0].peso
+            ),
+            (0, 4096, 1)
+        );
+        assert_eq!(pesos_modulo_a_modulo(&g).get(&(0, 4096)), Some(&1));
+        conferir_contabilidade(&g, &d);
+        assert!(
+            agregar_por_modulo_detalhado(&Grafo::new("vazio"))
+                .relacoes
+                .is_empty()
+        );
     }
 }
