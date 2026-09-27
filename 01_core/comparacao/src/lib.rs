@@ -1,13 +1,17 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/comparacao.md
-//! @prompt-hash 1fc86eec
+//! @prompt-hash 5a71d2b2
 //! @layer L1
-//! @updated 2026-06-10
+//! @updated 2026-09-26
 //! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core` + `lente_estrutura`.
 //!
 //! **Paridade como dado** (prompt 0074): compara **duas** [`EstruturaModulos`]
 //! (antes/depois de uma refatoração) e devolve o que parou, o que só existe de
 //! um lado, e como arestas/pesos/ciclos mudaram entre os pares.
+//!
+//! A API [`comparar_estruturas_por_identidade`] aceita chaves opacas fornecidas
+//! pelo chamador, separadas dos paths apresentados. A descrição abaixo refere-se
+//! ao pareamento legado por normalização Rust.
 //!
 //! ## O pareamento (e a honestidade dele)
 //!
@@ -136,6 +140,73 @@ pub struct ItemSemPar {
     pub path: String,
 }
 
+/// Regra mecânica de movimento: troca um prefixo com fronteira `::` e exige
+/// que o sufixo restante exista literalmente no outro lado (P0079).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RegraPrefixo {
+    pub antes: String,
+    pub depois: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RelacaoDeclarada {
+    UmParaUm,
+    Divisao,
+    Consolidacao,
+    Grupo,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AlegacaoDeclarada {
+    DeclaradaFechada,
+    Parcial,
+    Ausente,
+    ForaDeEscopo,
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CorrespondenciaDeclarada {
+    pub id: String,
+    pub antes: Vec<String>,
+    pub depois: Vec<String>,
+    pub relacao: RelacaoDeclarada,
+    pub alegacao: AlegacaoDeclarada,
+    pub evidencias: Vec<String>,
+    pub nota: String,
+}
+
+/// Entrada pura já desserializada pelo L3.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MapaCorrespondencia {
+    pub caminho: String,
+    pub sha256: String,
+    pub prefixos: Vec<RegraPrefixo>,
+    pub correspondencias: Vec<CorrespondenciaDeclarada>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CorrespondenciaAplicada {
+    pub id: String,
+    pub antes: Vec<String>,
+    pub depois: Vec<String>,
+    pub relacao: RelacaoDeclarada,
+    pub alegacao: AlegacaoDeclarada,
+    pub evidencias: Vec<String>,
+    pub nota: String,
+    pub estado: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ResultadoMapa {
+    pub caminho: String,
+    pub sha256: String,
+    pub regras_prefixo: usize,
+    pub prefixos_aplicados: Vec<ItemPareado>,
+    pub correspondencias: Vec<CorrespondenciaAplicada>,
+    pub diagnosticos: Vec<String>,
+}
+
 /// O nível de **item** da comparação (prompt 0078), por chave K4 `(kind, trait_,
 /// pai-tipo::nome)` — independente de path. As quatro categorias do contrato
 /// honesto do 0074, agora no nível de item.
@@ -145,6 +216,7 @@ pub struct ComparacaoItens {
     pub ambiguos: Vec<ItemAmbiguo>,
     pub sem_par_antes: Vec<ItemSemPar>,
     pub sem_par_depois: Vec<ItemSemPar>,
+    pub mapa: ResultadoMapa,
 }
 
 /// O resultado da comparação entre duas estruturas (prompt 0074). Tudo
@@ -200,51 +272,122 @@ pub fn comparar_estruturas(
     proveniencia: Proveniencia,
     itens: ComparacaoItens,
 ) -> Comparacao {
+    comparar_estruturas_com_mapa(
+        antes,
+        depois,
+        nome_antes,
+        nome_depois,
+        chave,
+        proveniencia,
+        itens,
+        None,
+    )
+}
+
+pub fn comparar_estruturas_com_mapa(
+    antes: &EstruturaModulos,
+    depois: &EstruturaModulos,
+    nome_antes: &str,
+    nome_depois: &str,
+    chave: ChavePareamento,
+    proveniencia: Proveniencia,
+    mut itens: ComparacaoItens,
+    mapa: Option<&MapaCorrespondencia>,
+) -> Comparacao {
     // chave → path, por lado. Com `Normalizada` e um crate por lado a chave é
     // injetiva; com `PathCompleto` é injetiva por construção (path único).
-    let map_a: BTreeMap<String, &Path> =
-        antes.modulos.iter().map(|p| (chave_de(p, chave), p)).collect();
-    let map_b: BTreeMap<String, &Path> =
-        depois.modulos.iter().map(|p| (chave_de(p, chave), p)).collect();
+    let map_a: BTreeMap<String, &Path> = antes
+        .modulos
+        .iter()
+        .map(|p| (chave_de(p, chave), p))
+        .collect();
+    let map_b: BTreeMap<String, &Path> = depois
+        .modulos
+        .iter()
+        .map(|p| (chave_de(p, chave), p))
+        .collect();
 
     let mut pareados = Vec::new();
+    let mut destino_usado = BTreeSet::new();
     let mut sem_par_antes = Vec::new();
     for (norm, pa) in &map_a {
-        match map_b.get(norm) {
-            Some(pb) => pareados.push(((*pa).clone(), (*pb).clone())),
-            None => sem_par_antes.push((*pa).clone()),
+        let por_prefixo: BTreeSet<&Path> = mapa
+            .into_iter()
+            .flat_map(|m| &m.prefixos)
+            .filter_map(|r| troca_prefixo(pa.as_str(), &r.antes, &r.depois))
+            .filter_map(|p| depois.modulos.iter().find(|m| m.as_str() == p))
+            .collect();
+        let pb = if por_prefixo.len() == 1 {
+            por_prefixo.iter().next().copied()
+        } else {
+            map_b.get(norm).copied()
+        };
+        match pb {
+            Some(pb) if destino_usado.insert(pb.as_str().to_string()) => {
+                pareados.push(((*pa).clone(), pb.clone()))
+            }
+            _ => sem_par_antes.push((*pa).clone()),
         }
     }
-    let mut sem_par_depois: Vec<Path> = map_b
+    let mut sem_par_depois: Vec<Path> = depois
+        .modulos
         .iter()
-        .filter(|(norm, _)| !map_a.contains_key(*norm))
-        .map(|(_, pb)| (*pb).clone())
-        .collect();
-
-    // Conjunto dos norms pareados — uma aresta só entra nos deltas se ambas as
-    // pontas são módulos pareados (comparar arestas de módulos sem par mentiria).
-    let pareado_norm: BTreeSet<String> = map_a
-        .keys()
-        .filter(|k| map_b.contains_key(*k))
+        .filter(|pb| !destino_usado.contains(pb.as_str()))
         .cloned()
         .collect();
+    if let Some(m) = mapa {
+        let mut modulos_prefixo: Vec<ItemPareado> = pareados
+            .iter()
+            .filter(|(a, b)| {
+                m.prefixos.iter().any(|r| {
+                    troca_prefixo(a.as_str(), &r.antes, &r.depois).as_deref() == Some(b.as_str())
+                })
+            })
+            .map(|(a, b)| ItemPareado {
+                kind: "mod".into(),
+                trait_: String::new(),
+                nome_qualificado: a.as_str().rsplit("::").next().unwrap_or(a.as_str()).into(),
+                path_antes: a.as_str().into(),
+                path_depois: b.as_str().into(),
+            })
+            .collect();
+        modulos_prefixo.sort_by(|a, b| a.path_antes.cmp(&b.path_antes));
+        itens.mapa.prefixos_aplicados.splice(0..0, modulos_prefixo);
+    }
 
-    let arestas_norm = |est: &EstruturaModulos| -> BTreeMap<(String, String), (Path, Path, usize)> {
+    let a_para_b: BTreeMap<String, String> = pareados
+        .iter()
+        .map(|(a, b)| (a.as_str().to_string(), b.as_str().to_string()))
+        .collect();
+    let b_para_a: BTreeMap<String, String> = pareados
+        .iter()
+        .map(|(a, b)| (b.as_str().to_string(), a.as_str().to_string()))
+        .collect();
+    let arestas_a = |est: &EstruturaModulos| -> BTreeMap<(String, String), (Path, Path, usize)> {
         est.dependencias
             .iter()
             .filter_map(|d| {
-                let nd = chave_de(&d.de, chave);
-                let np = chave_de(&d.para, chave);
-                if pareado_norm.contains(&nd) && pareado_norm.contains(&np) {
-                    Some(((nd, np), (d.de.clone(), d.para.clone(), d.peso)))
-                } else {
-                    None
-                }
+                a_para_b.get(d.de.as_str())?;
+                a_para_b.get(d.para.as_str())?;
+                Some((
+                    (d.de.as_str().to_string(), d.para.as_str().to_string()),
+                    (d.de.clone(), d.para.clone(), d.peso),
+                ))
             })
             .collect()
     };
-    let ea = arestas_norm(antes);
-    let eb = arestas_norm(depois);
+    let arestas_b = |est: &EstruturaModulos| -> BTreeMap<(String, String), (Path, Path, usize)> {
+        est.dependencias
+            .iter()
+            .filter_map(|d| {
+                let de = b_para_a.get(d.de.as_str())?.clone();
+                let para = b_para_a.get(d.para.as_str())?.clone();
+                Some(((de, para), (d.de.clone(), d.para.clone(), d.peso)))
+            })
+            .collect()
+    };
+    let ea = arestas_a(antes);
+    let eb = arestas_b(depois);
 
     let mut arestas_comuns = Vec::new();
     let mut arestas_so_antes = Vec::new();
@@ -298,7 +441,12 @@ pub fn comparar_estruturas(
 fn resumo_ciclos(est: &EstruturaModulos) -> ResumoCiclos {
     ResumoCiclos {
         quantidade: est.ciclos.len(),
-        maior: est.ciclos.iter().map(|c| c.modulos.len()).max().unwrap_or(0),
+        maior: est
+            .ciclos
+            .iter()
+            .map(|c| c.modulos.len())
+            .max()
+            .unwrap_or(0),
     }
 }
 
@@ -476,6 +624,349 @@ pub fn comparar_itens(
         ambiguos,
         sem_par_antes,
         sem_par_depois,
+        mapa: ResultadoMapa::default(),
+    }
+}
+
+fn troca_prefixo(path: &str, antes: &str, depois: &str) -> Option<String> {
+    if path == antes {
+        return Some(depois.to_string());
+    }
+    path.strip_prefix(antes)
+        .and_then(|r| r.strip_prefix("::"))
+        .map(|sufixo| format!("{depois}::{sufixo}"))
+}
+
+fn cardinalidade_valida(c: &CorrespondenciaDeclarada) -> bool {
+    match c.relacao {
+        RelacaoDeclarada::UmParaUm => c.antes.len() == 1 && c.depois.len() == 1,
+        RelacaoDeclarada::Divisao => c.antes.len() == 1 && c.depois.len() > 1,
+        RelacaoDeclarada::Consolidacao => c.antes.len() > 1 && c.depois.len() == 1,
+        RelacaoDeclarada::Grupo => !c.antes.is_empty() && !c.depois.is_empty(),
+    }
+}
+
+/// Aplica o mapa sobre o censo já calculado. Explicitamente declarados são
+/// validados contra os grafos completos; erro preserva `unknown` e não consome
+/// o resíduo. O retorno continua determinístico independentemente da ordem.
+pub fn aplicar_mapa(
+    itens: &mut ComparacaoItens,
+    mapa: &MapaCorrespondencia,
+    grafo_antes: &Grafo,
+    grafo_depois: &Grafo,
+) {
+    let paths_a: BTreeSet<String> = grafo_antes
+        .nodes
+        .iter()
+        .map(|n| n.path.as_str().to_string())
+        .collect();
+    let paths_b: BTreeSet<String> = grafo_depois
+        .nodes
+        .iter()
+        .map(|n| n.path.as_str().to_string())
+        .collect();
+    let mut usados_a = BTreeSet::new();
+    let mut usados_b = BTreeSet::new();
+    let mut declaradas = mapa.correspondencias.clone();
+    declaradas.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut cont_a: BTreeMap<String, usize> = BTreeMap::new();
+    let mut cont_b: BTreeMap<String, usize> = BTreeMap::new();
+    let mut cont_id: BTreeMap<String, usize> = BTreeMap::new();
+    for c in &declaradas {
+        *cont_id.entry(c.id.clone()).or_default() += 1;
+        for p in &c.antes {
+            *cont_a.entry(p.clone()).or_default() += 1;
+        }
+        for p in &c.depois {
+            *cont_b.entry(p.clone()).or_default() += 1;
+        }
+    }
+    itens.mapa = ResultadoMapa {
+        caminho: mapa.caminho.clone(),
+        sha256: mapa.sha256.clone(),
+        regras_prefixo: mapa.prefixos.len(),
+        ..ResultadoMapa::default()
+    };
+
+    for c in declaradas {
+        let mut erros = Vec::new();
+        if cont_id.get(&c.id).copied().unwrap_or(0) > 1 {
+            erros.push("id duplicado".to_string());
+        }
+        if !cardinalidade_valida(&c) {
+            erros.push("cardinalidade incompatível".to_string());
+        }
+        for p in &c.antes {
+            if !paths_a.contains(p) {
+                erros.push(format!("path antes inexistente: {p}"));
+            }
+            if cont_a.get(p).copied().unwrap_or(0) > 1 {
+                erros.push(format!("path antes em mais de uma relação: {p}"));
+            }
+        }
+        for p in &c.depois {
+            if !paths_b.contains(p) {
+                erros.push(format!("path depois inexistente: {p}"));
+            }
+            if cont_b.get(p).copied().unwrap_or(0) > 1 {
+                erros.push(format!("path depois em mais de uma relação: {p}"));
+            }
+        }
+        let estado = if erros.is_empty() {
+            "aplicada"
+        } else {
+            "unknown"
+        };
+        if erros.is_empty() {
+            usados_a.extend(c.antes.iter().cloned());
+            usados_b.extend(c.depois.iter().cloned());
+        } else {
+            itens
+                .mapa
+                .diagnosticos
+                .extend(erros.into_iter().map(|e| format!("{}: {e}", c.id)));
+        }
+        itens.mapa.correspondencias.push(CorrespondenciaAplicada {
+            id: c.id,
+            antes: c.antes,
+            depois: c.depois,
+            relacao: c.relacao,
+            alegacao: c.alegacao,
+            evidencias: c.evidencias,
+            nota: c.nota,
+            estado: estado.to_string(),
+        });
+    }
+
+    // Correspondências explícitas válidas precedem o automático.
+    itens
+        .pareados
+        .retain(|p| !usados_a.contains(&p.path_antes) && !usados_b.contains(&p.path_depois));
+    itens.ambiguos.retain(|a| {
+        !a.candidatos_antes.iter().any(|p| usados_a.contains(p))
+            && !a.candidatos_depois.iter().any(|p| usados_b.contains(p))
+    });
+    itens.sem_par_antes.retain(|i| !usados_a.contains(&i.path));
+    itens.sem_par_depois.retain(|i| !usados_b.contains(&i.path));
+
+    // Prefixos só atuam no resíduo e nunca por similaridade.
+    let mut regras = mapa.prefixos.clone();
+    regras.sort_by(|a, b| (&a.antes, &a.depois).cmp(&(&b.antes, &b.depois)));
+    let mut pares = Vec::new();
+    for a in &itens.sem_par_antes {
+        let candidatos: BTreeSet<String> = regras
+            .iter()
+            .filter_map(|r| troca_prefixo(&a.path, &r.antes, &r.depois))
+            .filter(|p| itens.sem_par_depois.iter().any(|b| &b.path == p))
+            .collect();
+        if candidatos.len() == 1 {
+            let b = candidatos.iter().next().unwrap();
+            pares.push(ItemPareado {
+                kind: a.kind.clone(),
+                trait_: a.trait_.clone(),
+                nome_qualificado: a.nome_qualificado.clone(),
+                path_antes: a.path.clone(),
+                path_depois: b.clone(),
+            });
+        } else if candidatos.len() > 1 {
+            itens.mapa.diagnosticos.push(format!(
+                "prefixo ambíguo para {}: {} destinos",
+                a.path,
+                candidatos.len()
+            ));
+        }
+    }
+    let pa: BTreeSet<String> = pares.iter().map(|p| p.path_antes.clone()).collect();
+    let pb: BTreeSet<String> = pares.iter().map(|p| p.path_depois.clone()).collect();
+    itens.sem_par_antes.retain(|i| !pa.contains(&i.path));
+    itens.sem_par_depois.retain(|i| !pb.contains(&i.path));
+    pares.sort_by(|a, b| a.path_antes.cmp(&b.path_antes));
+    itens.mapa.prefixos_aplicados = pares;
+}
+
+/// Um par declarado pelo chamador. A identidade é opaca; os paths são originais.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParIdentidade {
+    pub identidade: String,
+    pub path_antes: Path,
+    pub path_depois: Path,
+}
+
+/// Dependência entre pares inequívocos. `None` significa aresta ausente naquele
+/// lado; `Some(0)` continua sendo uma aresta presente.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArestaPorIdentidade {
+    pub de: ParIdentidade,
+    pub para: ParIdentidade,
+    pub peso_antes: Option<usize>,
+    pub peso_depois: Option<usize>,
+}
+
+/// Problemas de cobertura ou unicidade dos mapas fornecidos.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DiagnosticoIdentidade {
+    Ausente {
+        lado: Lado,
+        path: Path,
+    },
+    /// Todos os candidatos permanecem sem par, inclusive no lado não ambíguo.
+    Repetida {
+        identidade: String,
+        antes: Vec<Path>,
+        depois: Vec<Path>,
+    },
+    /// Entrada do mapa que não identifica um módulo desta estrutura.
+    PathNaoListado {
+        lado: Lado,
+        path: Path,
+    },
+}
+
+/// Comparação estrutural por identidade declarada, sem inferir equivalência
+/// comportamental. Arestas incidentes a módulos sem par não são comparadas.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ComparacaoIdentidades {
+    pub pareados: Vec<ParIdentidade>,
+    pub sem_par_antes: Vec<Path>,
+    pub sem_par_depois: Vec<Path>,
+    pub arestas: Vec<ArestaPorIdentidade>,
+    pub diagnosticos: Vec<DiagnosticoIdentidade>,
+    /// Resumos da estrutura inteira, incluindo módulos sem par.
+    pub ciclos_antes: ResumoCiclos,
+    pub ciclos_depois: ResumoCiclos,
+}
+
+/// Compara módulos usando mapas `path original -> identidade opaca` por lado.
+///
+/// O path apenas endereça o módulo dentro de cada entrada (paths únicos da
+/// forma resolvida). Nenhum separador, prefixo, caixa ou Unicode é normalizado;
+/// inclusive a chave vazia é válida. IDs locais da extração não são consultados
+/// nem constituem identidade persistente. O chamador fornece a política de
+/// identidade entre versões e garante escopo e granularidade comparáveis.
+///
+/// Só pareia uma chave com exatamente um candidato em cada lado. Ausências e
+/// duplicidades geram diagnósticos; entradas excedentes no mapa são diagnosticadas
+/// e ignoradas. Saídas são ordenadas por identidade, ou por path nos resíduos.
+/// Dependências seguem o contrato de `EstruturaModulos`: um peso agregado por
+/// par dirigido de módulos. As APIs legadas continuam independentes desta API.
+///
+/// Exemplo inteiramente em memória:
+/// ```
+/// use std::collections::BTreeMap;
+/// use lente_core::entities::grafo::Path;
+/// use lente_estrutura::EstruturaModulos;
+/// use lente_comparacao::comparar_estruturas_por_identidade;
+/// let antes = EstruturaModulos {
+///     modulos: vec![Path::from("src/antigo.py")], dependencias: vec![],
+///     ciclos: vec![], ordem: vec![], blocos: vec![], raios: vec![],
+/// };
+/// let depois = EstruturaModulos {
+///     modulos: vec![Path::from("novo.modulo")], ..antes.clone()
+/// };
+/// let ids_a = BTreeMap::from([(Path::from("src/antigo.py"), "componente-α".into())]);
+/// let ids_b = BTreeMap::from([(Path::from("novo.modulo"), "componente-α".into())]);
+/// let resultado = comparar_estruturas_por_identidade(&antes, &depois, &ids_a, &ids_b);
+/// assert_eq!(resultado.pareados[0].path_antes.as_str(), "src/antigo.py");
+/// assert_eq!(resultado.pareados[0].path_depois.as_str(), "novo.modulo");
+/// assert!(resultado.diagnosticos.is_empty());
+/// ```
+pub fn comparar_estruturas_por_identidade(
+    antes: &EstruturaModulos,
+    depois: &EstruturaModulos,
+    identidades_antes: &BTreeMap<Path, String>,
+    identidades_depois: &BTreeMap<Path, String>,
+) -> ComparacaoIdentidades {
+    let mut diagnosticos = Vec::new();
+    let mut grupos: BTreeMap<String, (Vec<Path>, Vec<Path>)> = BTreeMap::new();
+    let mut sem_par_antes: BTreeSet<Path> = antes.modulos.iter().cloned().collect();
+    let mut sem_par_depois: BTreeSet<Path> = depois.modulos.iter().cloned().collect();
+    for (lado, paths, mapa) in [
+        (Lado::Antes, &sem_par_antes, identidades_antes),
+        (Lado::Depois, &sem_par_depois, identidades_depois),
+    ] {
+        for path in paths {
+            if let Some(identidade) = mapa.get(path) {
+                let grupo = grupos.entry(identidade.clone()).or_default();
+                match lado {
+                    Lado::Antes => grupo.0.push(path.clone()),
+                    Lado::Depois => grupo.1.push(path.clone()),
+                }
+            } else {
+                diagnosticos.push(DiagnosticoIdentidade::Ausente {
+                    lado,
+                    path: path.clone(),
+                });
+            }
+        }
+        for path in mapa.keys().filter(|path| !paths.contains(*path)) {
+            diagnosticos.push(DiagnosticoIdentidade::PathNaoListado {
+                lado,
+                path: path.clone(),
+            });
+        }
+    }
+    let mut pareados = Vec::new();
+    for (identidade, (a, b)) in grupos {
+        if a.len() > 1 || b.len() > 1 {
+            diagnosticos.push(DiagnosticoIdentidade::Repetida {
+                identidade,
+                antes: a,
+                depois: b,
+            });
+        } else if let ([path_antes], [path_depois]) = (a.as_slice(), b.as_slice()) {
+            sem_par_antes.remove(path_antes);
+            sem_par_depois.remove(path_depois);
+            pareados.push(ParIdentidade {
+                identidade,
+                path_antes: path_antes.clone(),
+                path_depois: path_depois.clone(),
+            });
+        }
+    }
+    let mut pesos: BTreeMap<(usize, usize), (Option<usize>, Option<usize>)> = BTreeMap::new();
+    for (lado, estrutura) in [(Lado::Antes, antes), (Lado::Depois, depois)] {
+        let indices: BTreeMap<&Path, usize> = pareados
+            .iter()
+            .enumerate()
+            .map(|(i, par)| {
+                (
+                    match lado {
+                        Lado::Antes => &par.path_antes,
+                        Lado::Depois => &par.path_depois,
+                    },
+                    i,
+                )
+            })
+            .collect();
+        for dep in &estrutura.dependencias {
+            if let (Some(&de), Some(&para)) = (indices.get(&dep.de), indices.get(&dep.para)) {
+                let peso = pesos.entry((de, para)).or_default();
+                match lado {
+                    Lado::Antes => peso.0 = Some(dep.peso),
+                    Lado::Depois => peso.1 = Some(dep.peso),
+                }
+            }
+        }
+    }
+    let arestas = pesos
+        .into_iter()
+        .map(
+            |((de, para), (peso_antes, peso_depois))| ArestaPorIdentidade {
+                de: pareados[de].clone(),
+                para: pareados[para].clone(),
+                peso_antes,
+                peso_depois,
+            },
+        )
+        .collect();
+    ComparacaoIdentidades {
+        pareados,
+        sem_par_antes: sem_par_antes.into_iter().collect(),
+        sem_par_depois: sem_par_depois.into_iter().collect(),
+        arestas,
+        diagnosticos,
+        ciclos_antes: resumo_ciclos(antes),
+        ciclos_depois: resumo_ciclos(depois),
     }
 }
 
@@ -523,13 +1014,16 @@ mod tests {
     }
 
     /// Helper dos testes do 0074: chave Normalizada (= comportamento original).
-    fn cmp(
-        a: &EstruturaModulos,
-        b: &EstruturaModulos,
-        na: &str,
-        nb: &str,
-    ) -> Comparacao {
-        comparar_estruturas(a, b, na, nb, ChavePareamento::Normalizada, prov(), ComparacaoItens::default())
+    fn cmp(a: &EstruturaModulos, b: &EstruturaModulos, na: &str, nb: &str) -> Comparacao {
+        comparar_estruturas(
+            a,
+            b,
+            na,
+            nb,
+            ChavePareamento::Normalizada,
+            prov(),
+            ComparacaoItens::default(),
+        )
     }
 
     #[test]
@@ -705,11 +1199,17 @@ mod tests {
     #[test]
     fn item_pareia_independente_de_path() {
         let ga = grafo(
-            vec![item(1, "a::x", Kind::Mod, None), item(2, "a::x::Counter", Kind::Struct, None)],
+            vec![
+                item(1, "a::x", Kind::Mod, None),
+                item(2, "a::x::Counter", Kind::Struct, None),
+            ],
             vec![owns(1, 2)],
         );
         let gb = grafo(
-            vec![item(1, "b::y::z", Kind::Mod, None), item(2, "b::y::z::Counter", Kind::Struct, None)],
+            vec![
+                item(1, "b::y::z", Kind::Mod, None),
+                item(2, "b::y::z::Counter", Kind::Struct, None),
+            ],
             vec![owns(1, 2)],
         );
         let r = comparar_itens(&ga, &vazio(), &gb, &vazio());
@@ -725,17 +1225,31 @@ mod tests {
     #[test]
     fn pai_tipo_qualifica_e_separa() {
         let ga = grafo(
-            vec![item(1, "k::Counter", Kind::Struct, None), item(2, "k::Counter::get", Kind::Fn, None)],
+            vec![
+                item(1, "k::Counter", Kind::Struct, None),
+                item(2, "k::Counter::get", Kind::Fn, None),
+            ],
             vec![owns(1, 2)],
         );
         let gb = grafo(
-            vec![item(1, "k::Frame", Kind::Struct, None), item(2, "k::Frame::get", Kind::Fn, None)],
+            vec![
+                item(1, "k::Frame", Kind::Struct, None),
+                item(2, "k::Frame::get", Kind::Fn, None),
+            ],
             vec![owns(1, 2)],
         );
         let r = comparar_itens(&ga, &vazio(), &gb, &vazio());
         assert!(r.pareados.is_empty(), "nada pareia: {:?}", r.pareados);
-        assert!(r.sem_par_antes.iter().any(|i| i.nome_qualificado == "Counter::get"));
-        assert!(r.sem_par_depois.iter().any(|i| i.nome_qualificado == "Frame::get"));
+        assert!(
+            r.sem_par_antes
+                .iter()
+                .any(|i| i.nome_qualificado == "Counter::get")
+        );
+        assert!(
+            r.sem_par_depois
+                .iter()
+                .any(|i| i.nome_qualificado == "Frame::get")
+        );
     }
 
     /// `fmt`/Display e `fmt`/Debug sob o mesmo pai-tipo num lado; só Display no
@@ -751,16 +1265,23 @@ mod tests {
             vec![owns(1, 2), owns(1, 3)],
         );
         let gb = grafo(
-            vec![item(1, "k::T", Kind::Struct, None), item(2, "k::T::fmt", Kind::Fn, Some("Display"))],
+            vec![
+                item(1, "k::T", Kind::Struct, None),
+                item(2, "k::T::fmt", Kind::Fn, Some("Display")),
+            ],
             vec![owns(1, 2)],
         );
         let r = comparar_itens(&ga, &vazio(), &gb, &vazio());
         assert!(
-            r.pareados.iter().any(|p| p.trait_ == "Display" && p.nome_qualificado == "T::fmt"),
+            r.pareados
+                .iter()
+                .any(|p| p.trait_ == "Display" && p.nome_qualificado == "T::fmt"),
             "Display pareia"
         );
         assert!(
-            r.sem_par_antes.iter().any(|i| i.trait_ == "Debug" && i.nome_qualificado == "T::fmt"),
+            r.sem_par_antes
+                .iter()
+                .any(|i| i.trait_ == "Debug" && i.nome_qualificado == "T::fmt"),
             "Debug sem-par antes"
         );
     }
@@ -779,7 +1300,10 @@ mod tests {
             vec![owns(1, 2), owns(3, 4)],
         );
         let gb = grafo(
-            vec![item(1, "k::c", Kind::Mod, None), item(2, "k::c::Foo", Kind::Struct, None)],
+            vec![
+                item(1, "k::c", Kind::Mod, None),
+                item(2, "k::c::Foo", Kind::Struct, None),
+            ],
             vec![owns(1, 2)],
         );
         let r = comparar_itens(&ga, &vazio(), &gb, &vazio());
@@ -805,12 +1329,335 @@ mod tests {
     #[test]
     fn comparar_itens_e_deterministico() {
         let ga = grafo(
-            vec![item(1, "k::a", Kind::Mod, None), item(2, "k::a::Foo", Kind::Struct, None)],
+            vec![
+                item(1, "k::a", Kind::Mod, None),
+                item(2, "k::a::Foo", Kind::Struct, None),
+            ],
             vec![owns(1, 2)],
         );
         let gb = grafo(vec![item(1, "k::Bar", Kind::Struct, None)], vec![]);
         let r1 = comparar_itens(&ga, &vazio(), &gb, &vazio());
         let r2 = comparar_itens(&ga, &vazio(), &gb, &vazio());
         assert_eq!(r1, r2);
+    }
+
+    fn mapa(
+        prefixos: Vec<RegraPrefixo>,
+        correspondencias: Vec<CorrespondenciaDeclarada>,
+    ) -> MapaCorrespondencia {
+        MapaCorrespondencia {
+            caminho: "mapa.toml".into(),
+            sha256: "abc".into(),
+            prefixos,
+            correspondencias,
+        }
+    }
+
+    #[test]
+    fn prefixo_pareia_apenas_com_fronteira_de_segmento() {
+        let a = est(&["old::ast", "old::ast::alpha", "old::asterisco"], &[], &[]);
+        let b = est(
+            &[
+                "new::entities::ast",
+                "new::entities::ast::alpha",
+                "new::entities::asterisco",
+            ],
+            &[],
+            &[],
+        );
+        let m = mapa(
+            vec![RegraPrefixo {
+                antes: "old::ast".into(),
+                depois: "new::entities::ast".into(),
+            }],
+            vec![],
+        );
+        let r = comparar_estruturas_com_mapa(
+            &a,
+            &b,
+            "a",
+            "b",
+            ChavePareamento::PathCompleto,
+            prov(),
+            ComparacaoItens::default(),
+            Some(&m),
+        );
+        assert_eq!(r.pareados.len(), 2);
+        assert!(
+            r.pareados
+                .iter()
+                .any(|(x, y)| x.as_str() == "old::ast::alpha"
+                    && y.as_str() == "new::entities::ast::alpha")
+        );
+        assert!(
+            r.sem_par_antes
+                .iter()
+                .any(|p| p.as_str() == "old::asterisco")
+        );
+    }
+
+    #[test]
+    fn divisao_valida_consumo_residuo_e_preserva_alegacao() {
+        let ga = grafo(vec![item(1, "a::apply", Kind::Fn, None)], vec![]);
+        let gb = grafo(
+            vec![
+                item(1, "b::arith", Kind::Fn, None),
+                item(2, "b::equal", Kind::Fn, None),
+            ],
+            vec![],
+        );
+        let c = CorrespondenciaDeclarada {
+            id: "apply".into(),
+            antes: vec!["a::apply".into()],
+            depois: vec!["b::arith".into(), "b::equal".into()],
+            relacao: RelacaoDeclarada::Divisao,
+            alegacao: AlegacaoDeclarada::DeclaradaFechada,
+            evidencias: vec!["e.md".into()],
+            nota: "doc".into(),
+        };
+        let mut r = comparar_itens(&ga, &vazio(), &gb, &vazio());
+        aplicar_mapa(&mut r, &mapa(vec![], vec![c]), &ga, &gb);
+        assert!(r.sem_par_antes.is_empty() && r.sem_par_depois.is_empty());
+        assert_eq!(r.mapa.correspondencias[0].estado, "aplicada");
+        assert_eq!(
+            r.mapa.correspondencias[0].alegacao,
+            AlegacaoDeclarada::DeclaradaFechada
+        );
+    }
+
+    #[test]
+    fn cardinalidade_invalida_e_path_inexistente_ficam_unknown_sem_consumir() {
+        let ga = grafo(vec![item(1, "a::x", Kind::Fn, None)], vec![]);
+        let gb = grafo(vec![item(1, "b::y", Kind::Fn, None)], vec![]);
+        let c = CorrespondenciaDeclarada {
+            id: "ruim".into(),
+            antes: vec!["a::x".into()],
+            depois: vec!["b::y".into(), "b::z".into()],
+            relacao: RelacaoDeclarada::UmParaUm,
+            alegacao: AlegacaoDeclarada::Unknown,
+            evidencias: vec![],
+            nota: String::new(),
+        };
+        let mut r = comparar_itens(&ga, &vazio(), &gb, &vazio());
+        aplicar_mapa(&mut r, &mapa(vec![], vec![c]), &ga, &gb);
+        assert_eq!(r.mapa.correspondencias[0].estado, "unknown");
+        assert!(!r.mapa.diagnosticos.is_empty());
+        assert_eq!(r.sem_par_antes.len(), 1);
+    }
+
+    #[test]
+    fn conflito_nao_e_resolvido_pela_ordem() {
+        let ga = grafo(vec![item(1, "a::x", Kind::Fn, None)], vec![]);
+        let gb = grafo(
+            vec![
+                item(1, "b::y", Kind::Fn, None),
+                item(2, "b::z", Kind::Fn, None),
+            ],
+            vec![],
+        );
+        let mk = |id: &str, d: &str| CorrespondenciaDeclarada {
+            id: id.into(),
+            antes: vec!["a::x".into()],
+            depois: vec![d.into()],
+            relacao: RelacaoDeclarada::UmParaUm,
+            alegacao: AlegacaoDeclarada::Parcial,
+            evidencias: vec![],
+            nota: String::new(),
+        };
+        let mut r = comparar_itens(&ga, &vazio(), &gb, &vazio());
+        aplicar_mapa(
+            &mut r,
+            &mapa(vec![], vec![mk("a", "b::y"), mk("b", "b::z")]),
+            &ga,
+            &gb,
+        );
+        assert_eq!(
+            r.mapa
+                .correspondencias
+                .iter()
+                .filter(|c| c.estado == "unknown")
+                .count(),
+            2
+        );
+        assert!(
+            r.mapa
+                .diagnosticos
+                .iter()
+                .any(|d| d.contains("mais de uma relação"))
+        );
+    }
+
+    fn ids(pares: &[(&str, &str)]) -> BTreeMap<Path, String> {
+        pares
+            .iter()
+            .map(|(p, k)| (Path::from(*p), (*k).into()))
+            .collect()
+    }
+
+    #[test]
+    fn identidade_preserva_paths_e_compara_dependencias() {
+        let a = est(
+            &["src/a.py", "lib/b.hpp"],
+            &[("src/a.py", "lib/b.hpp", 2), ("lib/b.hpp", "src/a.py", 0)],
+            &[&["src/a.py", "lib/b.hpp"]],
+        );
+        let b = est(
+            &["pacote.alpha", "novo::β"],
+            &[("pacote.alpha", "novo::β", 5), ("novo::β", "novo::β", 1)],
+            &[],
+        );
+        let c = comparar_estruturas_por_identidade(
+            &a,
+            &b,
+            &ids(&[("src/a.py", "A"), ("lib/b.hpp", "B")]),
+            &ids(&[("pacote.alpha", "A"), ("novo::β", "B")]),
+        );
+        assert_eq!(
+            c.pareados,
+            vec![
+                ParIdentidade {
+                    identidade: "A".into(),
+                    path_antes: "src/a.py".into(),
+                    path_depois: "pacote.alpha".into()
+                },
+                ParIdentidade {
+                    identidade: "B".into(),
+                    path_antes: "lib/b.hpp".into(),
+                    path_depois: "novo::β".into()
+                }
+            ]
+        );
+        assert_eq!(
+            c.arestas
+                .iter()
+                .map(|e| (e.peso_antes, e.peso_depois))
+                .collect::<Vec<_>>(),
+            vec![(Some(2), Some(5)), (Some(0), None), (None, Some(1))]
+        );
+        assert_eq!(c.arestas[0].de, c.pareados[0]);
+        assert_eq!(c.arestas[0].para, c.pareados[1]);
+        assert!(c.diagnosticos.is_empty());
+        assert_eq!(c.ciclos_antes.quantidade, 1);
+        assert_eq!(c.ciclos_depois.quantidade, 0);
+    }
+
+    #[test]
+    fn identidade_diferente_nao_pareia_paths_iguais_ou_semelhantes() {
+        let a = est(&["a::x", "igual"], &[], &[]);
+        let b = est(&["b::x", "igual"], &[], &[]);
+        let c = comparar_estruturas_por_identidade(
+            &a,
+            &b,
+            &ids(&[("a::x", "1"), ("igual", "2")]),
+            &ids(&[("b::x", "3"), ("igual", "4")]),
+        );
+        assert!(c.pareados.is_empty());
+        assert_eq!(c.sem_par_antes.len(), 2);
+        assert_eq!(c.sem_par_depois.len(), 2);
+        assert!(c.diagnosticos.is_empty());
+    }
+
+    #[test]
+    fn identidades_sao_opacas_inclusive_unicode_e_vazio() {
+        let nomes = ["/", ".", "::", "ação/模块::β.x", "", "é", "e\u{301}"];
+        let a = est(&nomes, &[], &[]);
+        let mapa = ids(&nomes.iter().map(|n| (*n, *n)).collect::<Vec<_>>());
+        let c = comparar_estruturas_por_identidade(&a, &a, &mapa, &mapa);
+        assert_eq!(c.pareados.len(), nomes.len());
+        assert!(c.diagnosticos.is_empty());
+        for par in c.pareados {
+            assert_eq!(par.identidade, par.path_antes.as_str());
+        }
+    }
+
+    #[test]
+    fn identidade_repetida_em_qualquer_lado_bloqueia_todos_os_candidatos() {
+        for (na, nb) in [(2, 1), (1, 2), (2, 2), (2, 0), (0, 2)] {
+            let a = est(&["a", "b"][..na], &[], &[]);
+            let b = est(&["c", "d"][..nb], &[], &[]);
+            let ma = a
+                .modulos
+                .iter()
+                .cloned()
+                .map(|p| (p, "id".into()))
+                .collect();
+            let mb = b
+                .modulos
+                .iter()
+                .cloned()
+                .map(|p| (p, "id".into()))
+                .collect();
+            let c = comparar_estruturas_por_identidade(&a, &b, &ma, &mb);
+            assert!(c.pareados.is_empty());
+            assert_eq!(c.sem_par_antes, a.modulos);
+            assert_eq!(c.sem_par_depois, b.modulos);
+            assert_eq!(
+                c.diagnosticos,
+                vec![DiagnosticoIdentidade::Repetida {
+                    identidade: "id".into(),
+                    antes: a.modulos,
+                    depois: b.modulos
+                }]
+            );
+        }
+    }
+
+    #[test]
+    fn ausencias_nao_usam_path_como_fallback_e_extras_sao_diagnosticados() {
+        let a = est(&["a", "b"], &[("a", "b", 1)], &[]);
+        let c = comparar_estruturas_por_identidade(
+            &a,
+            &a,
+            &ids(&[("a", "ok"), ("fora", "ok")]),
+            &ids(&[("a", "ok")]),
+        );
+        assert_eq!(c.pareados.len(), 1);
+        assert!(c.arestas.is_empty());
+        assert_eq!(c.sem_par_antes, vec![Path::from("b")]);
+        assert_eq!(c.sem_par_depois, vec![Path::from("b")]);
+        assert_eq!(
+            c.diagnosticos,
+            vec![
+                DiagnosticoIdentidade::Ausente {
+                    lado: Lado::Antes,
+                    path: "b".into()
+                },
+                DiagnosticoIdentidade::PathNaoListado {
+                    lado: Lado::Antes,
+                    path: "fora".into()
+                },
+                DiagnosticoIdentidade::Ausente {
+                    lado: Lado::Depois,
+                    path: "b".into()
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn permutar_estruturas_preserva_todo_resultado_por_identidade() {
+        let mut a = est(
+            &["a", "b", "c", "d", "e"],
+            &[("a", "b", 2), ("b", "a", 3), ("c", "a", 1)],
+            &[],
+        );
+        let mut b = est(
+            &["v", "w", "x", "y", "z"],
+            &[("v", "w", 4), ("w", "v", 1)],
+            &[],
+        );
+        let ma = ids(&[("a", "1"), ("b", "2"), ("c", "dup"), ("d", "dup")]);
+        let mb = ids(&[("v", "1"), ("w", "2"), ("x", "dup"), ("y", "dup")]);
+        let esperado = comparar_estruturas_por_identidade(&a, &b, &ma, &mb);
+        for _ in 0..5 {
+            a.modulos.rotate_left(1);
+            b.modulos.reverse();
+            a.dependencias.reverse();
+            b.dependencias.reverse();
+            assert_eq!(
+                comparar_estruturas_por_identidade(&a, &b, &ma, &mb),
+                esperado
+            );
+        }
     }
 }
