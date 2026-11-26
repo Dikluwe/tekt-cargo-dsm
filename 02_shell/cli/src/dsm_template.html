@@ -3222,6 +3222,7 @@ function cabecalho() {
     $("#dica-matriz").textContent = "Diagonal: raio estrutural do arquivo. Células de dependência: referências.";
     const partes = [...indiceScip.indexadores];
     if (indiceScip.sem_declaracao) partes.push(`${indiceScip.sem_declaracao} usos sem declaração no índice`);
+    if (indiceScip.usos_ambiguos) partes.push(`${indiceScip.usos_ambiguos} usos ambíguos fora da matriz`);
     if (indiceScip.posicoes_invalidas) partes.push(`${indiceScip.posicoes_invalidas} posições descartadas por faixa inválida`);
     if (indiceScip.artefato_ffi) {
       const totalFfi = indiceScip.simbolos.filter(simbolo => simbolo.ffi).length;

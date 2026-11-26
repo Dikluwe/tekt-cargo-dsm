@@ -1,9 +1,10 @@
 # Índice de referências de fonte (L1)
-Hash do Código: 2d995c83
+Hash do Código: b906d740
 
 O índice recebe fontes e posições normalizadas em linha base um e colunas
 UTF-8 em bytes base zero, com fim exclusivo. Cada símbolo conserva a
-identidade resolvida pelo adaptador, todas as declarações e todos os usos.
+identidade resolvida pelo adaptador, as declarações e os usos admitidos.
+O índice registra a quantidade de usos sem destino inequívoco por ambiguidade.
 
 A projeção agrupa cada uso pelo par dirigido arquivo do uso → arquivo da
 declaração. Conta um uso uma vez por destino, mesmo com várias declarações

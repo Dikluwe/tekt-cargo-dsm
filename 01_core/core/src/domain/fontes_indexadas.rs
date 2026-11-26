@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/fontes-indexadas.md
-//! @prompt-hash ae779999
+//! @prompt-hash 67bea31b
 //! @layer L1
 //! @updated 2026-11-26
 
@@ -86,6 +86,7 @@ pub struct FontesIndexadas {
     pub simbolos: Vec<SimboloIndexado>,
     pub indexadores: BTreeSet<String>,
     pub usos_sem_declaracao: usize,
+    pub usos_ambiguos: usize,
     pub posicoes_invalidas: usize,
     pub artefato_ffi: Option<String>,
     pub chamadores: BTreeMap<LocalFonte, ChamadasFonte>,

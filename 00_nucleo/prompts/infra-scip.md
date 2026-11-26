@@ -1,5 +1,5 @@
 # Admissão de índices SCIP (L3)
-Hash do Código: 28aaeafa
+Hash do Código: 51925cdd
 
 Recebe um ou mais índices binários SCIP do mesmo snapshot e a raiz local
 explícita do código. Usa a biblioteca SCIP oficial. Lê somente documentos
@@ -13,6 +13,12 @@ de codificação está ausente. Usa identidade SCIP completa e limita
 símbolos locais ao documento. Junta ocorrências idênticas e usa o papel
 `Definition` para reconhecer destinos. Registra as ocorrências sem
 declaração no índice. Arestas exigem identidade comum declarada pelo índice.
+Se uma identidade tem definições em arquivos distintos, só projeta um uso
+com destino comprovado. Mantém as declarações navegáveis por arquivo e
+contabiliza usos sem destino inequívoco. Definições múltiplas num mesmo
+arquivo preservam a referência naquele arquivo. Raízes Rust são resolvidas
+conforme `infra-scip-raizes-rust.md`. A exploração Go retém as evidências
+de ambiguidade para seus próprios diagnósticos.
 Para scip-python, scip-java, scip-typescript, scip-dotnet e scip-dart com
 codificação ausente, normaliza os offsets UTF-16. Uma codificação explícita
 suportada sempre prevalece. Rejeita uma codificação desconhecida e rejeita
@@ -26,6 +32,7 @@ Dado cada indexador com padrão documentado Então o documento sem codificação
 Dado um documento com codificação explícita suportada Então os offsets seguem essa codificação mesmo quando o padrão do indexador difere
 Dado um caminho absoluto ou fora da raiz Então rejeitar a entrada
 Dado um símbolo local repetido em dois arquivos Então manter as identidades de cada documento
+Dado um símbolo global com definições em dois arquivos e origem ambígua Então conservar as declarações e não projetar dependência
 ```
 
 Para a exploração Go conserva à parte as ocorrências por símbolo e o índice de origem. Fornece evidência por uso, inclusive sem declaração no conjunto carregado.
@@ -44,4 +51,5 @@ O adaptador TextFold reutiliza a resolução confinada desses caminhos.
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-11-26 | Impedir projeções falsas de símbolos com definições em múltiplos arquivos. | `03_infra/src/scip.rs` |
 | 2026-11-26 | Cobertura parametrizada das codificações padrão e explícitas na admissão de documentos. | `03_infra/src/scip.rs` |

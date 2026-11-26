@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-scip.md
-//! @prompt-hash d85dcdf2
+//! @prompt-hash bdb00e6e
 //! @layer L3
 //! @updated 2026-11-26
 
@@ -17,6 +17,9 @@ use lente_core::domain::{
     grafo_chamadas::ReferenciaChamada,
 };
 use protobuf::Message;
+
+mod raizes_rust;
+use raizes_rust::{RaizesRust, raiz_do_rust_analyzer};
 
 pub fn carregar_indices(raiz: &Path, indices: &[PathBuf]) -> Result<FontesIndexadas, String> {
     carregar_indices_com_referencias_go(raiz, indices).map(|(fontes, _)| fontes)
@@ -69,8 +72,17 @@ pub fn carregar_indices_com_referencias_go(
     if fontes.fontes.is_empty() {
         return Err("nenhum documento local nos índices SCIP".into());
     }
+    let raizes = if simbolos
+        .iter()
+        .any(|((_, id), simbolo)| declara_em_varios_arquivos(simbolo) && raiz_do_rust_analyzer(id))
+    {
+        RaizesRust::indexar(&fontes.fontes, &simbolos)
+    } else {
+        RaizesRust::default()
+    };
     let mut referencias = Vec::new();
-    for (id, mut simbolo) in simbolos {
+    for (id, simbolo) in simbolos {
+        // A exploração Go recebe os candidatos para diagnosticar ambiguidades.
         if let Some(usos) = usos_go.remove(&id) {
             for (uso, origens) in usos {
                 for origem in origens {
@@ -92,14 +104,7 @@ pub fn carregar_indices_com_referencias_go(
                 }
             }
         }
-        if simbolo.declaracoes.is_empty() {
-            fontes.usos_sem_declaracao += simbolo.usos.len();
-        } else {
-            simbolo
-                .usos
-                .retain(|local| !simbolo.declaracoes.contains(local));
-            fontes.simbolos.push(simbolo);
-        }
+        anexar_simbolo(&mut fontes, &raizes, &id.1, simbolo);
     }
     Ok((fontes, referencias))
 }
@@ -107,6 +112,61 @@ pub fn carregar_indices_com_referencias_go(
 type Identidade = (Option<String>, String);
 type Simbolos = BTreeMap<Identidade, SimboloIndexado>;
 type UsosGo = BTreeMap<Identidade, BTreeMap<LocalFonte, BTreeSet<String>>>;
+
+fn declara_em_varios_arquivos(simbolo: &SimboloIndexado) -> bool {
+    simbolo
+        .declaracoes
+        .first()
+        .zip(simbolo.declaracoes.last())
+        .is_some_and(|(primeira, ultima)| primeira.arquivo != ultima.arquivo)
+}
+
+fn anexar_simbolo(
+    fontes: &mut FontesIndexadas,
+    raizes: &RaizesRust,
+    id: &str,
+    mut simbolo: SimboloIndexado,
+) {
+    if simbolo.declaracoes.is_empty() {
+        fontes.usos_sem_declaracao += simbolo.usos.len();
+        return;
+    }
+    simbolo
+        .usos
+        .retain(|local| !simbolo.declaracoes.contains(local));
+    if !declara_em_varios_arquivos(&simbolo) {
+        fontes.simbolos.push(simbolo);
+        return;
+    }
+
+    let raiz_rust = raiz_do_rust_analyzer(id);
+    let mut por_arquivo = BTreeMap::new();
+    for declaracao in simbolo.declaracoes {
+        let grupo = por_arquivo
+            .entry(declaracao.arquivo.clone())
+            .or_insert_with(|| SimboloIndexado {
+                nome: if raiz_rust {
+                    "crate".into()
+                } else {
+                    simbolo.nome.clone()
+                },
+                ..Default::default()
+            });
+        grupo.declaracoes.insert(declaracao);
+    }
+    for uso in simbolo.usos {
+        if raiz_rust && let Some(arquivo) = raizes.resolver(&uso, &por_arquivo, &fontes.fontes) {
+            por_arquivo
+                .get_mut(arquivo)
+                .expect("raiz candidata")
+                .usos
+                .insert(uso);
+        } else {
+            fontes.usos_ambiguos += 1;
+        }
+    }
+    fontes.simbolos.extend(por_arquivo.into_values());
+}
 
 fn identidade(arquivo: &str, simbolo: &str) -> (Option<String>, String) {
     (
@@ -356,6 +416,156 @@ fn coluna_em_bytes(linha: &str, offset: i32, unidade: PositionEncoding) -> Optio
 mod tests {
     use super::*;
     use protobuf::EnumOrUnknown;
+
+    fn ocorrencia(id: &str, faixa: [i32; 3], definicao: bool) -> Occurrence {
+        Occurrence {
+            symbol: id.into(),
+            range: faixa.into(),
+            symbol_roles: if definicao {
+                SymbolRole::Definition as i32
+            } else {
+                0
+            },
+            ..Default::default()
+        }
+    }
+
+    fn carregar_fixture(nome: &str, fontes: Vec<(&str, &str, Vec<Occurrence>)>) -> FontesIndexadas {
+        let raiz = std::env::temp_dir().join(format!("lente-scip-{nome}-{}", std::process::id()));
+        fs::create_dir(&raiz).unwrap();
+        let documents = fontes
+            .into_iter()
+            .map(|(arquivo, texto, occurrences)| {
+                fs::write(raiz.join(arquivo), texto).unwrap();
+                Document {
+                    relative_path: arquivo.into(),
+                    position_encoding: PositionEncoding::UTF8CodeUnitOffsetFromLineStart.into(),
+                    occurrences,
+                    ..Default::default()
+                }
+            })
+            .collect();
+        let caminho = raiz.join("teste.scip");
+        ::scip::write_message_to_file(
+            &caminho,
+            Index {
+                documents,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let resultado = carregar_indices(&raiz, &[caminho]);
+        fs::remove_dir_all(raiz).unwrap();
+        resultado.unwrap()
+    }
+
+    #[test]
+    fn retira_usos_ambiguos_e_conserva_usos_com_um_arquivo_declarador() {
+        let f = "scip-test cargo pacote . f().";
+        let g = "scip-test cargo pacote . g().";
+        let indice = carregar_fixture(
+            "colisao",
+            vec![
+                (
+                    "a.rs",
+                    "f\ng\ng",
+                    vec![
+                        ocorrencia(f, [0, 0, 1], true),
+                        ocorrencia(g, [1, 0, 1], true),
+                        ocorrencia(g, [2, 0, 1], true),
+                    ],
+                ),
+                ("b.rs", "f", vec![ocorrencia(f, [0, 0, 1], true)]),
+                (
+                    "uso.rs",
+                    "f g",
+                    vec![
+                        ocorrencia(f, [0, 0, 1], false),
+                        ocorrencia(g, [0, 2, 3], false),
+                    ],
+                ),
+            ],
+        );
+        assert_eq!(indice.usos_ambiguos, 1);
+        assert_eq!(indice.usos_sem_declaracao, 0);
+        let pares = indice.pares();
+        assert_eq!(
+            pares.keys().copied().collect::<Vec<_>>(),
+            [("uso.rs", "a.rs")]
+        );
+        assert_eq!(pares[&("uso.rs", "a.rs")].len(), 1);
+        let declaracoes_f = indice
+            .simbolos
+            .iter()
+            .filter(|s| s.nome == "f")
+            .collect::<Vec<_>>();
+        assert_eq!(declaracoes_f.len(), 2);
+        assert!(
+            declaracoes_f
+                .iter()
+                .all(|s| s.declaracoes.len() == 1 && s.usos.is_empty())
+        );
+    }
+
+    #[test]
+    fn crate_local_aponta_para_a_raiz_comprovada_pelos_modulos() {
+        let raiz = "rust-analyzer cargo pacote 0.1.0 crate/";
+        let regras = "rust-analyzer cargo pacote 0.1.0 regras/";
+        let v5 = "rust-analyzer cargo pacote 0.1.0 regras/v5/";
+        let lib = "/* á */ mod regras;";
+        let coluna = i32::try_from(lib.find("regras").unwrap()).unwrap();
+        for compartilhado in [false, true] {
+            let mut principais = vec![ocorrencia(raiz, [0, 0, 0], true)];
+            let main = if compartilhado {
+                principais.push(ocorrencia(regras, [0, 4, 10], false));
+                "mod regras;"
+            } else {
+                ""
+            };
+            let indice = carregar_fixture(
+                if compartilhado {
+                    "raizes-compartilhadas"
+                } else {
+                    "raiz-lib"
+                },
+                vec![
+                    (
+                        "lib.rs",
+                        lib,
+                        vec![
+                            ocorrencia(raiz, [0, 0, 0], true),
+                            ocorrencia(regras, [0, coluna, coluna + 6], false),
+                        ],
+                    ),
+                    ("main.rs", main, principais),
+                    (
+                        "regras.rs",
+                        "mod v5;",
+                        vec![
+                            ocorrencia(regras, [0, 0, 0], true),
+                            ocorrencia(v5, [0, 4, 6], false),
+                        ],
+                    ),
+                    (
+                        "v5.rs",
+                        "use crate::a;\nuse outro::b;",
+                        vec![
+                            ocorrencia(v5, [0, 0, 0], true),
+                            ocorrencia(raiz, [0, 4, 9], false),
+                            ocorrencia(raiz, [1, 4, 9], false),
+                        ],
+                    ),
+                ],
+            );
+            assert_eq!(indice.usos_ambiguos, if compartilhado { 2 } else { 1 });
+            let pares = indice.pares();
+            assert!(!pares.contains_key(&("v5.rs", "main.rs")));
+            assert_eq!(
+                pares.get(&("v5.rs", "lib.rs")).map(Vec::len),
+                if compartilhado { None } else { Some(1) }
+            );
+        }
+    }
 
     fn posicao_no_documento(
         indexador: &str,

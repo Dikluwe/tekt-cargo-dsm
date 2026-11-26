@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: eb480e5e
+Hash do Código: 17165eea
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -136,6 +136,8 @@ refactor 0055–0057.
   agrupadas preservam os pares de arquivos. O leitor oferece foco no arquivo
   de origem e devolve o foco à célula ao fechar. O raio estrutural continua
   baseado em referências estáticas entre arquivos.
+- A cobertura do índice apresenta a contagem de usos ambíguos omitidos da
+  matriz quando houver ocorrências sem destino inequívoco.
 - No painel de um arquivo com um prompt admitido, **Ver prompt** abre o
   caminho e o conteúdo original em um leitor autocontido com índice de
   seções Markdown. Títulos dentro de código cercado ou comentários HTML

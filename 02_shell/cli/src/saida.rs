@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash e7aaf03b
+//! @prompt-hash 37894a5c
 //! @layer L2
 //! @updated 2026-11-26
 //!
@@ -655,6 +655,7 @@ fn formatar_indice_scip(
     let mut dados = json!({
         "fontes": indice.fontes, "simbolos": simbolos, "pares": pares,
         "indexadores": indice.indexadores, "sem_declaracao": indice.usos_sem_declaracao,
+        "usos_ambiguos": indice.usos_ambiguos,
         "posicoes_invalidas": indice.posicoes_invalidas,
         "artefato_ffi": indice.artefato_ffi,
         "chamadores": indice.chamadores.iter()
