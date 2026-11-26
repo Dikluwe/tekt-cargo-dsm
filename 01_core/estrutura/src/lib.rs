@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash 7a8a7c30
+//! @prompt-hash 3e238c21
 //! @layer L1
 //! @updated 2026-11-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -272,8 +272,9 @@ pub fn pesos_modulo_a_modulo(grafo: &Grafo) -> HashMap<(usize, usize), usize> {
 /// a módulos; ver [`RaioModulo`]). Determinístico: módulos por `path`, listas
 /// por `path`.
 ///
-/// Custo: por módulo, dois BFS no grafo de itens — O(módulos · (itens +
-/// arestas)). Linear; medido barato (laudo 0073).
+/// A construção da adjacência ordena e deduplica os vizinhos de cada item.
+/// Com a adjacência pronta, os dois BFS por módulo custam
+/// O(módulos · (itens + pares distintos de usos)).
 pub fn raios_por_modulo(grafo: &Grafo) -> Vec<RaioModulo> {
     let modulo_de = mapa_modulo_contenedor(grafo);
 
@@ -285,6 +286,11 @@ pub fn raios_por_modulo(grafo: &Grafo) -> Vec<RaioModulo> {
             fwd.entry(a.id_from).or_default().push(a.id_to);
             rev.entry(a.id_to).or_default().push(a.id_from);
         }
+    }
+
+    for vizinhos in fwd.values_mut().chain(rev.values_mut()) {
+        vizinhos.sort_unstable();
+        vizinhos.dedup();
     }
 
     // Itens (todos os nós) de cada módulo, pela cadeia `Owns` (mapa_modulo_contenedor).
@@ -1122,6 +1128,32 @@ mod tests {
         let c = de("k::c");
         assert!(c.jusante.is_empty());
         assert_eq!(c.montante, vec![Path::from("k::b")], "B depende de C");
+    }
+
+    #[test]
+    fn usos_paralelos_preservam_o_raio_e_contam_no_peso_e_nas_evidencias() {
+        use lente_core::entities::grafo::UsesKind;
+
+        let mut grafo = grafo_dois_modulos();
+        let mut ida = aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses);
+        ida.uses_kind = Some(UsesKind::Reference);
+        let volta = aresta(21, "k::b::g", 11, "k::a::f", Relation::Uses);
+        grafo.edges.extend([ida.clone(), volta.clone()]);
+        let raios = raios_por_modulo(&grafo);
+
+        ida.uses_kind = Some(UsesKind::Import);
+        grafo.edges.extend([ida, volta]);
+
+        assert_eq!(raios_por_modulo(&grafo), raios);
+        let pesos = pesos_modulo_a_modulo(&grafo);
+        assert_eq!(pesos, HashMap::from([((10, 20), 2), ((20, 10), 2)]));
+
+        let detalhe = agregar_por_modulo_detalhado(&grafo);
+        assert_eq!(detalhe.dependencias.len(), 2);
+        for celula in detalhe.dependencias {
+            assert_eq!(celula.peso, pesos[&(celula.id_de, celula.id_para)]);
+            assert_eq!(celula.evidencias.len(), 2);
+        }
     }
 
     #[test]

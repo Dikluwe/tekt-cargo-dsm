@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_estrutura` — vista de módulos, ciclos e DSM
-Hash do Código: b62ee3df
+Hash do Código: aae3009c
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/estrutura/src/lib.rs` (crate `lente_estrutura`, arquivo único).
@@ -42,6 +42,7 @@ Genérico — opera sobre qualquer `Grafo` (fractal: item/módulo/crate).
 Dado t::a::f usa t::b::g e t::b::g usa t::a::f Quando detectar_ciclos Então o ciclo {t::a,t::b}
 Dado o grafo de itens Quando agregar_por_modulo Então arestas módulo→módulo (intra absorvido)
 Dado uma condensação Quando ordenar_dsm Então ordem topológica + blocos dos SCCs
+Dado um ciclo Quando acrescentar usos paralelos Então preservar os raios e contar cada uso no peso e nas evidências
 ```
 
 ## Agregação detalhada (API aditiva)
@@ -129,7 +130,11 @@ semântica e API; qualificação Option::None não é um braço curinga.
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-11-26 | Deduplicar vizinhos na adjacência dos raios e verificar a preservação de pesos e evidências. | `01_core/estrutura/src/lib.rs` |
 | 2026-11-26 | Simplificação das buscas dos módulos contenedores na agregação. | `01_core/estrutura/src/lib.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0060) da vista de estrutura. Código inalterado. | `01_core/estrutura/src/lib.rs` |
 
 | 2026-09-26 | API aditiva de agregação detalhada: evidências por snapshot, contabilidade e validação Owns; legado preservado. | `01_core/estrutura/src/lib.rs` |
+
+A adjacência do alcance retém um único vizinho por destino antes dos BFS.
+Arestas paralelas continuam em todos os cálculos de peso e evidência.
