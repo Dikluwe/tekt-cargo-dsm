@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: 0745420e
+Hash do Código: 5f9c82dc
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -21,6 +21,8 @@ das molduras.
 
 ## Comportamento e invariantes
 
+- `HELP_REFERENCIAS_GO` e `ERRO_REFERENCIAS_GO` descrevem a entrada
+  complementar da vista HTML e enquadram seu erro de validação.
 - Ajuda `HELP_ANALISE_ARTEFATOS` descreve fluxo exclusivo e códigos de regras.
 
 - Completude do diff: chaves `completude`, `falhas`, `crate_name`, `motivo`; valores `completa`/`parcial`; cabeçalhos explícitos e aviso de que ausência de impacto observado em análise parcial não garante ausência de impacto; template por crate com motivo.

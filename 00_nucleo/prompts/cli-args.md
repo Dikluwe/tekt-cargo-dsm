@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::args` — os argumentos da CLI (L2)
-Hash do Código: 5c0722d7
+Hash do Código: c44e4ef0
 
 **Camada**: L2 — Casca (apresentação pura). Os textos de ajuda vêm do
 `lente_catalogo` (ADR-0002).
@@ -35,6 +35,9 @@ resultados no `saida`.
 - **Todos os `help`/`about`** vêm do `lente_catalogo` — **nenhum literal de
   apresentação** aqui (ADR-0002).
 
+- `--referencias-go` recebe um índice de referências de arquivos e exige
+  `--estrutura --html --grafo`. A opção apenas complementa o HTML.
+
 ## Restrições (L2 — apresentação)
 
 - Importa só `clap` + `lente_catalogo`. Não importa L1/L3/L4 (a estrutura de args é
@@ -50,7 +53,7 @@ Dado --vista camadas Então Vista::Camadas
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","referencias_go","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 

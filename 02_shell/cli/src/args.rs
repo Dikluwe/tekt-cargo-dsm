@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash 4a9420e7
+//! @prompt-hash 70783aff
 //! @layer L2
-//! @updated 2026-09-26
+//! @updated 2026-11-25
 //!
 //! Argumentos da CLI. Todos os textos `help`/`about` vêm do
 //! `lente_catalogo` (ADR-0002).
@@ -126,6 +126,10 @@ pub struct Cli {
     /// `lente-estrutura.html` no diretório atual).
     #[arg(long, requires = "html", help = lente_catalogo::HELP_SAIDA)]
     pub saida: Option<std::path::PathBuf>,
+
+    /// Índice complementar da navegação de arquivos Go na vista HTML.
+    #[arg(long, requires_all = ["html", "grafo"], help = lente_catalogo::HELP_REFERENCIAS_GO)]
+    pub referencias_go: Option<std::path::PathBuf>,
 
     /// Restaura o escopo `completo` (com sysroot) nas superfícies de consumo
     /// cujo default virou `seu-codigo` (prompt 0072): `--html` e `--comparar`.
