@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra` — o adaptador da fonte (L3)
-Hash do Código: b664531b
+Hash do Código: 2f9ef816
 
 **Camada**: L3 — Infraestrutura. I/O e deps externas permitidos.
 **Unidade**: `03_infra/src/lib.rs` (crate `lente_infra`, fachada).
@@ -43,6 +43,10 @@ internas (`fork`, `diff`, `metadata`, `workspace`).
 
 Módulo público `analises` integra snapshots/regras/DSM por ferramentas externas
 conforme `infra-analises.md`, sem dependência Cargo da Arena.
+O módulo `scip` admite índices binários e fontes locais conforme
+`infra-scip.md`.
+O módulo `scip_ffi` acrescenta ligações nativas usando um ELF final,
+conforme `infra-scip-ffi.md`.
 
 - I/O legítimo (subprocesso do cargo). Importa o L1 (`lente_core`); **não importa
   o L4**. `serde`/`serde_json` permitidos (é L3).
@@ -75,3 +79,10 @@ Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
 
 Exporta módulo doxygen (contrato infra-doxygen.md); projeção de catálogo/impacto
 não modifica L1 nem importa crates da Arena.
+
+O adaptador IndexStore traduz USRs e chamadas do build Swift/Clang para as fontes indexadas do núcleo.
+
+O adaptador de chamadas Go lê apenas fontes indexadas e entrega posições para a projeção geral, independente de FFI.
+
+O leitor de Explorar chamadas C/C++ vive em `explorar_chamadas_nativas` e
+recebe base de compilação explícita para complementar um índice SCIP.

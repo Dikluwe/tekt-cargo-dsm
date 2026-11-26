@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash 70783aff
+//! @prompt-hash a315d3e1
 //! @layer L2
-//! @updated 2026-11-25
+//! @updated 2026-11-26
 //!
 //! Argumentos da CLI. Todos os textos `help`/`about` vêm do
 //! `lente_catalogo` (ADR-0002).
@@ -26,6 +26,7 @@ pub enum Vista {
 /// de apresentação aqui.
 #[derive(Parser, Debug, Clone)]
 #[command(name = "lente", about = lente_catalogo::ABOUT_CLI)]
+#[command(group(clap::ArgGroup::new("fontes_indexadas").multiple(true)))]
 pub struct Cli {
     /// Consulta sobre artefatos já extraídos; fluxo exclusivo.
     #[arg(long, exclusive = true, help = lente_catalogo::HELP_ANALISE_ARTEFATOS)]
@@ -130,6 +131,30 @@ pub struct Cli {
     /// Índice complementar da navegação de arquivos Go na vista HTML.
     #[arg(long, requires_all = ["html", "grafo"], help = lente_catalogo::HELP_REFERENCIAS_GO)]
     pub referencias_go: Option<std::path::PathBuf>,
+
+    /// Índices binários que formam uma DSM de referências entre arquivos.
+    #[arg(long = "indice-scip", group = "fontes_indexadas", value_name = "INDICE", requires_all = ["html", "raiz_scip"],
+        conflicts_with_all = ["grafo", "pacote", "provedor", "referencias_go", "filtrar_stdlib", "so_referencia", "completo"],
+        help = lente_catalogo::HELP_INDICE_SCIP)]
+    pub indices_scip: Vec<std::path::PathBuf>,
+
+    #[arg(long = "indice-swift", group = "fontes_indexadas", value_name = "INDEXSTORE",
+        requires_all = ["html", "raiz_scip"],
+        conflicts_with_all = ["grafo", "pacote", "provedor", "referencias_go", "filtrar_stdlib", "so_referencia", "completo"],
+        help = lente_catalogo::HELP_INDICE_SWIFT)]
+    pub indice_swift: Option<std::path::PathBuf>,
+
+    #[arg(long, requires = "fontes_indexadas", help = lente_catalogo::HELP_RAIZ_SCIP)]
+    pub raiz_scip: Option<std::path::PathBuf>,
+
+    #[arg(long, value_name = "ELF", requires = "indices_scip", help = lente_catalogo::HELP_ARTEFATO_FFI)]
+    pub artefato_ffi: Option<std::path::PathBuf>,
+
+    #[arg(long, value_name = "ARQUIVO", requires = "indices_scip", help = lente_catalogo::HELP_BASE_COMPILACAO)]
+    pub base_compilacao: Option<std::path::PathBuf>,
+
+    #[arg(long, value_name = "ARQUIVO", requires = "raiz_scip", help = lente_catalogo::HELP_FLUXOS)]
+    pub fluxos: Option<std::path::PathBuf>,
 
     /// Restaura o escopo `completo` (com sysroot) nas superfícies de consumo
     /// cujo default virou `seu-codigo` (prompt 0072): `--html` e `--comparar`.

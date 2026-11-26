@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra.md
-//! @prompt-hash f8645e68
+//! @prompt-hash 1b3c4baf
 //! @layer L3
-//! @updated 2026-09-26
+//! @updated 2026-11-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! ADRs:    00_nucleo/adr/0001-fonte-do-grafo-fork-externo.md
 //!          00_nucleo/adr/0002-modelagem-do-grafo.md
@@ -26,15 +26,20 @@ use lente_core::entities::grafo::{Grafo, ValorDesconhecido};
 
 pub mod analises;
 mod cache;
+pub mod chamadas_go;
 mod diff;
 pub mod doxygen;
 mod dto;
+pub mod explorar_chamadas_nativas;
 pub mod extracao;
 pub mod fork;
+pub mod indexstore;
 mod invocacao;
 mod mapa_correspondencia;
 mod metadata;
 pub mod provedores;
+pub mod scip;
+pub mod scip_ffi;
 mod traducao;
 mod workspace;
 

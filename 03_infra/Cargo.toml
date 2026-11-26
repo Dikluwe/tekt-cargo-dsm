@@ -13,6 +13,7 @@ lente_core = { path = "../01_core/core" }
 lente_comparacao = { path = "../01_core/comparacao" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+shlex = "1.3"
 # Parse direto dos `Cargo.toml` (enumeração de membros) — sem `cargo metadata`,
 # preservando o invariante de subprocessos do cargo (prompt 0044).
 toml = "0.8"
@@ -20,3 +21,7 @@ toml = "0.8"
 # stdlib usa seed aleatório por processo — imprópria para chave persistida).
 # Mesma escolha validada na Arena (laudo 0040).
 sha2 = "0.10"
+scip = "0.10.0"
+protobuf = "3.7"
+syn = { version = "2", features = ["full", "visit"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }

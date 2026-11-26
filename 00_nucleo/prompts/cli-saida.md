@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: 95cbaebe
+Hash do Código: f20ddd4d
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -130,6 +130,78 @@ refactor 0055–0057.
   quantas colunas são exibidas, e a seleção do filtro é mantida ao voltar
   do código ou da comparação. Se nenhuma coluna corresponder, a vista
   informa que nenhum subteste falhou nos mutantes.
+- A vista com índices SCIP usa uma linha e uma coluna por arquivo. Uma
+  célula dirigida abre o uso indexado com a faixa de código destacada e
+  oferece atalhos para as declarações e usos do símbolo. Relações em células
+  agrupadas preservam os pares de arquivos. O leitor oferece foco no arquivo
+  de origem e devolve o foco à célula ao fechar. O raio estrutural continua
+  baseado em referências estáticas entre arquivos.
+- No painel de um arquivo com um prompt admitido, **Ver prompt** abre o
+  caminho e o conteúdo original em um leitor autocontido com índice de
+  seções Markdown. Títulos dentro de código cercado ou comentários HTML
+  não compõem o índice. O leitor trata o conteúdo como texto. **Voltar à
+  matriz** fecha o leitor e conserva a seleção do arquivo. Quando o leitor
+  abriu na matriz, conserva também a rolagem e repõe o foco no botão.
+- Dado um arquivo sem prompt válido ou um grupo dobrado, o painel não oferece
+  a ação. A vista do prompt não altera os dados de dependência nem o raio.
+  Uma célula FFI abre primeiro a implementação nativa, identifica o
+  símbolo de link e mantém atalhos para a declaração e usos Rust.
+  O identificador Rust com vínculo FFI confirmado abre a implementação
+  no leitor. Na implementação, a lista de chamadas diretas reúne os
+  aliases Rust ligados à mesma posição nativa e abre cada chamador
+  na linha correspondente. O leitor preserva a célula de origem.
+  O grafo de chamadas mostra simultaneamente as ramificações dos
+  chamadores Rust alcançáveis até a implementação nativa. Cada função
+  ocupa um nó por posição de declaração e cada local de chamada mantém
+  uma seta própria e acionável com mouse ou teclado. Os aliases Rust
+  convergem na mesma implementação confirmada. A seta abre o local de
+  chamada e o nó abre a fonte correspondente no mesmo leitor. A
+  visualização desenha as ligações que fecham ciclos sem reexpandir os
+  nós ou enumerar rotas, e permite rolar grafos maiores que o painel.
+  Acionar um nó chamador Rust destaca todas as setas alcançáveis na
+  direção das chamadas até o nativo, incluindo ramificações e retornos
+  de ciclos. O resto do grafo permanece visível e acionável. Abrir uma
+  seta ou a implementação mantém o destaque, que pode ser trocado
+  ao selecionar outro chamador ou limpo no próprio grafo.
+  A comparação mantém a primeira origem e permite escolher uma segunda
+  origem Rust distinta. Distingue no mesmo grafo os caminhos exclusivos
+  de cada origem, a interseção e os nós em que um ramo exclusivo entra
+  na interseção ou uma das origens já pertence a ela. Cada seta conserva
+  a posição da chamada. Outra seleção durante a comparação substitui a
+  segunda origem. Encerrar a comparação restaura o destaque da primeira.
+  Acionar um nó marcado como encontro abre sua declaração Rust ou a
+  implementação nativa e lista as chamadas recebidas pelos caminhos de
+  A, B e em comum. Cada item abre o local da chamada sem fechar o painel
+  ou alterar a dupla. Uma origem que começa no encontro aparece como
+  tal. O painel permite escolher um encontro Rust como B e é recolhido
+  quando a dupla muda ou a comparação termina.
+  No painel, Anterior e Próximo percorrem os encontros da dupla na ordem
+  visual do grafo, da esquerda para a direita e de cima para baixo em
+  cada coluna. Cada passo abre o código e as chamadas do encontro e
+  atualiza o marcador ativo e o contador. Os botões param nos limites.
+  A lista lateral apresenta todos os encontros da dupla na mesma
+  ordem. Cada item informa o símbolo e a posição e abre diretamente
+  o encontro correspondente. A seleção da lista acompanha o marcador
+  do grafo e os botões de navegação enquanto a dupla é mantida.
+  O filtro da lista aceita partes do nome da função ou do caminho
+  indexado do arquivo, sem distinguir maiúsculas de minúsculas.
+  Atualiza a quantidade visível e informa quando não há resultados.
+  O filtro e a comparação são preservados ao abrir código. Anterior
+  e Próximo continuam percorrendo todos os encontros da dupla.
+  O grafo FFI reúne chamadores Rust e C/C++ com caminho até a
+  implementação selecionada. A e B podem combinar essas linguagens.
+  Os encontros abrem a declaração correspondente e os links abrem
+  cada chamada no arquivo de origem, mantendo a comparação.
+  A vista inclui também as chamadas nativas confirmadas a partir da
+  implementação FFI e os chamadores desses destinos. As origens
+  podem entrar por funções diferentes e compartilhar um nó nativo
+  posterior. O nó em comum é clicável mesmo quando é uma função folha.
+  As pontes confirmadas participam da matriz e do mesmo grafo. A vista
+  distingue Rust, C, C++, Python, Java, Go, C#, JavaScript, TypeScript,
+  Kotlin, Dart e Zig nos nós e nas chamadas e mantém a comparação ao abrir
+  um encontro nativo.
+  A vista distingue Swift, Objective-C e Objective-C++ e mostra IndexStore
+  como evidência das fronteiras produzidas pela toolchain.
 - As interações acontecem no HTML autocontido. O JSON público de estrutura
   e o comando de geração mantêm seus contratos.
 - **`formatar_diff(resultado)`** — o JSON view-agnóstico do `--diff` (0047).
@@ -174,7 +246,7 @@ Dada a matriz Quando ativar o filtro de falhas Então exibir somente colunas com
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"formatar","params":["&Raio","&AlvoPedido","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_ranking","params":["&[ItemRanking]","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_estrutura","params":["&EstruturaModulos","Escopo","ModoUses","&Modo"],"return_type":"String"},{"name":"formatar_estrutura_html","params":["&EstruturaModulos","Escopo","ModoUses","&str"],"return_type":"String"},{"name":"formatar_estrutura_html_com_evidencias","params":["&EstruturaModulos","Escopo","ModoUses","&str","&AgregacaoDetalhada"],"return_type":"String"},{"name":"formatar_estrutura_html_com_referencias_go","params":["&EstruturaModulos","Escopo","ModoUses","&str","&AgregacaoDetalhada","&str"],"return_type":"Result<String, String>"},{"name":"formatar_diff","params":["&ResultadoDiff"],"return_type":"String"},{"name":"formatar_diff_vista","params":["&ResultadoDiff","Vista"],"return_type":"String"},{"name":"formatar_comparacao","params":["&Comparacao","Escopo","ModoUses","&Modo"],"return_type":"String"}],"types":[{"name":"AlvoPedido","kind":"enum","members":["Path","Id"]},{"name":"Modo","kind":"struct","members":["text","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"formatar","params":["&Raio","&AlvoPedido","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_ranking","params":["&[ItemRanking]","Escopo","&Modo"],"return_type":"String"},{"name":"formatar_estrutura","params":["&EstruturaModulos","Escopo","ModoUses","&Modo"],"return_type":"String"},{"name":"formatar_estrutura_html","params":["&EstruturaModulos","Escopo","ModoUses","&str"],"return_type":"String"},{"name":"formatar_estrutura_html_com_evidencias","params":["&EstruturaModulos","Escopo","ModoUses","&str","&AgregacaoDetalhada"],"return_type":"String"},{"name":"formatar_estrutura_html_com_referencias_go","params":["&EstruturaModulos","Escopo","ModoUses","&str","&AgregacaoDetalhada","&str"],"return_type":"Result<String, String>"},{"name":"formatar_estrutura_html_com_chamadas_go","params":["&EstruturaModulos","Escopo","ModoUses","&str","&AgregacaoDetalhada","&str","&lente_core::domain::grafo_chamadas::GrafoChamadas"],"return_type":"Result<String, String>"},{"name":"formatar_estrutura_html_scip","params":["&EstruturaModulos","&FontesIndexadas"],"return_type":"String"},{"name":"formatar_estrutura_html_scip_com_chamadas","params":["&EstruturaModulos","&FontesIndexadas","&lente_core::domain::grafo_chamadas::GrafoChamadas"],"return_type":"String"},{"name":"formatar_estrutura_html_scip_com_fluxos","params":["&EstruturaModulos","&FontesIndexadas","&lente_core::domain::grafo_chamadas::GrafoChamadas","&str"],"return_type":"Result<String, String>"},{"name":"formatar_diff","params":["&ResultadoDiff"],"return_type":"String"},{"name":"formatar_diff_vista","params":["&ResultadoDiff","Vista"],"return_type":"String"},{"name":"formatar_comparacao","params":["&Comparacao","Escopo","ModoUses","&Modo"],"return_type":"String"}],"types":[{"name":"AlvoPedido","kind":"enum","members":["Path","Id"]},{"name":"Modo","kind":"struct","members":["text","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 
@@ -184,3 +256,20 @@ Dada a matriz Quando ativar o filtro de falhas Então exibir somente colunas com
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0063) dos formatadores. Código inalterado. | `02_shell/cli/src/saida.rs` |
 
 | 2026-09-26 | Correção da perda de falhas no diff: completude explícita, resultados parciais consultáveis e erro se nenhum crate for analisado. | Unidade deste contrato |
+
+Explorar chamadas abre do cartão ou da busca e conserva o símbolo de partida. Mostra vizinhos diretos dos dois lados. Cada expansão pertence à ocorrência do ramo e carrega apenas um nível. A seta abre a fonte destacada na linha da chamada sem descartar o ramo.
+
+Ao selecionar uma seta, mostrar o indício sintático e o índice de referência no inspetor. Listar pontos sem seta no ramo de saída por motivo e com o ponto e candidatos clicáveis. O filtro por função ou arquivo atua sobre as setas resolvidas e o painel identifica separadamente as ocultas, preservando ramos abertos e código selecionado.
+
+Uma seta resolvida no Explorador permite salvar o caminho desde
+a função de partida, na direção que o usuário percorreu. A declaração
+de partida e cada ponto de chamada formam passos clicáveis. O navegador
+guarda caminhos nomeados por endereço do HTML usando posições estáveis.
+Antes de abrir, a vista confere a continuidade do caminho e as posições
+no grafo carregado. Erro de gravação ou caminho desatualizado aparece na
+tela. Alternar entre grafo e fluxo mantém os ramos já expandidos.
+
+A navegação por chamadas marca a origem sintática de Go e de C/C++ e mostra
+a cobertura nativa com o motivo das unidades excluídas. Fluxos fornecidos
+em JSON pelo usuário são visíveis como exemplos publicados com o HTML,
+conservam a checagem das posições do grafo e convivem com os fluxos no navegador.

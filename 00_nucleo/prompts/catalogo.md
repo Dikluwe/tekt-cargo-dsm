@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: 5f9c82dc
+Hash do Código: 77716fd2
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -23,6 +23,12 @@ das molduras.
 
 - `HELP_REFERENCIAS_GO` e `ERRO_REFERENCIAS_GO` descrevem a entrada
   complementar da vista HTML e enquadram seu erro de validação.
+- `HELP_INDICE_SCIP`, `HELP_RAIZ_SCIP` e `ERRO_INDICE_SCIP` descrevem a
+  entrada binária de referências e seu erro de admissão.
+- `HELP_ARTEFATO_FFI` e `ERRO_ARTEFATO_FFI` identificam a entrada opcional
+  de evidências FFI multilíngues e sua falha de
+  leitura ou validação.
+  HELP_INDICE_SWIFT e ERRO_INDICE_SWIFT identificam o IndexStore de Swift/Clang.
 - Ajuda `HELP_ANALISE_ARTEFATOS` descreve fluxo exclusivo e códigos de regras.
 
 - Completude do diff: chaves `completude`, `falhas`, `crate_name`, `motivo`; valores `completa`/`parcial`; cabeçalhos explícitos e aviso de que ausência de impacto observado em análise parcial não garante ausência de impacto; template por crate com motivo.
@@ -73,3 +79,6 @@ semântica e API; qualificação Option::None não é um braço curinga.
 Vocabulário da seleção explícita de provedor, configuração, incompatibilidades e descrição da ferramenta MCP aditiva. Helpers opcionais experimentais são declarados na interface.
 
 Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
+
+A ajuda e os erros da base de compilação e da leitura de fluxos publicados
+pertencem ao catálogo.

@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::main` — o ponto de entrada (L4)
-Hash do Código: fca9190a
+Hash do Código: 9b81fa32
 
 **Camada**: L4 — Fiação (app/ponto de composição). Importa L1/L2/L4.
 **Unidade**: `04_wiring/app/src/main.rs` (crate `lente_app`, o binário `lente`).
@@ -36,6 +36,11 @@ do L4** (a CLI virou lib pura no 0057).
   a geração do HTML ao formatador L2. Texto e JSON usam a estrutura usual.
   Quando informado, lê `--referencias-go` localmente, valida o índice no
   formatador antes de gravar o HTML e propaga erro com o caminho da entrada.
+- Quando informado `--indice-scip`, entrega os índices e `--raiz-scip` ao
+  adaptador L3. Projeta as referências admitidas com L1, usa o cálculo
+  existente de estrutura e grava a vista HTML somente após a admissão.
+  Quando presente, `--artefato-ffi` pede ao adaptador L3 as ligações
+  nativas apoiadas pelo artefato antes do cálculo da estrutura.
 - **`SaidaErro`** — código (1=pipeline, 2=args) + mensagem já traduzida.
 - **L4 importa L1/L2/L4** (composição — para baixo, permitido). A apresentação
   (args/saida) e o catálogo são L2; a orquestração é L4; o vocabulário é L1.
@@ -72,3 +77,18 @@ semântica e API; qualificação Option::None não é um braço curinga.
 Seleção externa roteia antes dos modos legados. Rejeita diff/comparação/filtros Rust/HTML/texto/fontes legadas antes de ler configuração ou extrair. Consulta raio/ranking/estrutura usa envelope comum do wiring. --provedor rust mantém fluxo anterior.
 
 Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
+
+O modo HTML de fontes admite um IndexStore Swift/Clang isolado ou com SCIP/ELF e compõe os adaptadores antes da projeção estrutural.
+
+A origem Go do HTML compõe a projeção independente de chamadas com os índices de referências legados ou SCIP.
+
+A composição da exploração fornece ao adaptador as referências com origem dos índices SCIP ou o caminho do índice legado.
+
+A geração SCIP usa `--base-compilacao` quando fornecida para adicionar, via
+adaptador L3, chamadas C/C++ e cobertura antes da formatação. Lê o arquivo de
+`--fluxos` quando fornecido e entrega o texto ao formatador antes da gravação.
+
+Na DSM por arquivo, após reunir as fontes de todos os adaptadores, o ponto de
+composição entrega ao adaptador L3 a mesma raiz para carregar os prompts
+referenciados pelo código. O índice enriquecido segue ao formatador tanto na
+saída HTML usual quanto na saída com fluxos publicados.

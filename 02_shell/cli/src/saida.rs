@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash 12ff24e3
+//! @prompt-hash b62f9ebf
 //! @layer L2
-//! @updated 2026-11-25
+//! @updated 2026-11-26
 //!
 //! Formatação do `Raio` para stdout. Quatro modos (matriz `--text` ×
 //! `--verbose`); todos os literais visíveis ao usuário vêm do
@@ -23,6 +23,7 @@ use lente_core::entities::grafo::{Path as PathGrafo, UsesKind};
 // a CLi não importa mais tipos da fachada `lente_wiring` aqui.
 use lente_comparacao::{ArestaComparada, Comparacao};
 use lente_core::domain::consulta::{Escopo, ModoUses};
+use lente_core::domain::fontes_indexadas::FontesIndexadas;
 use lente_core::domain::resultado_diff::{CompletudeDiff, ResultadoDiff, TocadoComRaio};
 use lente_estrutura::{AgregacaoDetalhada, DependenciaModulo, EstruturaModulos, RaioModulo};
 use lente_ranking::ItemRanking;
@@ -450,6 +451,63 @@ pub fn formatar_estrutura_html_com_evidencias(
     renderizar_estrutura_html(estrut, escopo, modo_uses, pacote, Some(evidencias), None)
 }
 
+fn posicao(local: &lente_core::domain::fontes_indexadas::LocalFonte) -> serde_json::Value {
+    serde_json::json!([
+        local.arquivo,
+        local.linha,
+        local.coluna,
+        local.linha_fim,
+        local.coluna_fim
+    ])
+}
+
+fn acrescentar_chamadas(
+    dados: &mut serde_json::Value,
+    grafo: &lente_core::domain::grafo_chamadas::GrafoChamadas,
+) {
+    if let Some(cobertura) = &grafo.cobertura_nativa {
+        dados["cobertura_chamadas_nativas"] = serde_json::json!({
+            "analisadas": cobertura.analisadas,
+            "falhas": cobertura.falhas,
+        });
+    }
+    if grafo.funcoes.is_empty() {
+        return;
+    }
+    let funcoes: Vec<_> = grafo
+        .funcoes
+        .iter()
+        .map(|f| serde_json::json!([f.nome, posicao(&f.declaracao)]))
+        .collect();
+    let arestas: Vec<_> = grafo
+        .chamadas
+        .iter()
+        .map(|c| serde_json::json!([c.de, c.para, posicao(&c.uso), c.origens]))
+        .collect();
+    use lente_core::domain::grafo_chamadas::MotivoSemSeta;
+    let diagnosticos: Vec<_> = grafo
+        .diagnosticos
+        .iter()
+        .map(|d| {
+            let motivo = match d.motivo {
+                MotivoSemSeta::SemReferencia => "sem_referencia",
+                MotivoSemSeta::SemDeclaracao => "sem_declaracao",
+                MotivoSemSeta::Ambigua => "ambigua",
+                MotivoSemSeta::ForaDoRecorte => "fora_do_recorte",
+            };
+            let candidatos: Vec<_> = d
+                .candidatos
+                .iter()
+                .map(|(local, origens)| serde_json::json!([posicao(local), origens]))
+                .collect();
+            serde_json::json!([d.de, posicao(&d.uso), motivo, d.origens, candidatos])
+        })
+        .collect();
+    dados["grafo_chamadas"] = serde_json::json!({
+        "funcoes": funcoes, "arestas": arestas, "diagnosticos": diagnosticos,
+    });
+}
+
 /// Acrescenta ao HTML um índice de referências Go com associação explícita
 /// de cada arquivo a um módulo da estrutura. A vista usa o índice para navegar.
 pub fn formatar_estrutura_html_com_referencias_go(
@@ -460,15 +518,178 @@ pub fn formatar_estrutura_html_com_referencias_go(
     evidencias: &AgregacaoDetalhada,
     indice: &str,
 ) -> Result<String, String> {
-    let referencias = referencias_go_para_html(indice, estrut)?;
+    formatar_estrutura_html_com_chamadas_go(
+        estrut,
+        escopo,
+        modo_uses,
+        pacote,
+        evidencias,
+        indice,
+        &Default::default(),
+    )
+}
+
+pub fn formatar_estrutura_html_com_chamadas_go(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    pacote: &str,
+    evidencias: &AgregacaoDetalhada,
+    indice: &str,
+    grafo: &lente_core::domain::grafo_chamadas::GrafoChamadas,
+) -> Result<String, String> {
+    let mut referencias = referencias_go_para_html(indice, estrut)?;
+    acrescentar_chamadas(&mut referencias, grafo);
     Ok(renderizar_estrutura_html(
         estrut,
         escopo,
         modo_uses,
         pacote,
         Some(evidencias),
-        Some(referencias),
+        Some(("referencias_go", referencias)),
     ))
+}
+
+/// DSM por arquivo com referências provenientes de índices SCIP.
+pub fn formatar_estrutura_html_scip(estrut: &EstruturaModulos, indice: &FontesIndexadas) -> String {
+    formatar_estrutura_html_scip_com_chamadas(estrut, indice, &Default::default())
+}
+
+pub fn formatar_estrutura_html_scip_com_chamadas(
+    estrut: &EstruturaModulos,
+    indice: &FontesIndexadas,
+    grafo: &lente_core::domain::grafo_chamadas::GrafoChamadas,
+) -> String {
+    formatar_indice_scip(estrut, indice, grafo, None)
+}
+
+pub fn formatar_estrutura_html_scip_com_fluxos(
+    estrut: &EstruturaModulos,
+    indice: &FontesIndexadas,
+    grafo: &lente_core::domain::grafo_chamadas::GrafoChamadas,
+    texto: &str,
+) -> Result<String, String> {
+    let fluxo: serde_json::Value = serde_json::from_str(texto).map_err(|e| e.to_string())?;
+    let entradas = fluxo.as_array().ok_or("esperada uma lista de fluxos")?;
+    let mut nomes = std::collections::BTreeSet::new();
+    let local = |valor: &serde_json::Value| {
+        valor.as_array().is_some_and(|partes| {
+            partes.len() == 5
+                && partes[0]
+                    .as_str()
+                    .is_some_and(|arquivo| !arquivo.is_empty())
+                && partes[1..]
+                    .iter()
+                    .all(|p| p.as_u64().is_some_and(|v| v < (1 << 53)))
+        })
+    };
+    for entrada in entradas {
+        let nome = entrada["nome"].as_str().ok_or("fluxo sem nome")?;
+        if nome.trim().is_empty() || !nomes.insert(nome) {
+            return Err("nome vazio ou duplicado".into());
+        }
+        if !local(&entrada["raiz"]) || !matches!(entrada["lado"].as_u64(), Some(0 | 1)) {
+            return Err(format!("raiz ou direção inválida em {nome}"));
+        }
+        let passos = entrada["passos"].as_array().ok_or("fluxo sem passos")?;
+        if passos.is_empty()
+            || !passos.iter().all(|passo| {
+                passo
+                    .as_array()
+                    .is_some_and(|partes| partes.len() == 3 && partes.iter().all(local))
+            })
+        {
+            return Err(format!("passos inválidos em {nome}"));
+        }
+    }
+    Ok(formatar_indice_scip(estrut, indice, grafo, Some(fluxo)))
+}
+
+fn formatar_indice_scip(
+    estrut: &EstruturaModulos,
+    indice: &FontesIndexadas,
+    grafo: &lente_core::domain::grafo_chamadas::GrafoChamadas,
+    fluxos: Option<serde_json::Value>,
+) -> String {
+    use lente_core::domain::fontes_indexadas::OrigemFfi;
+    use serde_json::json;
+    let chamadas = |chamadas: &lente_core::domain::fontes_indexadas::ChamadasFonte| {
+        chamadas
+            .iter()
+            .map(|(local, funcao)| {
+                json!([
+                    posicao(local),
+                    funcao.as_ref().map(|f| &f.nome),
+                    funcao.as_ref().map(|f| posicao(&f.declaracao)),
+                ])
+            })
+            .collect::<Vec<_>>()
+    };
+    let simbolos: Vec<_> = indice
+        .simbolos
+        .iter()
+        .map(|simbolo| {
+            json!({
+                "nome": simbolo.nome,
+                "declaracoes": simbolo.declaracoes.iter().map(posicao).collect::<Vec<_>>(),
+                "usos": simbolo.usos.iter().map(posicao).collect::<Vec<_>>(),
+                "ffi": simbolo.ffi.as_ref().map(|vinculo| {
+                    let mut dados = json!({
+                        "nome_linker": vinculo.nome_linker,
+                        "implementacao": posicao(&vinculo.implementacao),
+                        "chamadas_fronteira": chamadas(&vinculo.chamadas_fronteira),
+                    });
+                    if vinculo.origem == OrigemFfi::IndexStore {
+                        dados["origem"] = json!("indexstore");
+                    }
+                    dados
+                }),
+            })
+        })
+        .collect();
+    let pares: Vec<_> = indice
+        .pares()
+        .into_iter()
+        .map(|((de, para), referencias)| json!([de, para, referencias]))
+        .collect();
+    let mut dados = json!({
+        "fontes": indice.fontes, "simbolos": simbolos, "pares": pares,
+        "indexadores": indice.indexadores, "sem_declaracao": indice.usos_sem_declaracao,
+        "posicoes_invalidas": indice.posicoes_invalidas,
+        "artefato_ffi": indice.artefato_ffi,
+        "chamadores": indice.chamadores.iter()
+            .map(|(local, registros)| json!([posicao(local), chamadas(registros)]))
+            .collect::<Vec<_>>(),
+        "definicoes_nativas": indice.definicoes_nativas.iter()
+            .map(|(local, nome)| json!([posicao(local), nome]))
+            .collect::<Vec<_>>(),
+    });
+    acrescentar_chamadas(&mut dados, grafo);
+    if !indice.prompts.is_empty() {
+        dados["prompts"] = json!(
+            indice
+                .prompts
+                .iter()
+                .map(|(arquivo, prompt)| {
+                    (
+                        arquivo.clone(),
+                        json!({"caminho": prompt.caminho, "texto": prompt.texto}),
+                    )
+                })
+                .collect::<serde_json::Map<_, _>>()
+        );
+    }
+    if let Some(fluxos) = fluxos {
+        dados["fluxos_publicados"] = fluxos;
+    }
+    renderizar_estrutura_html(
+        estrut,
+        Escopo::Completo,
+        ModoUses::Todas,
+        "índices SCIP",
+        None,
+        Some(("scip", dados)),
+    )
 }
 
 fn referencias_go_para_html(
@@ -1002,7 +1223,7 @@ fn renderizar_estrutura_html(
     modo_uses: ModoUses,
     pacote: &str,
     evidencias: Option<&AgregacaoDetalhada>,
-    referencias_go: Option<serde_json::Value>,
+    navegacao: Option<(&str, serde_json::Value)>,
 ) -> String {
     let mut map = estrutura_json_map(estrut, escopo, modo_uses);
     map.insert(
@@ -1034,8 +1255,8 @@ fn renderizar_estrutura_html(
     if let Some(evidencias) = evidencias {
         map.insert("evidencias".to_string(), evidencias_para_html(evidencias));
     }
-    if let Some(referencias) = referencias_go {
-        map.insert("referencias_go".to_string(), referencias);
+    if let Some((chave, referencias)) = navegacao {
+        map.insert(chave.to_string(), referencias);
     }
     let dados = serde_json::Value::Object(map)
         .to_string()
@@ -2355,6 +2576,121 @@ mod tests {
             "meu_pacote",
         );
         assert_eq!(s, s2);
+    }
+
+    #[test]
+    fn html_scip_admite_fluxo_publicado_com_passos_completos() {
+        let estrut = estrutura_amostra();
+        let indice = FontesIndexadas::default();
+        let grafo = Default::default();
+        let a = serde_json::json!(["a.cpp", 5, 4, 5, 8]);
+        let b = serde_json::json!(["b.cpp", 8, 4, 8, 8]);
+        let uso = serde_json::json!(["a.cpp", 6, 2, 6, 6]);
+        let fluxo = serde_json::json!({
+            "nome": "Camadas", "raiz": a, "lado": 0, "passos": [[a,b,uso]],
+        });
+        let html = formatar_estrutura_html_scip_com_fluxos(
+            &estrut,
+            &indice,
+            &grafo,
+            &serde_json::json!([fluxo]).to_string(),
+        )
+        .unwrap();
+        assert!(html.contains(r#""fluxos_publicados":[{"lado":0,"nome":"Camadas""#));
+        assert!(
+            formatar_estrutura_html_scip_com_fluxos(
+                &estrut,
+                &indice,
+                &grafo,
+                r#"[{"nome":"Inválido","raiz":["a.cpp",1,0,1,1],"lado":0,"passos":[[]]}]"#,
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn html_scip_embute_prompt_vinculado_como_texto() {
+        use lente_core::domain::fontes_indexadas::PromptFonte;
+
+        let caminho = "00_nucleo/prompts/a.md";
+        let texto = "# Contrato\n\nExemplo literal: `</script>`";
+        let mut indice = FontesIndexadas::default();
+        indice.prompts.insert(
+            "src/a.rs".into(),
+            PromptFonte {
+                caminho: caminho.into(),
+                texto: texto.into(),
+            },
+        );
+        let html = formatar_estrutura_html_scip(&estrutura_amostra(), &indice);
+        let dados = html
+            .lines()
+            .find_map(|linha| linha.strip_prefix("const DADOS = "))
+            .unwrap();
+        assert!(!dados.contains("</script>"));
+        let dados: serde_json::Value = serde_json::from_str(dados.trim_end_matches(';')).unwrap();
+        assert_eq!(dados["scip"]["prompts"]["src/a.rs"]["caminho"], caminho);
+        assert_eq!(dados["scip"]["prompts"]["src/a.rs"]["texto"], texto);
+    }
+
+    #[test]
+    fn html_scip_preserva_posicao_da_chamada_e_identidade_do_chamador() {
+        use lente_core::domain::fontes_indexadas::{FuncaoFonte, LocalFonte};
+        use serde_json::json;
+
+        let posicao = |arquivo: &str, linha, coluna| LocalFonte {
+            arquivo: arquivo.into(),
+            linha,
+            coluna,
+            linha_fim: linha,
+            coluna_fim: coluna + 4,
+        };
+        let mut indice = FontesIndexadas::default();
+        indice.chamadores.insert(
+            posicao("src/lib.rs", 3, 3),
+            BTreeMap::from([(
+                posicao("src/main.rs", 6, 8),
+                Some(FuncaoFonte {
+                    nome: "main".into(),
+                    declaracao: posicao("src/main.rs", 5, 3),
+                }),
+            )]),
+        );
+        let html = formatar_estrutura_html_scip(&estrutura_amostra(), &indice);
+        assert!(html.contains(r#"id="scip-grafo-foco" role="status""#));
+        assert!(html.contains(r#"id="scip-grafo-limpar" type="button" hidden"#));
+        assert!(
+            html.contains(r#"id="scip-grafo-comparar" type="button" aria-pressed="false" hidden"#)
+        );
+        assert!(html.contains(r#"id="scip-grafo-legenda" role="group""#));
+        assert!(
+            html.contains(r#"id="scip-encontro" aria-labelledby="scip-encontro-titulo" hidden"#)
+        );
+        assert!(html.contains(r#"id="scip-encontro-anterior" type="button" disabled"#));
+        assert!(html.contains(r#"id="scip-encontro-proximo" type="button" disabled"#));
+        assert!(html.contains(r#"id="scip-encontro-posicao" role="status""#));
+        assert!(html.contains(r#"id="scip-encontros" hidden"#));
+        assert!(html.contains(r#"id="scip-encontros-filtro" type="search""#));
+        assert!(html.contains(r#"id="scip-encontros-resultado" role="status" hidden"#));
+        assert!(
+            html.contains(r#"id="scip-encontros-itens" aria-labelledby="scip-encontros-titulo""#)
+        );
+        let dados = html
+            .lines()
+            .find_map(|linha| linha.strip_prefix("const DADOS = "))
+            .unwrap();
+        let dados: serde_json::Value = serde_json::from_str(dados.trim_end_matches(';')).unwrap();
+        assert_eq!(
+            dados["scip"]["chamadores"],
+            json!([[
+                ["src/lib.rs", 3, 3, 3, 7],
+                [[
+                    ["src/main.rs", 6, 8, 6, 12],
+                    "main",
+                    ["src/main.rs", 5, 3, 5, 7]
+                ]]
+            ]])
+        );
     }
 
     #[test]

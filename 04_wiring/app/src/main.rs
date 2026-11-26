@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash 3f93dbcd
+//! @prompt-hash e3eea63d
 //! @layer L4
-//! @updated 2026-11-25
+//! @updated 2026-11-26
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
 //! Camada:  L4 — Fiação (app/ponto de composição). É o crate que **compõe** a
 //!          apresentação (`lente_cli`, L2) com a orquestração (`lente_wiring`,
@@ -95,6 +95,61 @@ fn escolher_modo_uses(cli: &args::Cli) -> ModoUses {
 
 /// Composição testável: a partir de `Cli`, decide e produz stdout ou erro.
 fn run(cli: args::Cli) -> Result<String, SaidaErro> {
+    if let Some(raiz) = &cli.raiz_scip {
+        let (mut indice, referencias_go) = if cli.indices_scip.is_empty() {
+            Default::default()
+        } else {
+            lente_infra::scip::carregar_indices_com_referencias_go(raiz, &cli.indices_scip)
+                .map_err(|detalhe| SaidaErro {
+                    codigo: 1,
+                    mensagem: cat::ERRO_INDICE_SCIP.render(&[("detalhe", &detalhe)]),
+                })?
+        };
+        if let Some(artefato) = &cli.artefato_ffi {
+            lente_infra::scip_ffi::ligar_ffi(raiz, artefato, &mut indice).map_err(|detalhe| {
+                SaidaErro {
+                    codigo: 1,
+                    mensagem: cat::ERRO_ARTEFATO_FFI.render(&[("detalhe", &detalhe)]),
+                }
+            })?;
+        }
+        if let Some(indexstore) = &cli.indice_swift {
+            lente_infra::indexstore::anexar(raiz, indexstore, &mut indice).map_err(|detalhe| {
+                SaidaErro {
+                    codigo: 1,
+                    mensagem: cat::ERRO_INDICE_SWIFT.render(&[("detalhe", &detalhe)]),
+                }
+            })?;
+        }
+        let mut chamadas = lente_infra::chamadas_go::projetar_scip(&indice, referencias_go);
+        if let Some(base) = &cli.base_compilacao {
+            chamadas.anexar(
+                lente_infra::explorar_chamadas_nativas::carregar(raiz, base, &mut indice).map_err(
+                    |detalhe| SaidaErro {
+                        codigo: 1,
+                        mensagem: cat::ERRO_BASE_COMPILACAO.render(&[("detalhe", &detalhe)]),
+                    },
+                )?,
+            );
+        }
+        lente_infra::scip::anexar_prompts(raiz, &mut indice);
+        let estrutura = lente_wiring::analisar_estrutura_indexada(&indice.grafo());
+        let html = if let Some(arquivo) = &cli.fluxos {
+            let erro_fluxos = |detalhe: String| SaidaErro {
+                codigo: 1,
+                mensagem: cat::ERRO_FLUXOS.render(&[
+                    ("arquivo", &arquivo.display().to_string()),
+                    ("detalhe", &detalhe),
+                ]),
+            };
+            let texto = std::fs::read_to_string(arquivo).map_err(|e| erro_fluxos(e.to_string()))?;
+            saida::formatar_estrutura_html_scip_com_fluxos(&estrutura, &indice, &chamadas, &texto)
+                .map_err(erro_fluxos)?
+        } else {
+            saida::formatar_estrutura_html_scip_com_chamadas(&estrutura, &indice, &chamadas)
+        };
+        return gravar_estrutura_html(&cli, html);
+    }
     if cli.provedor.as_deref().is_some_and(|p| p != "rust") {
         return run_provedor(&cli);
     }
@@ -229,13 +284,15 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
         let html = if let Some(arquivo) = &cli.referencias_go {
             let indice =
                 lente_infra::extracao::ler_texto(arquivo).map_err(|e| err_arquivo(arquivo, e))?;
-            saida::formatar_estrutura_html_com_referencias_go(
+            let chamadas = lente_infra::chamadas_go::projetar_legado(&indice, arquivo);
+            saida::formatar_estrutura_html_com_chamadas_go(
                 &estrutura,
                 escopo,
                 modo_uses,
                 &pacote,
                 &evidencias,
                 &indice,
+                &chamadas,
             )
             .map_err(|detalhe| SaidaErro {
                 codigo: 1,
@@ -253,18 +310,7 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
                 &evidencias,
             )
         };
-        let caminho = cli
-            .saida
-            .clone()
-            .unwrap_or_else(|| std::path::PathBuf::from(cat::DSM_SAIDA_PADRAO));
-        std::fs::write(&caminho, html).map_err(|e| SaidaErro {
-            codigo: 1,
-            mensagem: cat::DSM_ERRO_ESCRITA.render(&[
-                ("caminho", &caminho.display().to_string()),
-                ("detalhe", &e.to_string()),
-            ]),
-        })?;
-        return Ok(cat::DSM_ESCRITO.render(&[("caminho", &caminho.display().to_string())]));
+        return gravar_estrutura_html(cli, html);
     }
 
     let estrutura =
@@ -279,6 +325,21 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
     Ok(saida::formatar_estrutura(
         &estrutura, escopo, modo_uses, &modo,
     ))
+}
+
+fn gravar_estrutura_html(cli: &args::Cli, html: String) -> Result<String, SaidaErro> {
+    let caminho = cli
+        .saida
+        .as_deref()
+        .unwrap_or_else(|| std::path::Path::new(cat::DSM_SAIDA_PADRAO));
+    std::fs::write(caminho, html).map_err(|e| SaidaErro {
+        codigo: 1,
+        mensagem: cat::DSM_ERRO_ESCRITA.render(&[
+            ("caminho", &caminho.display().to_string()),
+            ("detalhe", &e.to_string()),
+        ]),
+    })?;
+    Ok(cat::DSM_ESCRITO.render(&[("caminho", &caminho.display().to_string())]))
 }
 
 /// Pipeline do modo paridade (prompt 0074): compara duas raízes com escopo/modo
@@ -452,6 +513,104 @@ mod tests {
         );
     }
 
+    #[test]
+    fn base_nativa_e_fluxos_usam_o_modo_scip() {
+        assert!(
+            args::Cli::try_parse_from([
+                "lente",
+                "--estrutura",
+                "--html",
+                "--base-compilacao",
+                "compile_commands.json"
+            ])
+            .is_err()
+        );
+        assert!(
+            args::Cli::try_parse_from([
+                "lente",
+                "--estrutura",
+                "--html",
+                "--fluxos",
+                "fluxos.json"
+            ])
+            .is_err()
+        );
+        let cli = args::Cli::try_parse_from([
+            "lente",
+            "--estrutura",
+            "--html",
+            "--raiz-scip",
+            ".",
+            "--indice-scip",
+            "clang.scip",
+            "--base-compilacao",
+            "compile_commands.json",
+            "--fluxos",
+            "fluxos.json",
+        ])
+        .unwrap();
+        assert_eq!(
+            cli.base_compilacao.unwrap(),
+            std::path::Path::new("compile_commands.json")
+        );
+        assert_eq!(cli.fluxos.unwrap(), std::path::Path::new("fluxos.json"));
+    }
+
+    #[test]
+    fn indices_scip_exigem_raiz_e_html_e_podem_ser_repetidos() {
+        assert!(args::Cli::try_parse_from(["lente", "--artefato-ffi", "demo"]).is_err());
+        assert!(args::Cli::try_parse_from(["lente", "--indice-scip", "rust.scip"]).is_err());
+        let comandos = [
+            "lente",
+            "--estrutura",
+            "--html",
+            "--raiz-scip",
+            ".",
+            "--indice-scip",
+            "rust.scip",
+            "--indice-scip",
+            "clang.scip",
+        ];
+        let cli = args::Cli::try_parse_from(comandos).unwrap();
+        assert_eq!(cli.indices_scip.len(), 2);
+        let cli = args::Cli::try_parse_from(comandos.into_iter().chain(["--artefato-ffi", "demo"]))
+            .unwrap();
+        assert_eq!(
+            cli.artefato_ffi.as_deref(),
+            Some(std::path::Path::new("demo"))
+        );
+        assert!(
+            args::Cli::try_parse_from(comandos.into_iter().chain(["--grafo", "grafo.json"]))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn indexstore_aceita_modo_isolado_e_com_scip() {
+        let base = [
+            "lente",
+            "--estrutura",
+            "--html",
+            "--raiz-scip",
+            ".",
+            "--indice-swift",
+            "index",
+        ];
+        let cli = args::Cli::try_parse_from(base).unwrap();
+        assert_eq!(
+            cli.indice_swift.as_deref(),
+            Some(std::path::Path::new("index"))
+        );
+        assert!(
+            args::Cli::try_parse_from(base.into_iter().chain(["--indice-scip", "c.scip"])).is_ok()
+        );
+        assert!(args::Cli::try_parse_from(["lente", "--indice-swift", "index"]).is_err());
+        assert!(
+            args::Cli::try_parse_from(["lente", "--estrutura", "--html", "--raiz-scip", "."])
+                .is_err()
+        );
+    }
+
     /// JSON sintético com colisão Display+Debug (mesma estrutura do teste do
     /// L4 wiring, mas como string para a CLI consumir).
     fn json_sintetico() -> &'static str {
@@ -506,6 +665,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -593,6 +758,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -631,6 +802,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -668,6 +845,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -854,6 +1037,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -894,6 +1083,12 @@ mod tests {
             html: true,
             saida: Some(saida.clone()),
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -1086,6 +1281,12 @@ mod tests {
             html: true,
             saida: Some(saida.clone()),
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: true,
             comparar: false,
             antes: None,
@@ -1127,6 +1328,12 @@ mod tests {
             html: false,
             saida: None,
             referencias_go: None,
+            indices_scip: Vec::new(),
+            indice_swift: None,
+            raiz_scip: None,
+            artefato_ffi: None,
+            base_compilacao: None,
+            fluxos: None,
             completo: false,
             comparar: false,
             antes: None,

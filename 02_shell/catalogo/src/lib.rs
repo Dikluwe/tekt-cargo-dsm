@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/catalogo.md
-//! @prompt-hash d0310cc6
+//! @prompt-hash c32bddfb
 //! @layer L2
-//! @updated 2026-11-25
+//! @updated 2026-11-26
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
 //!          conteúdo de mensagens ao usuário é dado de L2; código nunca
 //!          carrega literais de apresentação.
@@ -128,6 +128,20 @@ pub const HELP_REFERENCIAS_GO: &str =
     "Índice JSON de referências Go entre arquivos. Requer --estrutura --html --grafo.";
 pub const ERRO_REFERENCIAS_GO: Template =
     Template("índice de referências Go inválido em {arquivo}: {detalhe}");
+pub const HELP_INDICE_SCIP: &str = "Índice SCIP binário para a DSM por arquivo. Pode ser repetido.";
+pub const HELP_RAIZ_SCIP: &str = "Raiz local do código que gerou os índices.";
+pub const HELP_INDICE_SWIFT: &str =
+    "Diretório IndexStore do build Swift/Clang para as chamadas nativas.";
+pub const ERRO_INDICE_SWIFT: Template = Template("IndexStore Swift inválido: {detalhe}");
+pub const ERRO_INDICE_SCIP: Template = Template("índice SCIP inválido: {detalhe}");
+pub const HELP_BASE_COMPILACAO: &str =
+    "Base compile_commands.json do mesmo build para Explorar chamadas em C e C++.";
+pub const ERRO_BASE_COMPILACAO: Template = Template("base de compilação inválida: {detalhe}");
+pub const HELP_FLUXOS: &str = "JSON de fluxos publicados no HTML com os índices.";
+pub const ERRO_FLUXOS: Template = Template("fluxos inválidos em {arquivo}: {detalhe}");
+pub const HELP_ARTEFATO_FFI: &str =
+    "ELF com debug para ligar chamadas FFI indexadas a definições C/C++.";
+pub const ERRO_ARTEFATO_FFI: Template = Template("artefato FFI inválido: {detalhe}");
 
 /// Prompt 0072: a vista `--html` tem default `seu-codigo`; esta flag restaura o `completo`.
 pub const HELP_COMPLETO: &str = "Inclui sysroot/stdlib na vista --html (restaura o escopo completo; default da vista é seu-codigo)";

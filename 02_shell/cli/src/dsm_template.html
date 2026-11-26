@@ -93,9 +93,10 @@
   .go-seta { --cor-seta: #35649a; --marca-seta: url(#go-ponta-saida); }
   .go-seta.entrada { --cor-seta: #8e4b50; --marca-seta: url(#go-ponta-entrada); }
   .go-seta path { fill: none; }
-  .go-seta .go-traco { stroke: var(--cor-seta); stroke-width: 1.8; marker-end: var(--marca-seta); }
+  .go-seta .go-traco { stroke: var(--cor-seta); stroke-width: var(--espessura-seta, 1.8); marker-end: var(--marca-seta); }
   .go-seta .go-alvo { stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
-  .go-seta:hover .go-traco, .go-seta:focus-visible .go-traco, .go-seta[aria-pressed="true"] .go-traco { stroke-width: 4; }
+  .go-seta:hover .go-traco, .go-seta:focus-visible .go-traco,
+  .go-seta[aria-pressed="true"] .go-traco, .scip-seta[aria-current="location"] .go-traco { stroke-width: 4; }
   #painel details.go-ligacao-ativa > summary { background: #e5efff; border-radius: 3px; }
   #painel.go-detalhes { position: sticky; top: 8px; min-width: 0; }
   @media (max-width: 800px) {
@@ -249,6 +250,153 @@
   .go-linha-alvo .go-numero { background: #d9e8ff; font-weight: 700; }
   .go-linha-alvo mark { background: #ffdc79; color: #382200; border-radius: 2px; font-weight: 700; }
   .cartao .abrir-go { justify-self: start; margin: 0 10px 8px; background: #edf3fb; border: 1px solid #b1c4dc; border-radius: 4px; padding: 2px 7px; }
+  .celula-scip { cursor: pointer; }
+  .celula-scip.ffi { stroke: #703f9d; stroke-width: 2; stroke-dasharray: 3 2; }
+  .celula-scip:focus-visible { outline: none; stroke: #16447f; stroke-width: 3; }
+  #scip-fonte { width: min(1080px, calc(100vw - 24px)); max-height: 88vh; padding: 0;
+    color: #182c42; border: 1px solid #aac0d6; border-radius: 9px;
+    --scip-a: #355b84; --scip-b: #a35414; --scip-comum: #176b54; }
+  #scip-fonte:has(#scip-grafo:not([hidden])) { width: min(1250px, calc(100vw - 24px)); }
+  #scip-fonte[open] { display: flex; flex-direction: column; }
+  #scip-fonte::backdrop { background: #1d2d4380; }
+  #scip-fonte .go-fonte-corpo { min-height: 0; }
+  #scip-fonte .go-fonte-corpo > * { min-height: 0; }
+  #painel .ver-prompt { margin-bottom: 8px; }
+  #prompt-leitor { width: min(960px, calc(100vw - 24px)); max-height: 88vh; padding: 0;
+    color: #182c42; border: 1px solid #aac0d6; border-radius: 9px; }
+  #prompt-leitor[open] { display: flex; flex-direction: column; }
+  #prompt-leitor::backdrop { background: #1d2d4380; }
+  #prompt-indice { flex: 0 1 240px; min-width: 0; overflow: auto;
+    padding: 12px; background: #f4f7fb; }
+  #prompt-indice h3 { margin: 0 0 6px; }
+  #prompt-indice ol { margin: 0; padding: 0; list-style: none; }
+  #prompt-indice button { width: 100%; text-align: start; overflow-wrap: anywhere; }
+  #prompt-texto { flex: 1; min-width: 0; overflow: auto; padding: 12px 18px;
+    overflow-wrap: anywhere; }
+  #prompt-texto pre { margin: 0; white-space: pre-wrap; font: 12px/1.6 ui-monospace, monospace; }
+  #prompt-texto :is(h3, h4, h5, h6) { margin: 8px 0; scroll-margin-top: 12px; }
+  @media (max-width: 760px) {
+    #prompt-indice { flex: 0 1 auto; max-height: 24vh; }
+  }
+  #scip-rolagem { margin: 0; padding: 8px 12px 12px 0;
+    font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 4; }
+  .scip-vinculos { display: grid; align-content: start; gap: 8px; }
+  .scip-vinculos label { display: grid; gap: 3px; }
+  .scip-vinculos :is(p, ul) { margin: 0; }
+  .scip-vinculos select { min-width: 0; width: 100%; }
+  .scip-vinculos ul { padding-left: 18px; }
+  #scip-grafo { flex: none; border-bottom: 1px solid #ccd9e5; }
+  #scip-grafo summary { padding: 8px 14px; cursor: pointer; font-weight: 600; }
+  .scip-grafo-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+    padding: 0 14px 7px; color: #45586e; font-size: 12px; }
+  .scip-grafo-barra button { color: #173a63; background: #fff; border: 1px solid #aac0d6;
+    border-radius: 4px; padding: 2px 7px; cursor: pointer; }
+  .scip-grafo-barra button[aria-pressed="true"] { background: #e3effd; border-color: #527da6; }
+  .scip-grafo-barra.com-destaque #scip-grafo-foco { color: #173a63; font-weight: 600; overflow-wrap: anywhere; }
+  #scip-grafo-legenda:not([hidden]) { display: flex; flex-wrap: wrap; gap: 4px 16px;
+    padding: 0 14px 8px; color: #33485d; font-size: 12px; }
+  #scip-grafo-legenda > span { display: inline-flex; gap: 5px; align-items: center; }
+  #scip-grafo-legenda i { width: 14px; border-top: 3px solid var(--cor-rota); }
+  #scip-grafo-legenda .scip-ponto-encontro { width: 8px; height: 8px; border: 0;
+    border-radius: 50%; background: var(--scip-comum); }
+  #scip-grafo-rolagem { max-height: min(31vh, 360px); overflow: auto; overscroll-behavior: contain;
+    background: #f3f7fb; border-top: 1px solid #dce7f0; }
+  #scip-grafo-rolagem svg { display: block; margin-inline: auto; }
+  .scip-seta { --cor-seta: var(--scip-a); --marca-seta: url(#scip-ponta); }
+  .scip-seta.ffi { --cor-seta: #694796; --marca-seta: url(#scip-ponta-ffi); }
+  .scip-seta.scip-no-caminho { --espessura-seta: 3; }
+  .scip-seta.scip-fora-do-caminho { --cor-seta: #778799; --marca-seta: url(#scip-ponta-contexto); }
+  .scip-seta.retorno .go-traco { stroke-dasharray: 5 3; }
+  .scip-no { cursor: pointer; }
+  .scip-no rect { fill: white; stroke: #96adc4; }
+  .scip-no.ffi rect { fill: #f1eafa; stroke: #8965b2; }
+  .scip-no text { fill: #182c42; font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    pointer-events: none; }
+  .scip-no .scip-no-local { fill: #45586e; font: 11px system-ui, sans-serif; }
+  .scip-no.scip-fora-do-caminho rect { fill: #f5f8fb; stroke: #b2c2d1; }
+  .scip-no.scip-fora-do-caminho text { fill: #52677c; }
+  .scip-no.scip-no-caminho rect { fill: #e3effd; stroke: #355b84; }
+  .scip-no.ffi.scip-no-caminho rect { fill: #ede3f9; stroke: #694796; }
+  .scip-no:is(:hover, :focus-visible, [aria-current="location"], [aria-pressed="true"], [aria-expanded="true"]) rect { stroke-width: 2.5; }
+  .scip-no[aria-pressed="true"] rect { fill: #254e7a; stroke: #173a63; }
+  .scip-no[aria-pressed="true"] text { fill: white; }
+  #scip-fonte [data-rota="a"] { --cor-rota: var(--scip-a); --fundo-rota: #e3effd; }
+  #scip-fonte [data-rota="b"] { --cor-rota: var(--scip-b); --fundo-rota: #fff0df; }
+  #scip-fonte [data-rota="comum"] { --cor-rota: var(--scip-comum); --fundo-rota: #e3f4ed; }
+  .scip-seta[data-rota] { --cor-seta: var(--cor-rota); }
+  .scip-seta[data-rota="a"] { --marca-seta: url(#scip-ponta); }
+  .scip-seta[data-rota="b"] { --marca-seta: url(#scip-ponta-b); }
+  .scip-seta[data-rota="comum"] { --marca-seta: url(#scip-ponta-comum); }
+  #scip-grafo .scip-no[data-rota] rect { fill: var(--fundo-rota); stroke: var(--cor-rota); }
+  .scip-no[data-rota] text { fill: #182c42; }
+  .scip-no[data-rota] .scip-no-local { fill: #45586e; }
+  .scip-no-encontro { display: none; fill: var(--scip-comum); stroke: #fff;
+    stroke-width: 1.5; pointer-events: none; }
+  .scip-no[data-encontro] .scip-no-encontro { display: block; }
+  #scip-encontros { margin: 0; border: 1px solid #a0c3b4; border-radius: 6px; padding: 7px 9px;
+    background: #f3f9f6; color: #184c3e; }
+  #scip-encontros label { margin-top: 6px; font-size: 12px; }
+  #scip-encontros-filtro { min-width: 0; padding: 4px 6px; border: 1px solid #a0c3b4;
+    border-radius: 4px; background: #fff; color: #182c42; }
+  #scip-encontros-resultado { margin: 5px 0 0; color: #405b54; font-size: 12px; }
+  #scip-encontros-itens { margin: 4px 0 0; padding: 0 4px 0 24px; max-height: min(17vh, 150px);
+    overflow: auto; overscroll-behavior: contain; }
+  #scip-encontros-itens .go-posicao { padding-inline: 5px; overflow-wrap: anywhere; }
+  #scip-encontros-itens .go-posicao[aria-current="step"] { background: #e0f2e9; box-shadow: inset 2px 0 #176b54; }
+  #scip-encontro { background: #f3f9f6; border: 1px solid #a0c3b4; border-radius: 6px; padding: 9px; }
+  #scip-encontro h3 { color: #184c3e; }
+  .scip-encontro-navegacao { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+    margin: 6px 0 2px; color: #405b54; font-size: 12px; }
+  .scip-encontro-navegacao button { color: #184c3e; background: #fff; border: 1px solid #91b6a7;
+    border-radius: 4px; padding: 2px 7px; cursor: pointer; }
+  .scip-encontro-navegacao button:disabled { color: #61736d; background: #edf3ef; cursor: default; }
+  #scip-encontro h4 { margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+  #scip-encontro ul { padding: 0; }
+  #scip-encontro .scip-encontro-rota { margin-top: 7px; border-left: 3px solid var(--cor-rota);
+    border-radius: 3px; background: var(--fundo-rota); padding: 5px 7px; }
+  #scip-encontro :is(code, small, .go-posicao) { overflow-wrap: anywhere; }
+  @media (max-width: 700px) {
+    #scip-fonte:has(#scip-grafo[open]:not([hidden])) .go-codigo { flex-basis: 120px; }
+    #scip-fonte:has(#scip-grafo[open]:not([hidden])) .go-navegacao { max-height: 20vh; }
+  }
+  .scip-atalho-ffi { color: #563485; text-decoration: underline; }
+  #scip-cobertura { color: #45586e; }
+  #explorar-chamadas { width: min(1180px, calc(100vw - 28px)); max-height: calc(100vh - 28px); border: 1px solid #aab7c3; border-radius: 8px; }
+  #explorar-chamadas::backdrop { background: #17212c80; }
+  .explorar-controles { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 12px; }
+  .explorar-controles label { display: grid; gap: 4px; }
+  .explorar-controles select { max-width: min(550px, 82vw); }
+  .explorar-grade { display: grid; grid-template-columns: minmax(18rem, 4fr) minmax(20rem, 5fr); gap: 16px; }
+  .explorar-grade > section { min-width: 0; border: 1px solid #deded6; border-radius: 6px; padding: 10px; }
+  .explorar-grade h3 { margin: 0 0 8px; }
+  #explorar-ramificacoes { max-height: 56vh; overflow: auto; }
+  #explorar-ramificacoes ul { margin: 5px 0 10px; padding-left: 14px; list-style: none; }
+  .explorar-ramo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-block: 6px; }
+  .explorar-seta { display: grid; gap: 2px; min-width: 0; max-width: 100%; padding: 4px 8px;
+    text-align: left; color: #214e7c; background: #f4f8fc; border: 1px solid #c4d3e2; border-radius: 4px; }
+  .explorar-seta:is(:hover, :focus-visible) { background: #e6f0fa; border-color: #6f97bb; }
+  .explorar-seta :is(code, small) { overflow-wrap: anywhere; }
+  .explorar-seta small { color: #4e5c6b; }
+  #explorar-ramificacoes li > ul { border-left: 1px solid #ddd; margin-left: 12px; }
+  .explorar-diagnostico { margin-block: 6px; }
+  .explorar-diagnostico summary { cursor: pointer; color: #414f5d; }
+  #explorar-evidencia { padding: 6px 8px; background: #f2f6fa; border-radius: 4px; overflow-wrap: anywhere; }
+  #explorar-evidencia p { margin: 4px 0; }
+  #explorar-evidencia ul { margin-block: 4px; padding-left: 20px; }
+  #explorar-fonte { margin: 10px 0 0; overflow: auto; white-space: pre; max-height: 52vh; }
+  #explorar-fonte .go-linha { display: block; }
+  #explorar-fonte mark { background: #ffe89e; color: #241800; }
+  #explorar-controles[hidden], #explorar-passo-navegacao[hidden] { display: none; }
+  .explorar-botoes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #explorar-salvar-form:not([hidden]) { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 8px; }
+  #explorar-gravar-status { flex-basis: 100%; margin: 0; color: #7d3428; }
+  #explorar-fluxos { max-height: 56vh; overflow: auto; }
+  #explorar-fluxos label { display: grid; gap: 4px; }
+  #explorar-fluxos select { width: 100%; }
+  #explorar-passos { padding-left: 24px; }
+  #explorar-passos li { margin-block: 6px; padding-left: 4px; }
+  #explorar-passos button[aria-current="step"] { background: #d8e9fa; border-color: #6f97bb; }
+  @media (max-width: 800px) { .explorar-grade { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
@@ -260,6 +408,11 @@
 
 <main>
   <p class="limite" id="limite"></p>
+  <p id="scip-cobertura" hidden></p>
+  <details id="scip-unidades-excluidas" hidden>
+    <summary>Unidades de compilação excluídas</summary>
+    <ul></ul>
+  </details>
 
   <div class="controles">
     <div class="vistas" role="group" aria-label="Vista da estrutura">
@@ -267,6 +420,8 @@
       <button type="button" id="vista-cartoes" aria-pressed="false" aria-controls="cartoes">Cartões</button>
     </div>
     <button type="button" id="go-abrir-busca" aria-haspopup="dialog" hidden>Buscar símbolo</button>
+    <button type="button" id="abrir-busca-chamadas" aria-haspopup="dialog" hidden>Buscar função</button>
+    <button type="button" id="abrir-fluxos-chamadas" aria-haspopup="dialog" hidden>Fluxos salvos</button>
     <button type="button" id="go-abrir-matriz-testes" aria-haspopup="dialog" hidden>Matriz de testes</button>
     <button type="button" id="foco-cartoes" aria-controls="cartoes" aria-pressed="false" hidden>Focar vizinhança</button>
     <button id="todos-dobra">dobrar tudo</button>
@@ -328,6 +483,44 @@
     <span><span class="swatch" style="background:#1a8a4a"></span>jusante (do que depende)</span>
   </div>
 </main>
+
+<dialog id="explorar-chamadas" aria-labelledby="explorar-titulo">
+  <div class="go-fonte-cabecalho">
+    <h2 id="explorar-titulo">Explorar chamadas</h2>
+    <div class="explorar-botoes">
+      <button type="button" id="explorar-ver-fluxos" aria-controls="explorar-fluxos" aria-pressed="false">Fluxos salvos</button>
+      <form method="dialog"><button type="submit">Fechar</button></form>
+    </div>
+  </div>
+  <div class="explorar-controles" id="explorar-controles">
+    <label>Buscar função <input id="explorar-busca" type="search" autocomplete="off"></label>
+    <label>Função de partida <select id="explorar-raiz"></select></label>
+    <label>Filtrar ligações <input id="explorar-filtro" type="search" placeholder="Função ou arquivo" autocomplete="off"></label>
+  </div>
+  <div class="explorar-grade">
+    <section id="explorar-ramificacoes" aria-label="Grafo de chamadas"></section>
+    <section id="explorar-fluxos" aria-label="Fluxos salvos" hidden>
+      <label>Fluxo salvo <select id="explorar-fluxo"></select></label>
+      <p id="explorar-fluxo-status" role="status"></p>
+      <ol id="explorar-passos"></ol>
+      <div class="explorar-botoes" id="explorar-passo-navegacao" hidden>
+        <button type="button" id="explorar-passo-anterior">Anterior</button>
+        <button type="button" id="explorar-passo-proximo">Próximo</button>
+      </div>
+    </section>
+    <section aria-label="Código da posição selecionada">
+      <h3 id="explorar-posicao" aria-live="polite"></h3>
+      <div id="explorar-evidencia" aria-label="Evidência da ligação" hidden></div>
+      <button type="button" id="explorar-salvar-fluxo" hidden>Salvar fluxo</button>
+      <form id="explorar-salvar-form" hidden>
+        <label>Nome do fluxo <input id="explorar-nome-fluxo" required></label>
+        <button type="submit">Salvar</button>
+        <p id="explorar-gravar-status" role="status"></p>
+      </form>
+      <pre id="explorar-fonte"></pre>
+    </section>
+  </div>
+</dialog>
 
 <dialog id="go-busca-global" aria-labelledby="go-busca-titulo">
   <div class="go-fonte-cabecalho">
@@ -427,6 +620,67 @@
 
 <div id="tip"></div>
 
+<dialog id="scip-fonte" aria-labelledby="scip-titulo">
+  <div class="go-fonte-cabecalho">
+    <div><p id="scip-tipo"></p><h2 id="scip-titulo"></h2></div>
+    <form method="dialog"><button id="scip-voltar" type="submit">Voltar à matriz</button></form>
+  </div>
+  <details id="scip-grafo" hidden open>
+    <summary id="scip-grafo-titulo">Grafo de chamadas</summary>
+    <div class="scip-grafo-barra">
+      <span id="scip-grafo-foco" role="status"></span>
+      <button id="scip-grafo-comparar" type="button" aria-pressed="false" hidden>Comparar chamadores</button>
+      <button id="scip-grafo-limpar" type="button" hidden>Limpar destaque</button>
+      <span id="scip-grafo-dica" hidden>Setas tracejadas fecham ciclos.</span>
+    </div>
+    <div id="scip-grafo-legenda" role="group" aria-label="Legenda da comparação" hidden>
+      <span data-rota="a"><i aria-hidden="true"></i><span id="scip-grafo-origem-a"></span></span>
+      <span data-rota="b"><i aria-hidden="true"></i><span id="scip-grafo-origem-b"></span></span>
+      <span data-rota="comum"><i aria-hidden="true"></i>Em comum</span>
+      <span><i class="scip-ponto-encontro" aria-hidden="true"></i>Clique num encontro para ver as chamadas</span>
+    </div>
+    <div id="scip-grafo-rolagem" role="region" aria-labelledby="scip-grafo-titulo" tabindex="0"></div>
+  </details>
+  <div class="go-fonte-corpo">
+    <pre id="scip-rolagem" class="go-codigo" role="region" aria-label="Código indexado" tabindex="0"></pre>
+    <aside class="go-navegacao scip-vinculos" aria-label="Referências indexadas">
+      <details id="scip-encontros" hidden>
+        <summary id="scip-encontros-titulo">Encontros</summary>
+        <label>Filtrar por função ou arquivo <input id="scip-encontros-filtro" type="search" autocomplete="off"></label>
+        <p id="scip-encontros-resultado" role="status" hidden></p>
+        <ol id="scip-encontros-itens" aria-labelledby="scip-encontros-titulo"></ol>
+      </details>
+      <section id="scip-encontro" aria-labelledby="scip-encontro-titulo" hidden>
+        <h3 id="scip-encontro-titulo" tabindex="-1"></h3>
+        <div class="scip-encontro-navegacao" role="group" aria-label="Navegar pelos encontros">
+          <button id="scip-encontro-anterior" type="button" disabled>Anterior</button>
+          <span id="scip-encontro-posicao" role="status"></span>
+          <button id="scip-encontro-proximo" type="button" disabled>Próximo</button>
+        </div>
+        <div id="scip-encontro-detalhe"></div>
+      </section>
+      <label id="scip-rotulo-par" hidden>Par de arquivos <select id="scip-par"></select></label>
+      <p id="scip-caminho"></p>
+      <label>Símbolo <select id="scip-simbolo"></select></label>
+      <div id="scip-vinculos"></div>
+      <button type="button" id="scip-focar-origem">Focar vizinhança da origem</button>
+    </aside>
+  </div>
+</dialog>
+
+<dialog id="prompt-leitor" aria-labelledby="prompt-titulo">
+  <div class="go-fonte-cabecalho">
+    <div><h2 id="prompt-titulo">Prompt do arquivo</h2><p><code id="prompt-caminho"></code></p></div>
+    <form id="prompt-retornar" method="dialog"><button type="submit">Voltar à matriz</button></form>
+  </div>
+  <div class="go-fonte-corpo">
+    <nav id="prompt-indice" aria-labelledby="prompt-indice-titulo">
+      <h3 id="prompt-indice-titulo">Seções</h3><ol></ol>
+    </nav>
+    <article id="prompt-texto" aria-label="Texto do prompt" tabindex="0"></article>
+  </div>
+</dialog>
+
 <script>
 // =========================================================================
 // lente — vista DSM de estrutura (prompt 0071). A TELA É UMA VISTA: o JS só
@@ -448,6 +702,10 @@ function el(tag, attrs, text) {
 // Prefixo de dobra: os 2 primeiros segmentos (crate::sub). Módulos com < 3
 // segmentos são seu próprio grupo (não há o que dobrar).
 function grupoDe(path) {
+  if (indiceScip) {
+    const barra = path.indexOf("/");
+    return barra < 0 ? path : path.slice(0, barra);
+  }
   const p = path.split("::");
   return p.length >= 3 ? p.slice(0, 2).join("::") : path;
 }
@@ -458,6 +716,7 @@ function abreviar(path) {
 
 // Grupos que têm > 1 membro são "dobráveis". Estado de dobra por grupo.
 const ordem = DADOS.ordem;
+const indiceScip = DADOS.scip;
 const dobravel = new Set();
 {
   const cont = {};
@@ -512,6 +771,7 @@ if (indiceGo) {
 }
 const chavePar = (de, para) => JSON.stringify([de, para]);
 const evidenciasPorPar = new Map((DADOS.evidencias || []).map(e => [chavePar(e.de, e.para), e]));
+const scipPorPar = new Map((indiceScip?.pares || []).map(par => [chavePar(par[0], par[1]), par]));
 const COR_MON = "#c0392b";     // montante: quem depende deste (sente a mudança)
 const COR_JUS = "#1a8a4a";     // jusante: do que este depende
 
@@ -535,7 +795,7 @@ function unidades() {
     if (dobrado.has(g)) {
       if (!posGrupo.has(g)) {
         posGrupo.set(g, us.length);
-        us.push({ chave: g, rotulo: g + "::*", grupo: true, membros: [] });
+        us.push({ chave: g, rotulo: g + (indiceScip ? "/…" : "::*"), grupo: true, membros: [] });
       }
       us[posGrupo.get(g)].membros.push(path);
     } else {
@@ -580,12 +840,12 @@ function render() {
     conexoes = vizinhancaDireta(us, cel);
     visiveis = renderCartoes(us, conexoes, raio?.su);
   } else {
-    renderMatriz(us, idxDe, cel, raio);
+    renderMatriz(us, idxDe, cel, raio, paresScipPorCelula(idxDe));
   }
   if (raio) painelRaio(us, raio, conexoes, idxDe);
   else $("#painel").style.display = "none";
 
-  $("#nivel").textContent = `${visiveis} unidades visíveis (${ordem.length} módulos, ${dobrado.size} grupos dobrados)`;
+  $("#nivel").textContent = `${visiveis} unidades visíveis (${ordem.length} ${indiceScip ? "arquivos" : "módulos"}, ${dobrado.size} grupos dobrados)`;
 }
 
 function vizinhancaDireta(us, cel) {
@@ -647,6 +907,9 @@ function renderCartoes(us, diretos, central) {
       const quantidade = arquivosPorPacote.get(u.chave).length;
       cartao.append(botaoAcao(`Arquivos Go · ${quantidade}`, () => abrirPacoteGo(u.chave), "abrir-go"));
     }
+    if (i === central && !u.grupo) {
+      adicionarExplorarCartao(cartao, arquivosPorPacote.get(u.chave) || [u.chave]);
+    }
     if (u.chave === foco || (!reporFoco && grupoDe(u.chave) === foco)) reporFoco = botao;
     if (u.grupo || dobravel.has(u.chave)) {
       const rotulo = u.grupo ? `Abrir grupo · ${u.membros.length} módulos` : "Dobrar grupo";
@@ -679,7 +942,19 @@ function renderCartoes(us, diretos, central) {
   return vistos.size;
 }
 
-function renderMatriz(us, idxDe, cel, raio) {
+function paresScipPorCelula(idxDe) {
+  const pares = new Map();
+  for (const par of scipPorPar.values()) {
+    const [de, para] = par;
+    if (!idxDe.has(de) || !idxDe.has(para)) continue;
+    const chave = idxDe.get(de) + "\u0000" + idxDe.get(para);
+    if (!pares.has(chave)) pares.set(chave, []);
+    pares.get(chave).push(par);
+  }
+  return pares;
+}
+
+function renderMatriz(us, idxDe, cel, raio, referencias) {
   const n = us.length;
   const cell = Math.max(5, Math.min(30, Math.floor(560 / Math.max(1, n))));
   const mEsq = 230, mTop = 230;
@@ -705,7 +980,25 @@ function renderMatriz(us, idxDe, cel, raio) {
     const [i, j] = k.split("\u0000").map(Number);
     const c = corPeso(peso);
     if (!c) continue;
-    svg.appendChild(el("rect", { x: mEsq + j * cell, y: mTop + i * cell, width: cell, height: cell, fill: c, "pointer-events": "none" }));
+    const retangulo = el("rect", { x: mEsq + j * cell, y: mTop + i * cell, width: cell, height: cell, fill: c });
+    const pares = referencias.get(k);
+    if (pares?.length) {
+      const ffi = pares.some(parScipTemFfi);
+      retangulo.setAttribute("class", ffi ? "celula-scip ffi" : "celula-scip");
+      retangulo.setAttribute("tabindex", "0");
+      retangulo.setAttribute("role", "button");
+      retangulo.setAttribute("aria-haspopup", "dialog");
+      retangulo.setAttribute("aria-label", `${us[i].rotulo} → ${us[j].rotulo} · ${peso} referências${ffi ? " · FFI" : ""}`);
+      retangulo.onclick = () => abrirCelulaScip(pares, retangulo);
+      retangulo.onkeydown = (evento) => {
+        if (evento.key !== "Enter" && evento.key !== " ") return;
+        evento.preventDefault();
+        abrirCelulaScip(pares, retangulo);
+      };
+    } else {
+      retangulo.setAttribute("pointer-events", "none");
+    }
+    svg.appendChild(retangulo);
   }
 
   // Blocos de ciclo: moldura no intervalo de unidades que os membros ocupam.
@@ -756,6 +1049,826 @@ function renderMatriz(us, idxDe, cel, raio) {
   }
 }
 
+let contextoScip = null;
+const atalhosFfiPorArquivo = new Map();
+const simbolosPorImplementacaoFfi = new Map();
+const chamadoresScip = new Map(
+  (indiceScip?.chamadores || []).map(([local, chamadas]) => [
+    JSON.stringify(local),
+    chamadas.map(([local, chamador, declaracao]) => ({ local, chamador, declaracao })),
+  ])
+);
+
+for (const [id, simbolo] of (indiceScip?.simbolos || []).entries()) {
+  if (!simbolo.ffi) continue;
+  const chave = JSON.stringify(simbolo.ffi.implementacao);
+  if (!simbolosPorImplementacaoFfi.has(chave)) simbolosPorImplementacaoFfi.set(chave, []);
+  simbolosPorImplementacaoFfi.get(chave).push(simbolo);
+  for (const [arquivo, linha, inicio, linhaFim, fim] of [...simbolo.declaracoes, ...simbolo.usos]) {
+    if (!/\.(rs|py|java|go|cs|kt|dart|zig|swift|[cm]?js|jsx|[cm]?ts|tsx)$/.test(arquivo) || linha !== linhaFim || inicio >= fim) continue;
+    if (!atalhosFfiPorArquivo.has(arquivo)) atalhosFfiPorArquivo.set(arquivo, new Map());
+    const linhas = atalhosFfiPorArquivo.get(arquivo);
+    if (!linhas.has(linha)) linhas.set(linha, new Map());
+    const pontos = linhas.get(linha);
+    const faixa = `${inicio}:${fim}`;
+    const anterior = pontos.get(faixa);
+    pontos.set(faixa, { inicio, fim, id: anterior && anterior.id !== id ? null : id });
+  }
+}
+
+function localScip([arquivo, linha, coluna]) {
+  return `${arquivo}:${linha}:${coluna + 1}`;
+}
+
+function ffiNoDestinoScip(simbolo, arquivo) {
+  return simbolo.ffi?.implementacao[0] === arquivo ? simbolo.ffi : null;
+}
+
+function parScipTemFfi([, para, referencias]) {
+  return referencias.some(([id]) => ffiNoDestinoScip(indiceScip.simbolos[id], para));
+}
+
+function abrirCelulaScip(pares, origem) {
+  contextoScip = { pares, origem };
+  $("#scip-voltar").textContent = vistaCartoes ? "Voltar aos cartões" : "Voltar à matriz";
+  const seletor = $("#scip-par");
+  seletor.replaceChildren(...pares.map(([de, para], i) => {
+    const op = elemento("option", `${de} → ${para}`);
+    op.value = i;
+    return op;
+  }));
+  seletor.selectedIndex = Math.max(0, pares.findIndex(parScipTemFfi));
+  $("#scip-rotulo-par").hidden = pares.length < 2;
+  $("#tip").style.display = "none";
+  $("#scip-grafo").open = true;
+  $("#scip-fonte").showModal();
+  preencherParScip();
+  $("#scip-rolagem").focus({ preventScroll: true });
+}
+
+function parScipSelecionado() {
+  return contextoScip.pares[$("#scip-par").selectedIndex];
+}
+
+function preencherParScip() {
+  const [, para, referencias] = parScipSelecionado();
+  const ids = [...new Set(referencias.map(([id]) => id))];
+  ids.sort((a, b) => Number(Boolean(ffiNoDestinoScip(indiceScip.simbolos[b], para)))
+    - Number(Boolean(ffiNoDestinoScip(indiceScip.simbolos[a], para))));
+  $("#scip-simbolo").replaceChildren(...ids.map(id => {
+    const simbolo = indiceScip.simbolos[id];
+    const ffi = ffiNoDestinoScip(simbolo, para);
+    const destino = ffi?.implementacao ?? simbolo.declaracoes.find(([arquivo]) => arquivo === para);
+    const op = elemento("option", `${simbolo.nome} · ${ffi ? "FFI · " : ""}${localScip(destino)}`);
+    op.value = id;
+    return op;
+  }));
+  preencherVinculosScip();
+}
+
+function chamadasFronteiraScip(chave) {
+  const chamadas = new Map();
+  for (const alias of simbolosPorImplementacaoFfi.get(chave) ?? []) {
+    for (const [local, chamador, declaracao] of alias.ffi.chamadas_fronteira || []) {
+      chamadas.set(JSON.stringify(local), { local, chamador, declaracao, alias: alias.nome });
+    }
+  }
+  return chamadas;
+}
+
+const definicoesNativasScip = new Map((indiceScip?.definicoes_nativas ?? [])
+  .map(([local, nome]) => [JSON.stringify(local), { local, nome }]));
+const destinosNativosScip = new Map();
+for (const [destino, chamadas] of chamadoresScip) {
+  if (!definicoesNativasScip.has(destino) && !simbolosPorImplementacaoFfi.has(destino)) continue;
+  for (const { declaracao } of chamadas) {
+    if (!declaracao) continue;
+    const chave = JSON.stringify(declaracao);
+    if (!destinosNativosScip.has(chave)) destinosNativosScip.set(chave, new Set());
+    destinosNativosScip.get(chave).add(destino);
+  }
+}
+
+function grafoChamadasFfiScip(chamadas, implementacao, nome) {
+  const chaveRaiz = JSON.stringify(implementacao);
+  const sementes = new Set([chaveRaiz]);
+  for (const origem of sementes) {
+    for (const destino of destinosNativosScip.get(origem) ?? []) sementes.add(destino);
+  }
+  const porDeclaracao = new Map();
+  function obterNo(local, nome, implementacaoFfi = false) {
+    const chave = JSON.stringify(local);
+    let no = porDeclaracao.get(chave);
+    if (!no) {
+      no = { nome, local, declaracao: local, implementacaoFfi, nivel: 0, entradas: [], saidas: [] };
+      porDeclaracao.set(chave, no);
+    }
+    return no;
+  }
+
+  const raiz = obterNo(implementacao, nome, true);
+  const visitados = new Set();
+  const abertos = new Set();
+  const nos = [];
+  const arestas = [];
+  const pilha = [];
+  function entrar(no) {
+    visitados.add(no);
+    abertos.add(no);
+    const chave = JSON.stringify(no.declaracao);
+    const rust = no === raiz ? chamadas : chamadasFronteiraScip(chave);
+    const entradas = [...rust.values(), ...(chamadoresScip.get(chave) ?? [])];
+    pilha.push({ no, entradas: entradas.values() });
+  }
+
+  for (const chave of sementes) {
+    const ffi = simbolosPorImplementacaoFfi.get(chave)?.[0]?.ffi;
+    const definicao = definicoesNativasScip.get(chave);
+    const semente = chave === chaveRaiz ? raiz : obterNo(
+      ffi?.implementacao ?? definicao.local, ffi?.nome_linker ?? definicao.nome, Boolean(ffi)
+    );
+    if (visitados.has(semente)) continue;
+    entrar(semente);
+    while (pilha.length) {
+      const { no: para, entradas } = pilha.at(-1);
+      const { value: chamada, done } = entradas.next();
+      if (done) {
+        abertos.delete(para);
+        nos.push(para);
+        pilha.pop();
+        continue;
+      }
+      const { local, chamador, declaracao, alias } = chamada;
+      const ffiOrigem = declaracao && simbolosPorImplementacaoFfi.get(JSON.stringify(declaracao))?.[0]?.ffi;
+      const de = declaracao
+        ? obterNo(declaracao, ffiOrigem?.nome_linker ?? chamador, Boolean(ffiOrigem))
+        : { nome: "Chamador sem nome", local, nivel: 0, entradas: [], saidas: [] };
+      const aresta = { de, para, local, alvo: alias ?? para.nome, ffi: Boolean(alias), retorno: abertos.has(de) };
+      para.entradas.push(aresta);
+      de.saidas.push(aresta);
+      arestas.push(aresta);
+      if (!visitados.has(de)) entrar(de);
+    }
+  }
+  const colunas = [];
+  // Sem as setas de retorno, a ordem de saída da busca permite calcular a maior distância até as folhas.
+  for (const no of nos.reverse()) {
+    (colunas[no.nivel] ??= []).push(no);
+    for (const { de, retorno } of no.entradas) {
+      if (!retorno) de.nivel = Math.max(de.nivel, no.nivel + 1);
+    }
+  }
+  return { colunas, arestas };
+}
+
+function linguagemScip([arquivo]) {
+  const extensao = arquivo.split(".").at(-1);
+  if (extensao === "rs") return "Rust";
+  if (extensao === "py") return "Python";
+  if (extensao === "java") return "Java";
+  if (extensao === "go") return "Go";
+  if (extensao === "cs") return "C#";
+  if (extensao === "kt") return "Kotlin";
+  if (extensao === "dart") return "Dart";
+  if (extensao === "zig") return "Zig";
+  if (extensao === "swift") return "Swift";
+  if (extensao === "m") return "Objective-C";
+  if (extensao === "mm") return "Objective-C++";
+  if (/^(?:[cm]?js|jsx)$/.test(extensao)) return "JavaScript";
+  if (/^(?:[cm]?ts|tsx)$/.test(extensao)) return "TypeScript";
+  if (extensao === "c") return "C";
+  return extensao.toLowerCase() === "h" ? "C/C++" : "C++";
+}
+
+function desenharGrafoFfiScip({ colunas, arestas }, selecionarChamador, consultarEncontro) {
+  const largura = 154;
+  const intervalo = 88;
+  const margem = 22;
+  const alturaMinima = 44;
+  const passoPorta = 14;
+  const larguraTotal = 2 * margem + colunas.length * largura + (colunas.length - 1) * intervalo;
+
+  for (const coluna of colunas) {
+    for (const no of coluna) {
+      no.portas = [[], []];
+      no.lacos = 0;
+    }
+  }
+  for (const aresta of arestas) {
+    const { de, para, retorno } = aresta;
+    if (de === para) {
+      aresta.laco = de.lacos++;
+      continue;
+    }
+    const ladoSaida = retorno ? 0 : 1;
+    const ladoEntrada = 1 - ladoSaida;
+    const desvio = Math.abs(de.nivel - para.nivel) > 1;
+    aresta.saida = { lado: ladoSaida, vizinho: para, desvio };
+    aresta.entrada = { lado: ladoEntrada, vizinho: de, desvio };
+    de.portas[ladoSaida].push(aresta.saida);
+    para.portas[ladoEntrada].push(aresta.entrada);
+  }
+
+  function alturaColuna(coluna) {
+    let altura = 0;
+    for (const no of coluna) {
+      no.espacoLacos = no.lacos ? 14 + no.lacos * passoPorta : 0;
+      no.altura = Math.max(alturaMinima, 12 + passoPorta * Math.max(...no.portas.map(p => p.length)));
+      altura += no.altura + no.espacoLacos;
+    }
+    return altura + (coluna.length - 1) * 22;
+  }
+
+  const alturas = colunas.map(alturaColuna);
+  const alturaCorpo = alturas.reduce((maior, altura) => Math.max(maior, altura), 0);
+  for (const [nivel, coluna] of colunas.entries()) {
+    let y = margem + (alturaCorpo - alturas[nivel]) / 2;
+    for (const no of coluna) {
+      no.x = margem + (colunas.length - 1 - nivel) * (largura + intervalo);
+      no.y = y + no.espacoLacos;
+      y = no.y + no.altura + 22;
+    }
+  }
+  const centro = no => no.y + no.altura / 2;
+  for (const coluna of colunas) {
+    for (const no of coluna) {
+      for (const [lado, portas] of no.portas.entries()) {
+        portas.sort((a, b) => Number(a.desvio) - Number(b.desvio) || centro(a.vizinho) - centro(b.vizinho));
+        portas.forEach((porta, i) => {
+          porta.x = no.x + lado * largura;
+          porta.y = centro(no) + passoPorta * (i - (portas.length - 1) / 2);
+        });
+      }
+    }
+  }
+
+  let corredores = 0;
+  for (const aresta of arestas) {
+    const { de, para, saida, entrada, laco } = aresta;
+    if (laco !== undefined) {
+      const inicio = de.x + largura / 2 - 14 - laco * 2;
+      const fim = de.x + largura / 2 + 14 + laco * 2;
+      const topo = de.y - 24 - laco * passoPorta;
+      aresta.traco = `M ${inicio} ${de.y} C ${inicio - 24} ${topo}, ${fim + 24} ${topo}, ${fim} ${de.y - 2}`;
+      continue;
+    }
+    const sentido = saida.lado === 1 ? 1 : -1;
+    const x1 = saida.x + 2 * sentido;
+    const x2 = entrada.x - 3 * sentido;
+    const { y: y1 } = saida;
+    const { y: y2 } = entrada;
+    if (saida.desvio) {
+      // Desvia das colunas intermediárias para manter a seta inteira clicável.
+      const corredor = margem + alturaCorpo + 20 + corredores++ * passoPorta;
+      const curva = intervalo * sentido / 2;
+      aresta.traco = `M ${x1} ${y1} C ${x1 + curva} ${y1}, ${x1 + curva} ${corredor}, ${x1 + 2 * curva} ${corredor}
+        H ${x2 - 2 * curva} C ${x2 - curva} ${corredor}, ${x2 - curva} ${y2}, ${x2} ${y2}`;
+    } else {
+      const meio = (x1 + x2) / 2;
+      aresta.traco = `M ${x1} ${y1} C ${meio} ${y1}, ${meio} ${y2}, ${x2} ${y2}`;
+    }
+  }
+
+  const alturaTotal = 2 * margem + alturaCorpo + corredores * passoPorta;
+  const svg = el("svg", { width: larguraTotal, height: alturaTotal, role: "group", "aria-label": "Chamadas em torno da implementação FFI" });
+  const pontas = el("defs", {});
+  for (const [id, fill] of [
+    ["scip-ponta", "var(--scip-a)"], ["scip-ponta-ffi", "#694796"], ["scip-ponta-contexto", "#778799"],
+    ["scip-ponta-b", "var(--scip-b)"], ["scip-ponta-comum", "var(--scip-comum)"],
+  ]) {
+    const ponta = el("marker", { id, viewBox: "0 0 8 8", refX: 8, refY: 4,
+      markerWidth: 8, markerHeight: 8, markerUnits: "userSpaceOnUse", orient: "auto" });
+    ponta.append(el("path", { d: "M 0 0 L 8 4 L 0 8 Z", fill }));
+    pontas.append(ponta);
+  }
+  svg.append(pontas);
+  const botoesNos = new Map();
+  const botoesSetas = new Map();
+  const grupos = new Map();
+  const encontros = [];
+  let encontroAtual;
+  let fonteAtual;
+  function marcarFonte(grupo) {
+    fonteAtual?.removeAttribute("aria-current");
+    grupo.setAttribute("aria-current", "location");
+    fonteAtual = grupo;
+  }
+  function recolherEncontro() {
+    botoesNos.get(encontroAtual)?.setAttribute("aria-expanded", "false");
+    encontroAtual = null;
+  }
+  const tipoNo = no => {
+    if (no.implementacaoFfi) return "Implementação FFI";
+    const linguagem = linguagemScip(no.local);
+    return no.declaracao ? `Declaração ${linguagem}` : `Chamada em ${linguagem}`;
+  };
+  function abrirEncontro(funcao, controleNavegacao) {
+    const indice = encontros.indexOf(funcao);
+    if (indice === -1) return;
+    const no = botoesNos.get(funcao);
+    recolherEncontro();
+    encontroAtual = funcao;
+    no.setAttribute("aria-expanded", "true");
+    no.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const chamadas = funcao.entradas.flatMap(aresta => {
+      const grupo = grupos.get(aresta.de);
+      return grupo ? [{ aresta, grupo, abrir: () => botoesSetas.get(aresta).onclick() }] : [];
+    });
+    function abrirPonto() {
+      marcarFonte(no);
+      abrirFonteScip(funcao.local, tipoNo(funcao), funcao.nome);
+    }
+    consultarEncontro({
+      no: funcao, chamadas, indice, total: encontros.length, controleNavegacao, abrirPonto,
+      escolherB: () => {
+        selecionarChamador(funcao);
+        no.focus({ preventScroll: true });
+        abrirPonto();
+      }
+    });
+  }
+  function navegarEncontros(passo, controleNavegacao) {
+    if (!encontroAtual) return;
+    const destino = encontros[encontros.indexOf(encontroAtual) + passo];
+    if (destino) abrirEncontro(destino, controleNavegacao);
+  }
+  function controle(classe, rotulo, acao) {
+    const grupo = el("g", { class: classe, role: "button", tabindex: 0, "aria-label": rotulo, "data-rotulo": rotulo });
+    grupo.append(el("title", {}, rotulo));
+    grupo.onclick = () => {
+      marcarFonte(grupo);
+      acao();
+    };
+    grupo.onkeydown = evento => {
+      if (evento.key === "Enter" || evento.key === " ") {
+        evento.preventDefault();
+        grupo.onclick();
+      }
+    };
+    return grupo;
+  }
+  function alcancar(origem) {
+    const alcancados = new Set();
+    const pendentes = origem ? [origem] : [];
+    while (pendentes.length) {
+      const no = pendentes.pop();
+      if (alcancados.has(no)) continue;
+      alcancados.add(no);
+      for (const { para } of no.saidas) pendentes.push(para);
+    }
+    return alcancados;
+  }
+  const encurtar = (texto, limite) => texto.length > limite ? texto.slice(0, limite - 1) + "…" : texto;
+  function destacar(primeiro, segundo) {
+    const deA = alcancar(primeiro);
+    const deB = alcancar(segundo);
+    grupos.clear();
+    for (const no of botoesNos.keys()) {
+      if (deA.has(no)) grupos.set(no, deB.has(no) ? "comum" : "a");
+      else if (deB.has(no)) grupos.set(no, "b");
+    }
+    const descricoes = { a: "Caminho de A", b: "Caminho de B", comum: "Em comum" };
+    // O grafo já contém apenas chamadores que chegam à implementação.
+    function aplicar(botao, grupo, encontro = false, origem = "") {
+      botao.classList.toggle("scip-no-caminho", Boolean(grupo));
+      botao.classList.toggle("scip-fora-do-caminho", Boolean(primeiro) && !grupo);
+      const rota = segundo && grupo;
+      const rotulo = botao.dataset.rotulo + (rota ? ` · ${descricoes[rota]}` : "")
+        + (segundo && origem ? ` · Chamador ${origem}` : "")
+        + (encontro ? " · Ponto de encontro · Ver chamadas de A e B" : "");
+      if (rota) botao.dataset.rota = rota;
+      else delete botao.dataset.rota;
+      botao.setAttribute("aria-label", rotulo);
+      botao.firstElementChild.textContent = rotulo;
+    }
+    encontros.length = 0;
+    for (const [no, botao] of botoesNos) {
+      const grupo = grupos.get(no);
+      const origem = no === primeiro ? "A" : no === segundo ? "B" : "";
+      const encontro = grupo === "comum" && (Boolean(origem) ||
+        no.entradas.some(({ de }) => grupos.get(de) === "a" || grupos.get(de) === "b"));
+      if (encontro) encontros.push(no);
+      aplicar(botao, grupo, encontro, origem);
+      botao.toggleAttribute("data-encontro", encontro);
+      if (encontro) {
+        botao.setAttribute("aria-controls", "scip-encontro");
+        botao.setAttribute("aria-expanded", String(encontroAtual === no));
+      } else {
+        botao.removeAttribute("aria-controls");
+        botao.removeAttribute("aria-expanded");
+      }
+      if (no.saidas.length) {
+        botao.setAttribute("aria-pressed", String(Boolean(origem)));
+        const prefixo = segundo && origem ? `${origem} · ` : "";
+        botao.querySelector(".scip-no-nome").textContent = encurtar(prefixo + no.nome, 18);
+      }
+    }
+    encontros.sort((a, b) => a.x - b.x || a.y - b.y);
+    for (const [aresta, botao] of botoesSetas) aplicar(botao, grupos.get(aresta.de));
+    return encontros;
+  }
+  for (const aresta of arestas) {
+    const { de, para, alvo, local, ffi, retorno, traco } = aresta;
+    const linguagem = linguagemScip(local);
+    const classe = `go-seta scip-seta${ffi ? " ffi" : ""}${retorno ? " retorno" : ""}`;
+    const destino = ffi && alvo !== para.nome ? `${alvo} → ${para.nome} (${linguagemScip(para.local)})` : para.nome;
+    const rotulo = `${de.nome} → ${destino} · ${localScip(local)}${retorno ? " · fecha ciclo" : ""}`;
+    const seta = controle(classe, rotulo, () => abrirFonteScip(local, `Chamada em ${linguagem}`, alvo));
+    seta.append(
+      el("path", { class: "go-traco", d: traco, "aria-hidden": "true" }),
+      el("path", { class: "go-alvo", d: traco, "aria-hidden": "true" })
+    );
+    botoesSetas.set(aresta, seta);
+    svg.append(seta);
+  }
+  for (const coluna of colunas) {
+    for (const funcao of coluna) {
+      const { nome, local, implementacaoFfi, x, y, altura } = funcao;
+      const tipo = tipoNo(funcao);
+      const no = controle(implementacaoFfi ? "scip-no ffi" : "scip-no", `${tipo} · ${nome} · ${localScip(local)}`, () => {
+        if (no.hasAttribute("data-encontro")) {
+          abrirEncontro(funcao);
+          return;
+        }
+        if (funcao.saidas.length) selecionarChamador(funcao);
+        abrirFonteScip(local, tipo, nome);
+      });
+      if (funcao.saidas.length) no.setAttribute("aria-pressed", "false");
+      const [arquivo, linha] = local;
+      const caminho = `${linguagemScip(local)} · ${arquivo.split("/").at(-1)}:${linha}`;
+      no.append(
+        el("rect", { x, y, width: largura, height: altura, rx: 6 }),
+        el("text", { x: x + 9, y: y + altura / 2 - 3, class: "scip-no-nome" }, encurtar(nome, 18)),
+        el("text", { x: x + 9, y: y + altura / 2 + 13, class: "scip-no-local" }, encurtar(caminho, 23)),
+        el("circle", { cx: x + largura - 8, cy: y + 8, r: 5.5, class: "scip-no-encontro", "aria-hidden": "true" })
+      );
+      botoesNos.set(funcao, no);
+      svg.append(no);
+    }
+  }
+  return { svg, destacar, recolherEncontro, navegarEncontros, abrirEncontro };
+}
+
+function preencherEncontroFfiScip(painel, encontro, primeiro, segundo) {
+  const { no, chamadas, indice, total, controleNavegacao, abrirPonto, escolherB } = encontro;
+  const titulo = $("#scip-encontro-titulo");
+  const anterior = $("#scip-encontro-anterior");
+  const proximo = $("#scip-encontro-proximo");
+  const detalhe = $("#scip-encontro-detalhe");
+  titulo.textContent = `Encontro em ${no.nome}`;
+  $("#scip-encontro-posicao").textContent = `${indice + 1} de ${total}`;
+  anterior.disabled = indice === 0;
+  proximo.disabled = indice + 1 === total;
+  detalhe.replaceChildren(botaoAcao(localScip(no.local), abrirPonto, "go-posicao"));
+
+  for (const [rota, chamador] of [["a", primeiro], ["b", segundo], ["comum", null]]) {
+    const recebidas = chamadas.filter(chamada => chamada.grupo === rota);
+    const inicio = no === chamador;
+    if (!recebidas.length && !inicio) continue;
+    const bloco = elemento("div", null, "scip-encontro-rota");
+    bloco.dataset.rota = rota;
+    const letra = rota.toUpperCase();
+    bloco.append(elemento("h4", chamador ? `${letra} · ${chamador.nome}` : "Chamadas em comum"));
+    if (inicio) bloco.append(elemento("p", `O caminho de ${letra} começa aqui.`));
+    if (recebidas.length) {
+      const lista = elemento("ul");
+      for (const { aresta, abrir } of recebidas) {
+        const item = elemento("li");
+        const botao = botaoAcao(null, abrir, "go-posicao");
+        botao.append(elemento("code", `${aresta.de.nome} → ${aresta.alvo}`),
+          elemento("small", localScip(aresta.local)));
+        item.append(botao);
+        lista.append(item);
+      }
+      bloco.append(lista);
+    }
+    detalhe.append(bloco);
+  }
+  if (no.saidas.length && no !== primeiro && no !== segundo) {
+    detalhe.append(botaoAcao("Usar como chamador B", escolherB, "go-posicao"));
+  }
+  painel.hidden = false;
+  abrirPonto();
+  const lateral = painel.parentElement;
+  const limites = lateral.getBoundingClientRect();
+  if (titulo.getBoundingClientRect().top < limites.top || proximo.getBoundingClientRect().bottom > limites.bottom) {
+    lateral.scrollTop += painel.getBoundingClientRect().top - limites.top - 8;
+  }
+  const foco = controleNavegacao?.disabled ? (controleNavegacao === anterior ? proximo : anterior) : controleNavegacao;
+  (foco ?? titulo).focus({ preventScroll: true });
+}
+
+function preencherGrafoFfiScip(chamadas, implementacao, nome) {
+  const chaveImpl = implementacao && JSON.stringify(implementacao);
+  const temChamadas = chamadas?.size || chamadoresScip.get(chaveImpl)?.length || destinosNativosScip.has(chaveImpl);
+  const chave = temChamadas ? chaveImpl : null;
+  if (contextoScip.grafoFfi === chave) return;
+  contextoScip.grafoFfi = chave;
+  const detalhe = $("#scip-grafo");
+  const painel = $("#scip-grafo-rolagem");
+  const limpar = $("#scip-grafo-limpar");
+  const comparar = $("#scip-grafo-comparar");
+  const legenda = $("#scip-grafo-legenda");
+  const status = $("#scip-grafo-foco");
+  const listaEncontros = $("#scip-encontros");
+  const itensEncontros = $("#scip-encontros-itens");
+  const filtroEncontros = $("#scip-encontros-filtro");
+  const resultadoEncontros = $("#scip-encontros-resultado");
+  const encontro = $("#scip-encontro");
+  const detalheEncontro = $("#scip-encontro-detalhe");
+  const anterior = $("#scip-encontro-anterior");
+  const proximo = $("#scip-encontro-proximo");
+  detalhe.hidden = chave === null;
+  painel.replaceChildren();
+  listaEncontros.hidden = true;
+  itensEncontros.replaceChildren();
+  filtroEncontros.value = "";
+  filtroEncontros.oninput = null;
+  resultadoEncontros.hidden = true;
+  detalheEncontro.replaceChildren();
+  encontro.hidden = true;
+  limpar.onclick = null;
+  comparar.onclick = null;
+  anterior.onclick = proximo.onclick = null;
+  if (detalhe.hidden) return;
+
+  const grafo = grafoChamadasFfiScip(chamadas, implementacao, nome);
+  $("#scip-grafo-dica").hidden = !grafo.arestas.some(aresta => aresta.retorno);
+  const temDoisChamadores = grafo.colunas.flat().filter(no => no.saidas.length).length >= 2;
+  let primeiro = null;
+  let segundo = null;
+  let comparando = false;
+  let entradasEncontros = [];
+  let itemAtivo;
+
+  function filtrarEncontros() {
+    const termo = filtroEncontros.value.trim().toLowerCase();
+    let quantidade = 0;
+    for (const { no, item } of entradasEncontros) {
+      item.hidden = !no.nome.toLowerCase().includes(termo) && !no.local[0].toLowerCase().includes(termo);
+      if (!item.hidden) quantidade++;
+    }
+    const total = entradasEncontros.length;
+    resultadoEncontros.hidden = !termo;
+    resultadoEncontros.textContent = quantidade
+      ? `${quantidade} de ${total} ${total === 1 ? "encontro" : "encontros"}`
+      : "Nenhum encontro corresponde ao filtro.";
+    itensEncontros.scrollTop = 0;
+  }
+  function atualizarDestaque() {
+    const encontros = destacar(primeiro, segundo);
+    listaEncontros.hidden = !encontros.length;
+    listaEncontros.open = Boolean(encontros.length);
+    $("#scip-encontros-titulo").textContent = `Encontros (${encontros.length})`;
+    const itens = document.createDocumentFragment();
+    entradasEncontros = encontros.map((no, indice) => {
+      const item = elemento("li");
+      item.value = indice + 1;
+      const botao = botaoAcao(null, () => abrirEncontro(no), "go-posicao");
+      botao.setAttribute("aria-controls", "scip-encontro");
+      botao.append(elemento("code", no.nome), elemento("small", localScip(no.local)));
+      item.append(botao);
+      itens.append(item);
+      return { no, item, botao };
+    });
+    itensEncontros.replaceChildren(itens);
+    if (!segundo) filtroEncontros.value = "";
+    filtrarEncontros();
+    limpar.hidden = !primeiro;
+    comparar.hidden = !primeiro || !temDoisChamadores;
+    comparar.setAttribute("aria-pressed", String(comparando));
+    limpar.parentElement.classList.toggle("com-destaque", Boolean(primeiro));
+    legenda.hidden = !segundo;
+    if (segundo) {
+      for (const [id, chamador] of [["a", primeiro], ["b", segundo]]) {
+        const rotulo = $(`#scip-grafo-origem-${id}`);
+        rotulo.textContent = `${id.toUpperCase()} · ${chamador.nome}`;
+        rotulo.title = localScip(chamador.local);
+      }
+      const resumo = encontros.length === 1 ? "1 ponto de encontro" : `${encontros.length} pontos de encontro`;
+      status.textContent = `${primeiro.nome} e ${segundo.nome} · ${resumo}`;
+    } else if (comparando) {
+      status.textContent = `A · ${primeiro.nome}. Selecione o segundo chamador.`;
+    } else if (primeiro) {
+      status.textContent = `Caminhos de ${primeiro.nome} · ${localScip(primeiro.local)}`;
+    } else {
+      status.textContent = "Clique num chamador para destacar seus caminhos. Cada seta abre a chamada.";
+    }
+  }
+  function fecharPainelEncontro() {
+    recolherEncontro();
+    itemAtivo?.removeAttribute("aria-current");
+    itemAtivo = null;
+    detalheEncontro.replaceChildren();
+    encontro.hidden = true;
+  }
+  function selecionarChamador(chamador) {
+    if (comparando) {
+      if (chamador === primeiro || chamador === segundo) return;
+      segundo = chamador;
+    } else {
+      primeiro = chamador;
+    }
+    fecharPainelEncontro();
+    atualizarDestaque();
+  }
+  const { svg, destacar, recolherEncontro, navegarEncontros, abrirEncontro } = desenharGrafoFfiScip(
+    grafo, selecionarChamador, dados => {
+      itemAtivo?.removeAttribute("aria-current");
+      itemAtivo = entradasEncontros[dados.indice].botao;
+      itemAtivo.setAttribute("aria-current", "step");
+      preencherEncontroFfiScip(encontro, dados, primeiro, segundo);
+    }
+  );
+  anterior.onclick = evento => navegarEncontros(-1, evento.currentTarget);
+  proximo.onclick = evento => navegarEncontros(1, evento.currentTarget);
+  filtroEncontros.oninput = filtrarEncontros;
+  atualizarDestaque();
+  comparar.onclick = () => {
+    comparando = !comparando;
+    segundo = null;
+    fecharPainelEncontro();
+    atualizarDestaque();
+  };
+  limpar.onclick = () => {
+    primeiro = segundo = null;
+    comparando = false;
+    fecharPainelEncontro();
+    atualizarDestaque();
+    painel.focus({ preventScroll: true });
+  };
+  painel.append(svg);
+  painel.scrollTop = painel.scrollLeft = 0;
+}
+
+function preencherVinculosScip() {
+  const [origem, destino, referencias] = parScipSelecionado();
+  const opcao = $("#scip-simbolo").selectedOptions[0];
+  const id = Number(opcao.value);
+  const simbolo = indiceScip.simbolos[id];
+  const de = opcao.dataset.arquivoFfi ?? origem;
+  const para = opcao.dataset.arquivoFfi ? simbolo.ffi.implementacao[0] : destino;
+  contextoScip.arquivoEmFoco = de;
+  $("#scip-caminho").textContent = `${de} → ${para}`;
+  function secao(rotulo, locais, arquivoPrincipal, tipo) {
+    const detalhe = elemento("details");
+    detalhe.open = true;
+    detalhe.append(elemento("summary", `${rotulo} (${locais.length})`));
+    const marcados = new Set(locais.filter(([arquivo]) => arquivo === arquivoPrincipal));
+    const lista = elemento("ul");
+    for (const local of [...marcados, ...locais.filter(local => !marcados.has(local))]) {
+      const item = elemento("li");
+      const botao = botaoAcao(localScip(local), () => abrirFonteScip(local, tipo, simbolo.nome), "go-posicao");
+      item.append(botao);
+      lista.append(item);
+    }
+    detalhe.append(lista);
+    return detalhe;
+  }
+  const painel = $("#scip-vinculos");
+  if (simbolo.ffi) {
+    const { nome_linker, implementacao, origem } = simbolo.ffi;
+    const evidencia = origem === "indexstore" ? "Símbolo no IndexStore" : "Símbolo no ELF " + indiceScip.artefato_ffi;
+    const abrir = () => abrirFonteScip(implementacao, "Implementação FFI", nome_linker);
+    const destino = botaoAcao(`Implementação · ${localScip(implementacao)}`, abrir, "go-posicao");
+    const chamadas = chamadasFronteiraScip(JSON.stringify(implementacao));
+    const secaoChamadas = elemento("details");
+    secaoChamadas.open = true;
+    secaoChamadas.append(elemento("summary", `Chamadas na fronteira FFI (${chamadas.size})`));
+    if (chamadas.size) {
+      const lista = elemento("ul");
+      for (const { local, chamador, alias } of chamadas.values()) {
+        const item = elemento("li");
+        const rotulo = chamador ? `${chamador} · ${localScip(local)}` : localScip(local);
+        item.append(botaoAcao(rotulo, () => abrirFonteScip(local, `Chamada em ${linguagemScip(local)}`, alias), "go-posicao"));
+        lista.append(item);
+      }
+      secaoChamadas.append(lista);
+    }
+    preencherGrafoFfiScip(chamadas, implementacao, nome_linker);
+    const outrosUsos = simbolo.usos.filter(local => !chamadas.has(JSON.stringify(local)));
+    painel.replaceChildren(
+      elemento("p", `${evidencia} · ${nome_linker}`), destino,
+      secaoChamadas
+    );
+    if (simbolo.declaracoes.length) painel.append(secao("Declarações", simbolo.declaracoes, de, "Declaração"));
+    if (outrosUsos.length) painel.append(secao("Outros usos indexados", outrosUsos, de, "Uso"));
+    if (ffiNoDestinoScip(simbolo, para)) {
+      abrir();
+      return;
+    }
+  } else {
+    preencherGrafoFfiScip();
+    painel.replaceChildren(
+      secao("Declarações", simbolo.declaracoes, para, "Declaração"),
+      secao("Usos indexados", simbolo.usos, de, "Uso")
+    );
+  }
+  const [, uso] = referencias.find(([simboloId]) => simboloId === id);
+  abrirFonteScip(simbolo.usos[uso], "Uso", simbolo.nome);
+}
+
+function abrirAtalhoFfiScip(id, arquivo) {
+  const simbolo = indiceScip.simbolos[id];
+  const seletor = $("#scip-simbolo");
+  let opcao = [...seletor.options].find(op => op.value === String(id));
+  if (!opcao) {
+    opcao = elemento("option");
+    opcao.value = id;
+    seletor.append(opcao);
+  }
+  opcao.dataset.arquivoFfi = arquivo;
+  opcao.textContent = `${simbolo.nome} · FFI · ${localScip(simbolo.ffi.implementacao)}`;
+  seletor.value = id;
+  preencherVinculosScip();
+  $("#scip-rolagem").focus({ preventScroll: true });
+}
+
+function preencherLinhaScip(conteudo, texto, destaque, pontos, arquivo) {
+  if (!destaque && !pontos?.size) {
+    conteudo.textContent = texto;
+    return null;
+  }
+  const bytes = new TextEncoder().encode(texto);
+  const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
+  const ler = (de, ate) => decoder.decode(bytes.subarray(de, ate));
+  const [inicio, fim] = destaque || [0, 0];
+  const fimDestaque = fim ?? bytes.length;
+  let alvo = null;
+  function trecho(destino, de, ate) {
+    const a = Math.max(de, inicio);
+    const b = Math.min(ate, fimDestaque);
+    if (a >= b) {
+      destino.append(ler(de, ate));
+      return;
+    }
+    const marca = elemento("mark", ler(a, b));
+    alvo ??= marca;
+    destino.append(ler(de, a), marca, ler(b, ate));
+  }
+  const atalhos = [...(pontos?.values() || [])].sort((a, b) => a.inicio - b.inicio);
+  let anterior = 0;
+  for (const [i, faixa] of atalhos.entries()) {
+    if (faixa.id == null || atalhos[i - 1]?.fim > faixa.inicio || atalhos[i + 1]?.inicio < faixa.fim) continue;
+    trecho(conteudo, anterior, faixa.inicio);
+    const botao = botaoAcao(null, () => abrirAtalhoFfiScip(faixa.id, arquivo), "go-token scip-atalho-ffi");
+    botao.title = "Abrir implementação FFI de " + ler(faixa.inicio, faixa.fim);
+    trecho(botao, faixa.inicio, faixa.fim);
+    conteudo.append(botao);
+    anterior = faixa.fim;
+  }
+  trecho(conteudo, anterior, bytes.length);
+  return alvo;
+}
+
+function abrirFonteScip(local, tipo, nome) {
+  const [arquivo, inicio, primeiraColuna, fim, ultimaColuna] = local;
+  $("#scip-tipo").textContent = `${tipo} · ${nome}`;
+  $("#scip-titulo").textContent = localScip(local);
+  const codigo = $("#scip-rolagem");
+  const fragmento = document.createDocumentFragment();
+  const atalhos = atalhosFfiPorArquivo.get(arquivo);
+  let alvo;
+  indiceScip.fontes[arquivo].split(/\r?\n/).forEach((texto, i) => {
+    const linha = i + 1;
+    const bloco = elemento("span", null, "go-linha");
+    const numero = elemento("span", String(linha), "go-numero");
+    numero.setAttribute("aria-hidden", "true");
+    const conteudo = elemento("span", null, "go-texto-linha");
+    const selecionada = linha >= inicio && (linha < fim || linha === inicio || ultimaColuna > 0 && linha === fim);
+    const faixa = selecionada ? [linha === inicio ? primeiraColuna : 0, linha === fim ? ultimaColuna : null] : null;
+    const marca = preencherLinhaScip(conteudo, texto, faixa, atalhos?.get(linha), arquivo);
+    if (selecionada) {
+      bloco.classList.add("go-linha-alvo");
+      bloco.setAttribute("aria-label", `Linha ${linha}`);
+      if (linha === inicio) alvo = marca ?? bloco;
+    }
+    bloco.append(numero, conteudo);
+    fragmento.append(bloco);
+  });
+  codigo.replaceChildren(fragmento);
+  codigo.scrollTop = 0;
+  codigo.scrollLeft = 0;
+  alvo?.scrollIntoView({ block: "center", inline: "nearest" });
+}
+
+$("#scip-par").onchange = preencherParScip;
+$("#scip-simbolo").onchange = preencherVinculosScip;
+$("#scip-fonte").addEventListener("close", () => {
+  contextoScip?.origem?.focus({ preventScroll: true });
+  contextoScip = null;
+});
+$("#scip-focar-origem").onclick = () => {
+  const origem = contextoScip.arquivoEmFoco;
+  contextoScip.origem = null;
+  $("#scip-fonte").close();
+  dobrado.delete(grupoDe(origem));
+  selecao = origem;
+  focoCartoes = true;
+  alternarVista(true);
+  $("#cartoes .seletor-modulo[aria-pressed='true']")?.focus({ preventScroll: true });
+};
+
 function raioDaSelecao(us, idxDe) {
   const su = us.findIndex(u => u.chave === selecao || u.membros.includes(selecao));
   if (su < 0) {
@@ -796,6 +1909,78 @@ function limparSelecao() {
   render();
 }
 
+function titulosPrompt(linhas) {
+  const titulos = [];
+  let cerca = "";
+  let comentario = false;
+  let paragrafo = false;
+  for (const [i, linha] of linhas.entries()) {
+    if (cerca) {
+      const fim = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(linha)?.[1];
+      if (fim?.startsWith(cerca)) cerca = "";
+    } else if (comentario || linha.trimStart().startsWith("<!--")) {
+      comentario = !linha.includes("-->");
+    } else {
+      const atx = /^ {0,3}(#{1,6})[ \t]+(.*)$/.exec(linha);
+      const setext = paragrafo && /^ {0,3}(=+|-+)\s*$/.exec(linha);
+      cerca = /^ {0,3}(`{3,}|~{3,})/.exec(linha)?.[1] || "";
+      if (atx) {
+        const titulo = atx[2].replace(/(?:^|[ \t]+)#+\s*$/, "").trim();
+        if (titulo) titulos.push({ inicio: i, fim: i + 1, nivel: atx[1].length, titulo });
+      } else if (setext) {
+        titulos.push({ inicio: i - 1, fim: i + 1, nivel: setext[1][0] === "=" ? 1 : 2, titulo: linhas[i - 1].trim() });
+      } else if (!cerca) {
+        paragrafo = /^ {0,3}[^\s#<>*+|~`\-]/.test(linha) && !/^ {0,3}\d+[.)]\s/.test(linha);
+        continue;
+      }
+    }
+    paragrafo = false;
+  }
+  return titulos;
+}
+
+let retornoPrompt;
+function abrirPrompt(prompt, origem) {
+  const linhas = prompt.texto.split(/\r?\n/);
+  const titulos = titulosPrompt(linhas);
+  const texto = $("#prompt-texto");
+  const indice = $("#prompt-indice ol");
+  $("#prompt-caminho").textContent = prompt.caminho;
+  indice.replaceChildren();
+  texto.replaceChildren();
+  $("#prompt-indice").hidden = !titulos.length;
+  let inicio = 0;
+  for (const { inicio: linha, fim, nivel, titulo } of titulos) {
+    if (linha > inicio) texto.append(elemento("pre", linhas.slice(inicio, linha).join("\n")));
+    const secao = elemento(`h${Math.min(nivel + 2, 6)}`, titulo);
+    secao.tabIndex = -1;
+    texto.append(secao);
+    const item = elemento("li");
+    item.style.paddingInlineStart = `${Math.min(nivel - 1, 4) * 9}px`;
+    item.append(botaoAcao(titulo, () => {
+      secao.scrollIntoView({ block: "start" });
+      secao.focus({ preventScroll: true });
+    }, "go-posicao"));
+    indice.append(item);
+    inicio = fim;
+  }
+  if (inicio < linhas.length) texto.append(elemento("pre", linhas.slice(inicio).join("\n")));
+  retornoPrompt = origem;
+  $("#prompt-leitor").showModal();
+  texto.scrollTop = 0;
+  $("#prompt-indice").scrollTop = 0;
+}
+
+$("#prompt-retornar").addEventListener("submit", () => {
+  if (!vistaCartoes) return;
+  alternarVista(false);
+  retornoPrompt = $("#painel .ver-prompt");
+});
+$("#prompt-leitor").addEventListener("close", () => {
+  retornoPrompt?.focus({ preventScroll: true });
+  retornoPrompt = null;
+});
+
 function painelRaio(us, {su, monU, jusU}, diretos, idxDe) {
   const painel = $("#painel");
   const selecionado = us[su];
@@ -805,6 +1990,12 @@ function painelRaio(us, {su, monU, jusU}, diretos, idxDe) {
   const fechar = botaoAcao("×", limparSelecao, "fechar");
   fechar.setAttribute("aria-label", "Limpar seleção");
   painel.replaceChildren(fechar, cabecalho);
+  const prompt = !selecionado.grupo && indiceScip?.prompts?.[selecionado.chave];
+  if (prompt?.caminho) {
+    const abrir = botaoAcao("Ver prompt", evento => abrirPrompt(prompt, evento.currentTarget), "go-posicao ver-prompt");
+    abrir.setAttribute("aria-haspopup", "dialog");
+    painel.append(abrir);
+  }
 
   if (diretos) {
     const {entrada, saida} = diretos[su];
@@ -826,7 +2017,7 @@ function painelRaio(us, {su, monU, jusU}, diretos, idxDe) {
 
   const raio = diretos ? elemento("details", null, "raio-transitivo") : elemento("div");
   if (diretos) raio.append(elemento("summary", "Raio estrutural transitivo"));
-  raio.append(elemento("div", DADOS.raio_semantica, "psem"));
+  raio.append(elemento("div", indiceScip ? "O raio segue referências estáticas entre arquivos." : DADOS.raio_semantica, "psem"));
   const secaoRaio = (titulo, indices, cor) => {
     const secao = elemento("div", null, "psec");
     const ponto = elemento("span", null, "dot");
@@ -862,7 +2053,10 @@ function secaoLigacoes(titulo, vizinhos, porVizinho, us) {
       const par = elemento("li");
       par.append(elemento("code", `${dep.de} → ${dep.para}`), ` · peso ${dep.peso}`);
       const evidencia = evidenciasPorPar.get(chavePar(dep.de, dep.para));
-      if (evidencia?.registros.length) {
+      const parScip = scipPorPar.get(chavePar(dep.de, dep.para));
+      if (parScip) {
+        par.append(" ", botaoAcao("Abrir referências", (evento) => abrirCelulaScip([parScip], evento.currentTarget), "go-posicao"));
+      } else if (evidencia?.registros.length) {
         const registros = elemento("ul");
         for (const [de, para, tipo] of evidencia.registros) {
           registros.append(elemento("li", `${de} → ${para} · ${tipo || "uso sem subtipo"}`));
@@ -941,6 +2135,7 @@ function cartaoArquivoGo(arquivo, mostrarLocal = false) {
     botao.append(elemento("small", pasta, "go-local"));
   }
   cartao.append(botao);
+  adicionarExplorarCartao(cartao, [arquivo]);
   return cartao;
 }
 
@@ -1253,6 +2448,12 @@ function renderBuscaGo() {
     declaracao.disabled = !fonteDisponivelGo(destino.arquivo);
     usados.disabled = declaracao.disabled || usos.size === 0;
     acoes.append(declaracao, usados);
+    const funcao = funcoesExplorarPorPosicao.get(chaveExplorar(destino.arquivo, destino.linha, destino.coluna - 1));
+    if (funcao !== undefined) {
+      acoes.append(botaoAcao("Explorar chamadas", () => abrirExploracaoChamadas(
+        funcoesExplorarPorArquivo.get(destino.arquivo), funcao
+      )));
+    }
     item.append(rotulo, acoes);
     itens.append(item);
   }
@@ -1885,6 +3086,7 @@ function limparArquivoGo() {
 
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+  if ($("#scip-fonte").open || $("#prompt-leitor").open) return;
   if (comparacaoGo && $("#go-fonte").open) {
     e.preventDefault();
     if (retornoMatrizTestesGo?.comparacaoDireta) $("#go-fonte").close();
@@ -1932,11 +3134,37 @@ function alternarVista(cartoes) {
 function cabecalho() {
   $("#pacote").textContent = DADOS.pacote;
   $("#meta").innerHTML =
-    `<strong>${DADOS.modulos.length}</strong> módulos · ` +
+    `<strong>${DADOS.modulos.length}</strong> ${indiceScip ? "arquivos" : "módulos"} · ` +
     `<strong>${DADOS.dependencias.length}</strong> deps · ` +
     `<strong>${DADOS.ciclos.length}</strong> ciclos · ` +
     `escopo=<code>${DADOS.escopo}</code>${DADOS.escopo_dica || ""} · uses=<code>${DADOS.modo_uses}</code>`;
   $("#limite").innerHTML = DADOS.limite;
+  if (indiceScip) {
+    $("#limite").textContent = "Selecione uma célula preenchida para abrir as referências no código.";
+    $("#dica-matriz").textContent = "Diagonal: raio estrutural do arquivo. Células de dependência: referências.";
+    const partes = [...indiceScip.indexadores];
+    if (indiceScip.sem_declaracao) partes.push(`${indiceScip.sem_declaracao} usos sem declaração no índice`);
+    if (indiceScip.posicoes_invalidas) partes.push(`${indiceScip.posicoes_invalidas} posições descartadas por faixa inválida`);
+    if (indiceScip.artefato_ffi) {
+      const totalFfi = indiceScip.simbolos.filter(simbolo => simbolo.ffi).length;
+      partes.push(`${totalFfi} símbolos FFI vinculados · ${indiceScip.artefato_ffi}`);
+      $("#limite").textContent += " O contorno tracejado marca células FFI que abrem a implementação.";
+    }
+    const cobertura = indiceScip.cobertura_chamadas_nativas;
+    if (cobertura) {
+      const falhas = Object.entries(cobertura.falhas);
+      partes.push(`Chamadas C/C++ · ${cobertura.analisadas}/${cobertura.analisadas + falhas.length} unidades analisadas`);
+      if (falhas.length) {
+        const detalhes = $("#scip-unidades-excluidas");
+        detalhes.hidden = false;
+        for (const [arquivo, erro] of falhas) {
+          detalhes.querySelector("ul").append(elemento("li", arquivo + " · " + erro));
+        }
+      }
+    }
+    $("#scip-cobertura").textContent = partes.join(" · ");
+    $("#scip-cobertura").hidden = !partes.length;
+  }
 }
 
 $("#vista-matriz").onclick = () => alternarVista(false);
@@ -1947,12 +3175,499 @@ $("#go-busca").oninput = renderCartoesGo;
 $("#go-entradas").addEventListener("scroll", agendarSetasGo, { passive: true });
 $("#go-saidas").addEventListener("scroll", agendarSetasGo, { passive: true });
 new ResizeObserver(agendarSetasGo).observe($("#go-diagrama"));
+const grafoExplorar = indiceGo?.grafo_chamadas ?? indiceScip?.grafo_chamadas;
+const funcoesExplorarPorArquivo = new Map();
+const funcoesExplorarPorPosicao = new Map();
+const chamadasExplorar = [new Map(), new Map()];
+const diagnosticosExplorar = new Map();
+const ramosAbertosExplorar = new Set();
+const motivosExplorar = {
+  sem_referencia: ["Sem referência no índice", "O parser encontrou uma expressão de chamada, mas o índice não trouxe uma referência nesse ponto."],
+  sem_declaracao: ["Sem declaração indexada", "O índice trouxe a referência, mas não forneceu uma posição completa de declaração."],
+  ambigua: ["Chamada ambígua", "As referências apontam para declarações diferentes."],
+  fora_do_recorte: ["Destino fora do recorte", "O corpo da função está fora do recorte analisado. A declaração tem posição navegável."],
+  filtro: ["Oculta pelo filtro", "A ligação está resolvida e ficou fora da vista por causa do filtro ativo."],
+};
+const decodificarExplorar = new TextDecoder();
+const codificarExplorar = new TextEncoder();
+let escopoExplorar = [];
+let raizExplorar;
+let retornoExplorar;
+let evidenciaExplorar;
+
+function chaveExplorar(arquivo, linha, coluna) {
+  return JSON.stringify([arquivo, linha, coluna]);
+}
+
+for (const [id, [, local]] of (grafoExplorar?.funcoes || []).entries()) {
+  const [arquivo, linha, coluna] = local;
+  if (!funcoesExplorarPorArquivo.has(arquivo)) funcoesExplorarPorArquivo.set(arquivo, []);
+  funcoesExplorarPorArquivo.get(arquivo).push(id);
+  funcoesExplorarPorPosicao.set(chaveExplorar(arquivo, linha, coluna), id);
+}
+
+for (const aresta of grafoExplorar?.arestas || []) {
+  for (const lado of [0, 1]) {
+    const mapa = chamadasExplorar[lado];
+    const id = aresta[lado];
+    if (!mapa.has(id)) mapa.set(id, []);
+    mapa.get(id).push(aresta);
+  }
+}
+
+for (const [de, uso, motivo, origens, candidatos] of grafoExplorar?.diagnosticos || []) {
+  if (!diagnosticosExplorar.has(de)) diagnosticosExplorar.set(de, []);
+  diagnosticosExplorar.get(de).push({uso, motivo, origens, candidatos});
+}
+
+function adicionarExplorarCartao(cartao, arquivos) {
+  const ids = arquivos.flatMap(arquivo => funcoesExplorarPorArquivo.get(arquivo) || []);
+  if (ids.length) {
+    cartao.append(botaoAcao("Explorar chamadas", () => abrirExploracaoChamadas(ids, ids.length === 1 ? ids[0] : undefined), "abrir-go"));
+  }
+}
+
+function abrirExploracaoChamadas(ids, raiz, abrirFluxos = false) {
+  const [dialogo, busca] = [$("#explorar-chamadas"), $("#explorar-busca")];
+  retornoExplorar = document.activeElement;
+  escopoExplorar = [...ids].sort((a, b) => grafoExplorar.funcoes[a][0].localeCompare(grafoExplorar.funcoes[b][0]));
+  raizExplorar = raiz;
+  ramosAbertosExplorar.clear();
+  fonteGrafoExplorar = null;
+  alternarVistaFluxos(false);
+  $("#explorar-filtro").value = "";
+  busca.value = "";
+  filtrarFuncoesExplorar();
+  renderExploracaoChamadas();
+  dialogo.showModal();
+  if (abrirFluxos) alternarVistaFluxos(true);
+  else busca.focus();
+}
+
+function filtrarFuncoesExplorar() {
+  const termos = $("#explorar-busca").value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const ids = escopoExplorar.filter(id => {
+    const [nome, [arquivo]] = grafoExplorar.funcoes[id];
+    const busca = (nome + " " + arquivo).toLowerCase();
+    return termos.every(termo => busca.includes(termo));
+  });
+  const seletor = $("#explorar-raiz");
+  const vazio = elemento("option", ids.length ? "Selecione uma função" : "Nenhuma função encontrada");
+  vazio.value = "";
+  const opcoes = ids.slice(0, 200);
+  if (ids.includes(raizExplorar) && !opcoes.includes(raizExplorar)) opcoes.unshift(raizExplorar);
+  seletor.replaceChildren(vazio, ...opcoes.map(id => {
+    const [nome, local] = grafoExplorar.funcoes[id];
+    const opcao = elemento("option", nome + " · " + localScip(local));
+    opcao.value = id;
+    return opcao;
+  }));
+  if (ids.length > opcoes.length) {
+    const aviso = elemento("option", "Digite para ver mais resultados");
+    aviso.disabled = true;
+    seletor.append(aviso);
+  }
+  seletor.value = opcoes.includes(raizExplorar) ? String(raizExplorar) : "";
+}
+
+function bytesLinhaExplorar([arquivo, linha]) {
+  const texto = (indiceGo?.sources ?? indiceScip?.fontes)?.[arquivo];
+  return typeof texto === "string" ? codificarExplorar.encode(texto.split(/\r?\n/)[linha - 1] ?? "") : null;
+}
+
+function nomeNoPontoExplorar(local) {
+  const bytes = bytesLinhaExplorar(local);
+  return bytes ? decodificarExplorar.decode(bytes.subarray(local[2], local[4])) : localScip(local);
+}
+
+function passaFiltroExplorar(id) {
+  const filtro = $("#explorar-filtro").value.toLowerCase().trim();
+  const [nome, [arquivo]] = grafoExplorar.funcoes[id];
+  return !filtro || (nome + " " + arquivo).toLowerCase().includes(filtro);
+}
+
+function mostrarEvidenciaExplorar(evidencia, arquivo = fonteGrafoExplorar?.local?.[0]) {
+  evidenciaExplorar = evidencia;
+  const painel = $("#explorar-evidencia");
+  painel.replaceChildren();
+  painel.hidden = !evidencia;
+  if (!evidencia) return;
+  const {origens = [], candidatos = [], vizinho} = evidencia;
+  const motivo = vizinho !== undefined && !passaFiltroExplorar(vizinho) ? "filtro" : evidencia.motivo;
+  if (motivo) {
+    painel.append(elemento("p", motivosExplorar[motivo][1]));
+  }
+  const sintaxe = arquivo?.endsWith(".go")
+    ? "Sintaxe · go/parser identificou a expressão de chamada."
+    : "Sintaxe · libclang identificou a expressão e seu destino estático.";
+  painel.append(elemento("p", sintaxe));
+  if (origens.length) {
+    const indices = elemento("ul");
+    for (const origem of origens) indices.append(elemento("li", origem));
+    painel.append(indices);
+  }
+  if (candidatos.length) {
+    const lista = elemento("ul");
+    for (const [local, fontes] of candidatos) {
+      const item = elemento("li");
+      item.append(botaoAcao(nomeNoPontoExplorar(local) + " · " + localScip(local), () =>
+        mostrarFonteExplorar(local, "Declaração candidata", evidencia)));
+      item.append(elemento("p", fontes.join(" · ")));
+      lista.append(item);
+    }
+    painel.append(lista);
+  }
+}
+
+function mostrarFonteExplorar(local, titulo, evidencia) {
+  const [arquivo, linha, inicio, , fim] = local;
+  const texto = (indiceGo?.sources ?? indiceScip?.fontes)?.[arquivo];
+  $("#explorar-posicao").textContent = titulo + " · " + localScip(local);
+  mostrarEvidenciaExplorar(evidencia, arquivo);
+  if ($("#explorar-fluxos").hidden) fonteGrafoExplorar = {local, titulo, evidencia};
+  atualizarSalvarFluxo(evidencia?.trajeto);
+  const codigo = $("#explorar-fonte");
+  codigo.replaceChildren();
+  if (typeof texto !== "string") {
+    codigo.textContent = "Código indisponível neste recorte.";
+    return;
+  }
+  const linhas = texto.split(/\r?\n/);
+  for (let n = Math.max(1, linha - 6); n <= Math.min(linhas.length, linha + 6); n++) {
+    const bloco = elemento("span", null, n === linha ? "go-linha go-linha-alvo" : "go-linha");
+    bloco.append(elemento("span", String(n).padStart(String(linha + 6).length) + "  ", "go-num"));
+    if (n === linha) {
+      const bytes = codificarExplorar.encode(linhas[n - 1]);
+      const ler = (de, ate) => decodificarExplorar.decode(bytes.subarray(de, ate));
+      bloco.append(ler(0, inicio), elemento("mark", ler(inicio, fim)), ler(fim));
+    } else {
+      bloco.append(linhas[n - 1]);
+    }
+    codigo.append(bloco);
+  }
+  codigo.scrollTop = codigo.scrollLeft = 0;
+}
+
+function adicionarDiagnosticosExplorar(lista, titulo, registros) {
+  if (!registros.length) return;
+  const item = elemento("li");
+  const detalhes = elemento("details", null, "explorar-diagnostico");
+  detalhes.append(elemento("summary", titulo + " (" + registros.length + ")"));
+  const pontos = elemento("ul");
+  for (const evidencia of registros) {
+    const {uso, motivo, vizinho} = evidencia;
+    const nome = nomeNoPontoExplorar(uso);
+    const rotulo = motivosExplorar[vizinho === undefined ? motivo : "filtro"][0];
+    const botao = botaoAcao(nome + " · " + rotulo + " · " + localScip(uso),
+      () => mostrarFonteExplorar(uso, vizinho === undefined ? rotulo : "Chamada a " + nome, evidencia));
+    const ponto = elemento("li");
+    ponto.dataset.motivo = vizinho === undefined ? motivo : "filtro";
+    ponto.append(botao);
+    pontos.append(ponto);
+  }
+  detalhes.append(pontos);
+  item.append(detalhes);
+  lista.append(item);
+}
+
+function listarRamosExplorar(id, lado, caminho, ramoPai, passos) {
+  const lista = elemento("ul");
+  const ocultas = [];
+  for (const aresta of chamadasExplorar[lado].get(id) || []) {
+    const [de, para, uso, origens] = aresta;
+    const novosPassos = [...passos, aresta];
+    const vizinho = lado === 0 ? para : de;
+    const [nome, declaracao] = grafoExplorar.funcoes[vizinho];
+    const evidencia = {origens, vizinho, trajeto: {raiz: raizExplorar, lado, passos: novosPassos}};
+    if (!passaFiltroExplorar(vizinho)) {
+      ocultas.push({uso, ...evidencia});
+      continue;
+    }
+    const nomeA = grafoExplorar.funcoes[de][0];
+    const nomeB = grafoExplorar.funcoes[para][0];
+    const item = elemento("li");
+    const linha = elemento("div", null, "explorar-ramo");
+    const seta = botaoAcao(null, () => mostrarFonteExplorar(uso, "Chamada a " + nomeB, evidencia), "explorar-seta");
+    seta.append(elemento("code", (lado === 0 ? "→ " : "← ") + nome), elemento("small", localScip(uso)));
+    seta.setAttribute("aria-label", nomeA + " → " + nomeB + " · " + localScip(uso));
+    linha.append(seta);
+    const abrirFonte = botaoAcao("Declaração", () => mostrarFonteExplorar(declaracao, "Declaração de " + nome));
+    abrirFonte.title = localScip(declaracao);
+    linha.append(abrirFonte);
+    item.append(linha);
+    if (caminho.has(vizinho)) {
+      linha.append(elemento("small", "Ciclo"));
+    } else if (chamadasExplorar[lado].has(vizinho) || (lado === 0 && diagnosticosExplorar.has(vizinho))) {
+      const chave = ramoPai + "/" + de + ":" + para + ":" + uso[1] + ":" + uso[2];
+      let ramo;
+      const expandir = botaoAcao(null, () => {
+        if (!ramosAbertosExplorar.delete(chave)) ramosAbertosExplorar.add(chave);
+        atualizarRamo();
+      }, "explorar-expandir");
+      function atualizarRamo() {
+        const aberto = ramosAbertosExplorar.has(chave);
+        if (aberto && !ramo) {
+          ramo = listarRamosExplorar(vizinho, lado, new Set([...caminho, vizinho]), chave, novosPassos);
+          item.append(ramo);
+        }
+        if (ramo) ramo.hidden = !aberto;
+        expandir.setAttribute("aria-expanded", String(aberto));
+        expandir.textContent = aberto ? "Recolher" : "Expandir";
+        expandir.setAttribute("aria-label", expandir.textContent + " ramo de " + nome);
+      }
+      linha.append(expandir);
+      atualizarRamo();
+    }
+    lista.append(item);
+  }
+  adicionarDiagnosticosExplorar(lista, "Ocultas pelo filtro", ocultas);
+  if (lado === 0) {
+    adicionarDiagnosticosExplorar(lista, "Pontos sem seta", diagnosticosExplorar.get(id) || []);
+  }
+  return lista;
+}
+
+function renderExploracaoChamadas(mostrarRaiz = true) {
+  const ramos = $("#explorar-ramificacoes");
+  const rolagem = ramos.scrollTop;
+  ramos.replaceChildren();
+  if (raizExplorar === undefined) {
+    fonteGrafoExplorar = null;
+    ramos.append(elemento("p", "Selecione uma função para ver as ligações indexadas."));
+    $("#explorar-posicao").textContent = "Código";
+    $("#explorar-fonte").replaceChildren();
+    mostrarEvidenciaExplorar();
+    atualizarSalvarFluxo();
+    return;
+  }
+  for (const [lado, titulo] of ["Chamadas", "Chamadores"].entries()) {
+    const secao = elemento("section");
+    secao.setAttribute("aria-label", titulo);
+    secao.append(elemento("h3", titulo));
+    const lista = listarRamosExplorar(raizExplorar, lado, new Set([raizExplorar]), String(lado), []);
+    secao.append(lista.children.length ? lista : elemento("p", "Nenhuma ligação indexada."));
+    ramos.append(secao);
+  }
+  if (mostrarRaiz) {
+    const [nome, declaracao] = grafoExplorar.funcoes[raizExplorar];
+    mostrarFonteExplorar(declaracao, "Declaração de " + nome);
+  }
+  ramos.scrollTop = mostrarRaiz ? 0 : rolagem;
+}
+
+$("#explorar-filtro").oninput = () => {
+  renderExploracaoChamadas(false);
+  mostrarEvidenciaExplorar(evidenciaExplorar);
+};
+$("#explorar-busca").oninput = filtrarFuncoesExplorar;
+$("#explorar-raiz").onchange = evento => {
+  const valor = evento.target.value;
+  raizExplorar = valor === "" ? undefined : Number(valor);
+  ramosAbertosExplorar.clear();
+  renderExploracaoChamadas();
+};
+$("#explorar-chamadas").addEventListener("close", () => retornoExplorar?.focus({preventScroll: true}));
+$("#abrir-busca-chamadas").hidden = !grafoExplorar || Boolean(indiceGo);
+$("#abrir-busca-chamadas").onclick = () => abrirExploracaoChamadas(grafoExplorar.funcoes.map((_, id) => id));
+
+const chaveFluxosExplorar = "lente.fluxos.v1:" + location.pathname;
+const fluxosPublicados = indiceScip?.fluxos_publicados || [];
+let fonteGrafoExplorar;
+let fluxosExplorar = [];
+let passosFluxoExplorar = [];
+let passoFluxoExplorar = 0;
+
+function atualizarSalvarFluxo(trajeto) {
+  $("#explorar-salvar-fluxo").hidden = !trajeto || !$("#explorar-fluxos").hidden;
+  $("#explorar-salvar-form").hidden = true;
+  $("#explorar-gravar-status").textContent = "";
+}
+
+function lerFluxosExplorar() {
+  const fluxos = JSON.parse(localStorage.getItem(chaveFluxosExplorar) || "[]");
+  if (!Array.isArray(fluxos) || fluxos.some(f => !f || typeof f.nome !== "string")) {
+    throw new Error("Fluxos salvos inválidos.");
+  }
+  return fluxos;
+}
+
+function listarFluxosExplorar(locais) {
+  const nomes = new Set(locais.map(fluxo => fluxo.nome));
+  return [...locais, ...fluxosPublicados.filter(fluxo => !nomes.has(fluxo.nome))];
+}
+
+function identificarArestaExplorar([de, para, uso]) {
+  return [grafoExplorar.funcoes[de][1], grafoExplorar.funcoes[para][1], uso];
+}
+
+function resolverFluxoExplorar(fluxo) {
+  const {raiz, lado, passos} = fluxo;
+  if (!Array.isArray(raiz) || raiz.length !== 5 || !Array.isArray(passos) || !passos.length || (lado !== 0 && lado !== 1)) return [];
+  let atual = funcoesExplorarPorPosicao.get(chaveExplorar(...raiz));
+  const inicio = grafoExplorar.funcoes[atual];
+  if (!inicio || JSON.stringify(inicio[1]) !== JSON.stringify(raiz)) return [];
+  const passosResolvidos = [{rotulo: "Declaração de " + inicio[0], local: inicio[1]}];
+  for (const passo of passos) {
+    const chave = JSON.stringify(passo);
+    const aresta = chamadasExplorar[lado].get(atual)?.find(a => JSON.stringify(identificarArestaExplorar(a)) === chave);
+    if (!aresta) return [];
+    const [de, para, local, origens] = aresta;
+    const nomeA = grafoExplorar.funcoes[de][0];
+    const nomeB = grafoExplorar.funcoes[para][0];
+    passosResolvidos.push({rotulo: nomeA + " → " + nomeB, local, origens});
+    atual = aresta[1 - lado];
+  }
+  return passosResolvidos;
+}
+
+function abrirPassoFluxo(indice) {
+  const passo = passosFluxoExplorar[indice];
+  if (!passo) return;
+  passoFluxoExplorar = indice;
+  for (const [i, botao] of [...$("#explorar-passos").querySelectorAll("button")].entries()) {
+    if (i === indice) botao.setAttribute("aria-current", "step");
+    else botao.removeAttribute("aria-current");
+  }
+  $("#explorar-passo-anterior").disabled = indice === 0;
+  $("#explorar-passo-proximo").disabled = indice === passosFluxoExplorar.length - 1;
+  mostrarFonteExplorar(passo.local, passo.rotulo, passo.origens ? {origens: passo.origens} : undefined);
+}
+
+function renderFluxoExplorar(indice) {
+  const lista = $("#explorar-passos");
+  const status = $("#explorar-fluxo-status");
+  const fluxo = fluxosExplorar[indice];
+  lista.replaceChildren();
+  status.textContent = "";
+  passosFluxoExplorar = fluxo ? resolverFluxoExplorar(fluxo) : [];
+  $("#explorar-passo-navegacao").hidden = !passosFluxoExplorar.length;
+  if (!passosFluxoExplorar.length) {
+    status.textContent = fluxo
+      ? "O caminho salvo não está completo no índice deste HTML."
+      : "Selecione uma seta no grafo para salvar o caminho.";
+    $("#explorar-posicao").textContent = "Código";
+    $("#explorar-fonte").replaceChildren();
+    mostrarEvidenciaExplorar();
+    return;
+  }
+  for (const [i, passo] of passosFluxoExplorar.entries()) {
+    const item = elemento("li");
+    const botao = botaoAcao(null, () => abrirPassoFluxo(i), "explorar-seta");
+    botao.append(elemento("code", passo.rotulo), elemento("small", localScip(passo.local)));
+    item.append(botao);
+    lista.append(item);
+  }
+  abrirPassoFluxo(0);
+}
+
+function alternarVistaFluxos(abrir, nome) {
+  $("#explorar-controles").hidden = abrir;
+  $("#explorar-ramificacoes").hidden = abrir;
+  $("#explorar-fluxos").hidden = !abrir;
+  $("#explorar-ver-fluxos").textContent = abrir ? "Voltar ao grafo" : "Fluxos salvos";
+  $("#explorar-ver-fluxos").setAttribute("aria-pressed", String(abrir));
+  if (!abrir) {
+    if (fonteGrafoExplorar) {
+      const {local, titulo, evidencia} = fonteGrafoExplorar;
+      mostrarFonteExplorar(local, titulo, evidencia);
+    } else {
+      $("#explorar-posicao").textContent = "Código";
+      $("#explorar-fonte").replaceChildren();
+      mostrarEvidenciaExplorar();
+      atualizarSalvarFluxo();
+    }
+    return;
+  }
+  atualizarSalvarFluxo();
+  const seletor = $("#explorar-fluxo");
+  let falha = false;
+  try {
+    fluxosExplorar = listarFluxosExplorar(lerFluxosExplorar());
+  } catch {
+    fluxosExplorar = fluxosPublicados;
+    falha = true;
+  }
+  seletor.replaceChildren(...fluxosExplorar.map((f, i) => {
+    const opcao = elemento("option", f.nome);
+    opcao.value = i;
+    return opcao;
+  }));
+  seletor.disabled = !fluxosExplorar.length;
+  seletor.selectedIndex = Math.max(0, fluxosExplorar.findIndex(f => f.nome === nome));
+  renderFluxoExplorar(seletor.selectedIndex);
+  if (falha) $("#explorar-fluxo-status").textContent = "O navegador não abriu os fluxos salvos.";
+  (seletor.disabled ? $("#explorar-ver-fluxos") : seletor).focus();
+}
+
+$("#explorar-salvar-fluxo").onclick = () => {
+  const trajeto = evidenciaExplorar?.trajeto;
+  if (!trajeto) return;
+  const {raiz, lado, passos} = trajeto;
+  const destino = passos.at(-1)[1 - lado];
+  const nome = $("#explorar-nome-fluxo");
+  nome.value = grafoExplorar.funcoes[raiz][0] + " → " + grafoExplorar.funcoes[destino][0];
+  $("#explorar-salvar-form").hidden = false;
+  nome.select();
+  nome.focus();
+};
+
+$("#explorar-salvar-form").onsubmit = evento => {
+  evento.preventDefault();
+  const nome = $("#explorar-nome-fluxo").value.trim();
+  const trajeto = evidenciaExplorar?.trajeto;
+  const status = $("#explorar-gravar-status");
+  if (!nome || !trajeto) {
+    status.textContent = "Dê um nome ao fluxo selecionado.";
+    return;
+  }
+  let fluxos;
+  try {
+    fluxos = lerFluxosExplorar();
+  } catch {
+    status.textContent = "O navegador não abriu os fluxos salvos.";
+    return;
+  }
+  if (listarFluxosExplorar(fluxos).some(f => f.nome === nome)) {
+    status.textContent = "Já existe um fluxo com esse nome.";
+    return;
+  }
+  const {raiz, lado, passos} = trajeto;
+  const fluxo = {nome, raiz: grafoExplorar.funcoes[raiz][1], lado, passos: passos.map(identificarArestaExplorar)};
+  try {
+    localStorage.setItem(chaveFluxosExplorar, JSON.stringify([...fluxos, fluxo]));
+  } catch {
+    status.textContent = "O navegador não permitiu salvar o fluxo.";
+    return;
+  }
+  alternarVistaFluxos(true, nome);
+  if (passosFluxoExplorar.length) $("#explorar-fluxo-status").textContent = "Fluxo salvo neste navegador.";
+};
+
+$("#explorar-ver-fluxos").onclick = () => alternarVistaFluxos($("#explorar-fluxos").hidden);
+$("#explorar-fluxo").onchange = evento => renderFluxoExplorar(evento.target.selectedIndex);
+$("#explorar-passo-anterior").onclick = () => abrirPassoFluxo(passoFluxoExplorar - 1);
+$("#explorar-passo-proximo").onclick = () => abrirPassoFluxo(passoFluxoExplorar + 1);
+$("#abrir-fluxos-chamadas").hidden = !grafoExplorar;
+$("#abrir-fluxos-chamadas").onclick = () => {
+  let fluxo = fluxosPublicados[0];
+  try {
+    fluxo = lerFluxosExplorar()[0] ?? fluxo;
+  } catch {
+    // A vista ainda pode abrir os fluxos publicados.
+  }
+  const raiz = Array.isArray(fluxo?.raiz)
+    ? funcoesExplorarPorPosicao.get(chaveExplorar(...fluxo.raiz))
+    : undefined;
+  abrirExploracaoChamadas(grafoExplorar.funcoes.map((_, id) => id), raiz, true);
+};
+
 $("#foco-cartoes").onclick = () => { focoCartoes = !focoCartoes; render(); };
 $("#todos-dobra").onclick = () => { dobravel.forEach((g) => dobrado.add(g)); render(); };
 $("#todos-desdobra").onclick = () => { dobrado.clear(); render(); };
 
 cabecalho();
 render();
+if (grafoExplorar && location.hash === "#fluxos") $("#abrir-fluxos-chamadas").click();
 </script>
 </body>
 </html>

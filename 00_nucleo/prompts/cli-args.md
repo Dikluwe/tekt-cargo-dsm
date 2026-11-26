@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::args` — os argumentos da CLI (L2)
-Hash do Código: c44e4ef0
+Hash do Código: 0fb1d48a
 
 **Camada**: L2 — Casca (apresentação pura). Os textos de ajuda vêm do
 `lente_catalogo` (ADR-0002).
@@ -37,6 +37,15 @@ resultados no `saida`.
 
 - `--referencias-go` recebe um índice de referências de arquivos e exige
   `--estrutura --html --grafo`. A opção apenas complementa o HTML.
+- `--indice-scip` é repetível e requer `--estrutura --html --raiz-scip`.
+  Usa os índices binários como fonte da vista por arquivo e é exclusivo
+  das fontes `--grafo`, `--pacote`, `--provedor` e `--referencias-go`.
+  O recorte corresponde aos arquivos e referências presentes nesses índices.
+- `--indice-swift` recebe o IndexStore de Swift/Clang. Aceita a mesma raiz,
+  o modo HTML e índices SCIP opcionais. A raiz exige ao menos uma fonte.
+- `--artefato-ffi` requer `--indice-scip` e recebe um ELF final com debug
+  do mesmo build para ligar chamadas FFI indexadas a C/C++.
+  Python e Java usam a biblioteca compartilhada carregada pelas fontes.
 
 ## Restrições (L2 — apresentação)
 
@@ -53,7 +62,7 @@ Dado --vista camadas Então Vista::Camadas
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","referencias_go","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","referencias_go","indices_scip","indice_swift","raiz_scip","artefato_ffi","base_compilacao","fluxos","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 
@@ -66,3 +75,7 @@ Dado --vista camadas Então Vista::Camadas
 Adiciona --provedor (rust/python/typescript/zig/c/cpp/go/pacote-analise) e --config-provedor. Ausência de seleção mantém fluxo anterior; validação semântica e execução pertencem ao L4/L3.
 
 Instalação, protocolo e matriz verificada: `docs/adaptadores.md`. ADR-0008.
+
+`--base-compilacao` requer `--indice-scip` e recebe o JSON do mesmo build para
+Explorar chamadas em C/C++. `--fluxos` requer a raiz SCIP e recebe um JSON de fluxos
+publicados junto ao HTML, no formato posicional versionado da vista.

@@ -2,6 +2,8 @@
 
 pub mod consulta;
 pub mod extracao;
+pub mod fontes_indexadas;
+pub mod grafo_chamadas;
 pub mod mapeamento;
 pub mod raio;
 pub mod resultado_diff;

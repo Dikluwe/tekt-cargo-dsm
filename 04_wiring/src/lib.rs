@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash c785a193
+//! @prompt-hash a5548205
 //! @layer L4
-//! @updated 2026-11-25
+//! @updated 2026-11-26
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
 //!          escopo do usuário por prompt 00_nucleo/prompt/0030-escopo-usuario.md
 //! Camada:  L4 — Fiação (composição pura, sem lógica de negócio).
@@ -438,7 +438,7 @@ pub fn analisar_estrutura_com_evidencias(
 ) -> Result<(EstruturaModulos, AgregacaoDetalhada), ErroLente> {
     let grafo = aplicar_modo_estrutura(obter_grafo(fonte, escopo)?, modo_uses)?;
     Ok((
-        estrutura_filtrada(&grafo),
+        analisar_estrutura_indexada(&grafo),
         agregar_por_modulo_detalhado(&grafo),
     ))
 }
@@ -446,7 +446,7 @@ pub fn analisar_estrutura_com_evidencias(
 /// Sobre um grafo já resolvido e escopado, aplica o modo e calcula a estrutura.
 fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModulos, ErroLente> {
     let grafo = aplicar_modo_estrutura(grafo, modo_uses)?;
-    Ok(estrutura_filtrada(&grafo))
+    Ok(analisar_estrutura_indexada(&grafo))
 }
 
 fn aplicar_modo_estrutura(grafo: Grafo, modo_uses: ModoUses) -> Result<Grafo, ErroLente> {
@@ -475,7 +475,8 @@ fn aplicar_modo_estrutura(grafo: Grafo, modo_uses: ModoUses) -> Result<Grafo, Er
     Ok(grafo)
 }
 
-fn estrutura_filtrada(grafo: &Grafo) -> EstruturaModulos {
+/// Calcula a estrutura de um grafo já resolvido e com seu escopo definido.
+pub fn analisar_estrutura_indexada(grafo: &Grafo) -> EstruturaModulos {
     let agg = agregar_por_modulo(grafo);
     let ciclos = detectar_ciclos(&agg);
     // Prompt 0035: ordem da DSM (módulos + blocos) sobre o agregado.
