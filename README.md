@@ -103,6 +103,35 @@ apontando para um Markdown local sob `00_nucleo/prompts/` ou `00_nucleo/prompt/`
 o painel oferece **Ver prompt**. O leitor inclui o texto e um índice clicável
 das seções no próprio HTML. **Voltar à matriz** conserva o arquivo selecionado.
 
+### Nomes das colunas e testes pela CLI
+
+Na matriz por arquivo, **Nomes das colunas** alterna entre **Caminho completo**
+e **Nome do arquivo**. Passe o cursor pelo cabeçalho para consultar o caminho
+inteiro em qualquer modo.
+
+O painel do arquivo da regra pode incluir **Testes pela CLI**. Cada nome abre
+o arquivo de teste na DSM. A seção informa a revisão e quantas suítes foram
+medidas. Montante e jusante continuam seguindo as referências estáticas do SCIP.
+
+Gere o manifesto e o índice a partir do mesmo estado do código. No
+`tekt-linter`, o coletor de laboratório usa Python 3 e o componente
+`llvm-tools` da toolchain ativa do Rust. Passe os alvos Cargo que quer medir:
+
+```sh
+python3 lab/coletar-cobertura-cli.py -o target/cobertura-cli.json \
+  analysis_policy_cli resolution_completeness_cli v19_report_cli
+rust-analyzer scip --output target/rust.scip .
+lente --estrutura --html --raiz-scip . --indice-scip target/rust.scip \
+  --cobertura-cli target/cobertura-cli.json --saida target/lente-cobertura.html
+```
+
+O JSON tem `versao: 1`, `revisao`, `testes` (suítes medidas) e `regras`
+(arquivo da regra → suítes que executaram checagens). Os caminhos são relativos
+à raiz e pertencem ao índice. Uma lista vazia registra que nenhuma execução
+da regra foi observada nas suítes da coleta. A indicação de execução vale para
+o arquivo de teste e para o escopo registrado. As asserções de cada caso são
+descritas pelo próprio teste. O HTML incorpora o manifesto e abre offline.
+
 ### Níveis TextFold para prompts Tekt
 
 O TextFold é uma dependência externa e opcional. Instale o pacote Python em

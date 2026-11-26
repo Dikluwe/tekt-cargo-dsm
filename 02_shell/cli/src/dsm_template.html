@@ -17,6 +17,7 @@
   .limite strong { color: #234; }
   .controles { margin-bottom: 8px; font-size: 12px; color: #555; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .controles button { font-size: 12px; padding: 2px 8px; cursor: pointer; }
+  #nomes-colunas select { font: inherit; margin-left: 4px; }
   [hidden] { display: none !important; }
   .vistas { display: flex; gap: 4px; }
   .vistas button[aria-pressed="true"] { background: #e5efff; border-color: #4476b3; color: #173a63; }
@@ -429,6 +430,12 @@
       <button type="button" id="vista-matriz" aria-pressed="true" aria-controls="vista-grade">Matriz</button>
       <button type="button" id="vista-cartoes" aria-pressed="false" aria-controls="cartoes">Cartões</button>
     </div>
+    <label id="nomes-colunas" hidden>Nomes das colunas
+      <select id="modo-nomes-colunas">
+        <option value="caminho">Caminho completo</option>
+        <option value="arquivo">Nome do arquivo</option>
+      </select>
+    </label>
     <button type="button" id="go-abrir-busca" aria-haspopup="dialog" hidden>Buscar símbolo</button>
     <button type="button" id="abrir-busca-chamadas" aria-haspopup="dialog" hidden>Buscar função</button>
     <button type="button" id="abrir-fluxos-chamadas" aria-haspopup="dialog" hidden>Fluxos salvos</button>
@@ -824,6 +831,7 @@ function render() {
   $("#cartoes").hidden = !vistaCartoes || verArquivos;
   $("#arquivos-go").hidden = !verArquivos;
   $("#foco-cartoes").hidden = !vistaCartoes || verArquivos;
+  $("#nomes-colunas").hidden = !indiceScip || vistaCartoes;
   $("#todos-dobra").hidden = verArquivos;
   $("#todos-desdobra").hidden = verArquivos;
   if (verArquivos) {
@@ -968,6 +976,14 @@ function paresScipPorCelula(idxDe) {
   return pares;
 }
 
+function atualizarNomesColunas() {
+  const abreviado = $("#modo-nomes-colunas").value === "arquivo";
+  for (const rotulo of document.querySelectorAll("#grade .rotulo-coluna[data-arquivo]")) {
+    const caminho = rotulo.dataset.arquivo;
+    rotulo.firstChild.nodeValue = abreviado ? caminho.slice(caminho.lastIndexOf("/") + 1) : caminho;
+  }
+}
+
 function renderMatriz(us, idxDe, cel, raio, referencias) {
   const n = us.length;
   const cell = Math.max(5, Math.min(30, Math.floor(560 / Math.max(1, n))));
@@ -1030,11 +1046,19 @@ function renderMatriz(us, idxDe, cel, raio, referencias) {
     const tEsq = el("text", { x: mEsq - 5, y: mTop + i * cell + cell / 2 + fs / 3, "text-anchor": "end", "font-size": fs, class: classe }, u.rotulo);
     const cx = mEsq + i * cell + cell / 2, cy = mTop - 5;
     const tTop = el("text", { x: cx, y: cy, "text-anchor": "start", "font-size": fs, class: classe, transform: `rotate(-45 ${cx} ${cy})` }, u.rotulo);
+    tTop.classList.add("rotulo-coluna");
+    if (indiceScip && !u.grupo) {
+      tTop.dataset.arquivo = u.chave;
+      tTop.append(el("title", {}, u.chave));
+      tTop.setAttribute("aria-label", u.chave);
+    }
     if (dobravel.has(u.chave) || u.grupo) {
       for (const t of [tEsq, tTop]) { t.style.cursor = "pointer"; t.onclick = () => alternar(u); }
     }
     svg.appendChild(tEsq); svg.appendChild(tTop);
   });
+
+  atualizarNomesColunas();
 
   // Hover: (i,j) → tooltip com paths e peso.
   svg.onmousemove = (ev) => {
@@ -2059,6 +2083,30 @@ $("#prompt-leitor").addEventListener("close", () => {
   retornoPrompt = null;
 });
 
+function secaoTestesCli(cobertura, testes) {
+  const secao = elemento("details", null, "ligacao testes-cli");
+  const revisao = elemento("code", cobertura.revisao.slice(0, 12));
+  revisao.title = cobertura.revisao;
+  const coleta = elemento("p", null, "psem");
+  coleta.append(`Suítes na coleta: ${cobertura.testes.length} · Revisão `, revisao);
+  secao.append(elemento("summary", `Testes pela CLI (${testes.length})`), coleta);
+  if (!testes.length) {
+    secao.append(elemento("p", "Nenhuma execução observada nesta coleta."));
+    return secao;
+  }
+  const lista = elemento("ul");
+  for (const teste of testes) {
+    const item = elemento("li");
+    item.append(botaoAcao(teste, () => {
+      dobrado.delete(grupoDe(teste));
+      navegar(teste);
+    }, "navegar"));
+    lista.append(item);
+  }
+  secao.append(lista);
+  return secao;
+}
+
 function painelRaio(us, {su, monU, jusU}, diretos, idxDe) {
   const painel = $("#painel");
   const selecionado = us[su];
@@ -2073,6 +2121,10 @@ function painelRaio(us, {su, monU, jusU}, diretos, idxDe) {
     const abrir = botaoAcao("Ver prompt", evento => abrirPrompt(prompt, evento.currentTarget), "go-posicao ver-prompt");
     abrir.setAttribute("aria-haspopup", "dialog");
     painel.append(abrir);
+  }
+  const cobertura = indiceScip?.cobertura_cli;
+  if (!selecionado.grupo && cobertura && Object.hasOwn(cobertura.regras, selecionado.chave)) {
+    painel.append(secaoTestesCli(cobertura, cobertura.regras[selecionado.chave]));
   }
 
   if (diretos) {
@@ -3246,6 +3298,7 @@ function cabecalho() {
   }
 }
 
+$("#modo-nomes-colunas").onchange = atualizarNomesColunas;
 $("#vista-matriz").onclick = () => alternarVista(false);
 $("#vista-cartoes").onclick = () => alternarVista(true);
 $("#go-voltar").onclick = () => abrirPacoteGo(null);

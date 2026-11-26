@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash 37894a5c
+//! @prompt-hash 29b7b23e
 //! @layer L2
 //! @updated 2026-11-26
 //!
@@ -666,6 +666,11 @@ fn formatar_indice_scip(
             .collect::<Vec<_>>(),
     });
     acrescentar_chamadas(&mut dados, grafo);
+    if let Some(cobertura) = &indice.cobertura_cli {
+        dados["cobertura_cli"] = json!({
+            "revisao": cobertura.revisao, "testes": cobertura.testes, "regras": cobertura.regras,
+        });
+    }
     if !indice.prompts.is_empty() {
         dados["prompts"] = json!(
             indice
@@ -2639,6 +2644,43 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn html_scip_embute_cobertura_cli_sem_alterar_os_dados_estruturais() {
+        use lente_core::domain::fontes_indexadas::CoberturaCli;
+
+        let dados = |html: String| -> serde_json::Value {
+            let json = html
+                .lines()
+                .find_map(|linha| linha.strip_prefix("const DADOS = "))
+                .unwrap();
+            serde_json::from_str(json.trim_end_matches(';')).unwrap()
+        };
+        let estrut = estrutura_amostra();
+        let mut indice = FontesIndexadas::default();
+        let antes = dados(formatar_estrutura_html_scip(&estrut, &indice));
+        indice.cobertura_cli = Some(CoberturaCli {
+            revisao: "0123456789".into(),
+            testes: ["tests/cli.rs".into()].into(),
+            regras: [
+                ("src/a.rs".into(), ["tests/cli.rs".into()].into()),
+                ("src/b.rs".into(), Default::default()),
+            ]
+            .into(),
+        });
+        let mut depois = dados(formatar_estrutura_html_scip(&estrut, &indice));
+        let cobertura = depois["scip"]
+            .as_object_mut()
+            .unwrap()
+            .remove("cobertura_cli")
+            .unwrap();
+        assert_eq!(
+            cobertura["regras"]["src/a.rs"],
+            serde_json::json!(["tests/cli.rs"])
+        );
+        assert_eq!(cobertura["regras"]["src/b.rs"], serde_json::json!([]));
+        assert_eq!(depois, antes);
     }
 
     #[test]

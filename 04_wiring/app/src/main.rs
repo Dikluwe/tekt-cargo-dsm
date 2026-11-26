@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash cb2a95d0
+//! @prompt-hash a5d1e329
 //! @layer L4
 //! @updated 2026-11-26
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
@@ -137,6 +137,17 @@ fn run(cli: args::Cli) -> Result<String, SaidaErro> {
             lente_infra::textfold::anexar(raiz, &mut indice).map_err(|detalhe| SaidaErro {
                 codigo: 1,
                 mensagem: cat::ERRO_TEXTFOLD.render(&[("detalhe", &detalhe)]),
+            })?;
+        }
+        if let Some(manifesto) = &cli.cobertura_cli {
+            lente_infra::cobertura_cli::anexar(manifesto, &mut indice).map_err(|detalhe| {
+                SaidaErro {
+                    codigo: 1,
+                    mensagem: cat::ERRO_COBERTURA_CLI.render(&[
+                        ("arquivo", &manifesto.display().to_string()),
+                        ("detalhe", &detalhe),
+                    ]),
+                }
             })?;
         }
         let estrutura = lente_wiring::analisar_estrutura_indexada(&indice.grafo());
@@ -579,6 +590,17 @@ mod tests {
         ];
         let cli = args::Cli::try_parse_from(comandos).unwrap();
         assert_eq!(cli.indices_scip.len(), 2);
+        assert!(args::Cli::try_parse_from(["lente", "--cobertura-cli", "coleta.json"]).is_err());
+        let cli = args::Cli::try_parse_from(
+            comandos
+                .into_iter()
+                .chain(["--cobertura-cli", "coleta.json"]),
+        )
+        .unwrap();
+        assert_eq!(
+            cli.cobertura_cli.as_deref(),
+            Some(std::path::Path::new("coleta.json"))
+        );
         let cli = args::Cli::try_parse_from(comandos.into_iter().chain(["--artefato-ffi", "demo"]))
             .unwrap();
         assert_eq!(
@@ -678,6 +700,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -772,6 +795,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -817,6 +841,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -861,6 +886,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -1054,6 +1080,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -1101,6 +1128,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -1300,6 +1328,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: true,
             comparar: false,
             antes: None,
@@ -1348,6 +1377,7 @@ mod tests {
             base_compilacao: None,
             fluxos: None,
             textfold: false,
+            cobertura_cli: None,
             completo: false,
             comparar: false,
             antes: None,

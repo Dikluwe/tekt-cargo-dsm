@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra` — o adaptador da fonte (L3)
-Hash do Código: dc05fe6e
+Hash do Código: 870e548d
 
 **Camada**: L3 — Infraestrutura. I/O e deps externas permitidos.
 **Unidade**: `03_infra/src/lib.rs` (crate `lente_infra`, fachada).
@@ -89,3 +89,5 @@ recebe base de compilação explícita para complementar um índice SCIP.
 
 O adaptador `textfold` exporta níveis de leitura dos prompts admitidos quando
 o ponto de composição o solicita.
+
+O adaptador cobertura_cli admite o manifesto de execução da CLI conforme infra-cobertura-cli.md.

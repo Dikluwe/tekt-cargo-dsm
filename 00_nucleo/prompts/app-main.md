@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::main` — o ponto de entrada (L4)
-Hash do Código: 5486eec0
+Hash do Código: a63b89a2
 
 **Camada**: L4 — Fiação (app/ponto de composição). Importa L1/L2/L4.
 **Unidade**: `04_wiring/app/src/main.rs` (crate `lente_app`, o binário `lente`).
@@ -94,3 +94,5 @@ referenciados pelo código. O índice enriquecido segue ao formatador tanto na
 saída HTML usual quanto na saída com fluxos publicados.
 Quando `--textfold` está presente, a composição solicita os níveis ao L3
 antes de formatar o HTML e propaga falha do adaptador.
+
+Quando `--cobertura-cli` é fornecido, a composição delega a leitura e a validação ao L3 e passa a coleta com as fontes ao formatador. Uma coleta inválida interrompe a exportação antes da gravação.

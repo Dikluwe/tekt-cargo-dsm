@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash 07281c0c
+//! @prompt-hash 7d6d2221
 //! @layer L2
 //! @updated 2026-11-26
 //!
@@ -158,6 +158,9 @@ pub struct Cli {
 
     #[arg(long, requires = "raiz_scip", help = lente_catalogo::HELP_TEXTFOLD)]
     pub textfold: bool,
+
+    #[arg(long, value_name = "MANIFESTO", requires = "indices_scip", help = lente_catalogo::HELP_COBERTURA_CLI)]
+    pub cobertura_cli: Option<std::path::PathBuf>,
 
     /// Restaura o escopo `completo` (com sysroot) nas superfícies de consumo
     /// cujo default virou `seu-codigo` (prompt 0072): `--html` e `--comparar`.

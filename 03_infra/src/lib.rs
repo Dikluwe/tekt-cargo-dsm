@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra.md
-//! @prompt-hash 8279ce3a
+//! @prompt-hash 9550f231
 //! @layer L3
 //! @updated 2026-11-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -27,6 +27,7 @@ use lente_core::entities::grafo::{Grafo, ValorDesconhecido};
 pub mod analises;
 mod cache;
 pub mod chamadas_go;
+pub mod cobertura_cli;
 mod diff;
 pub mod doxygen;
 mod dto;

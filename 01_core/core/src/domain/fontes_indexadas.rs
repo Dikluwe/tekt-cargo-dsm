@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/fontes-indexadas.md
-//! @prompt-hash 67bea31b
+//! @prompt-hash dafa871a
 //! @layer L1
 //! @updated 2026-11-26
 
@@ -79,10 +79,18 @@ pub struct UnidadeTextFold {
     pub integral: String,
 }
 
+#[derive(Debug)]
+pub struct CoberturaCli {
+    pub revisao: String,
+    pub testes: BTreeSet<String>,
+    pub regras: BTreeMap<String, BTreeSet<String>>,
+}
+
 #[derive(Debug, Default)]
 pub struct FontesIndexadas {
     pub fontes: BTreeMap<String, String>,
     pub prompts: BTreeMap<String, PromptFonte>,
+    pub cobertura_cli: Option<CoberturaCli>,
     pub simbolos: Vec<SimboloIndexado>,
     pub indexadores: BTreeSet<String>,
     pub usos_sem_declaracao: usize,

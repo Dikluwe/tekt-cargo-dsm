@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: af867f4d
+Hash do Código: fdd4bd82
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -84,3 +84,5 @@ A ajuda e os erros da base de compilação e da leitura de fluxos publicados
 pertencem ao catálogo.
 
 O catálogo descreve `--textfold` na ajuda e identifica falhas desse adaptador.
+
+O catálogo descreve `--cobertura-cli` e identifica falhas de leitura ou validação do manifesto.

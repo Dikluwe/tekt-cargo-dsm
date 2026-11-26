@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: 17165eea
+Hash do Código: be370001
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -279,3 +279,5 @@ A navegação por chamadas marca a origem sintática de Go e de C/C++ e mostra
 a cobertura nativa com o motivo das unidades excluídas. Fluxos fornecidos
 em JSON pelo usuário são visíveis como exemplos publicados com o HTML,
 conservam a checagem das posições do grafo e convivem com os fluxos no navegador.
+
+Na matriz por arquivo, o seletor **Nomes das colunas** alterna entre **Caminho completo** e **Nome do arquivo**. As identidades de arquivo, as linhas, o agrupamento e a seleção são preservados. O caminho inteiro continua consultável no rótulo. No painel individual, **Testes pela CLI** mostra as suítes registradas na coleta e permite selecionar cada arquivo. A seção informa o escopo registrado e distingue regra sem execução observada de HTML sem coleta. A coleta dá evidência de execução de checagem e segue em um campo opcional do HTML. Arestas, pesos e raios são os mesmos com e sem o manifesto.

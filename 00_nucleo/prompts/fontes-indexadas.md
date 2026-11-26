@@ -1,5 +1,5 @@
 # Índice de referências de fonte (L1)
-Hash do Código: b906d740
+Hash do Código: f0fbe72d
 
 O índice recebe fontes e posições normalizadas em linha base um e colunas
 UTF-8 em bytes base zero, com fim exclusivo. Cada símbolo conserva a
@@ -43,3 +43,5 @@ complementação. O índice conserva a cadeia Rust e as posições verificadas.
 Dadas duas declarações de um símbolo no mesmo arquivo e um uso externo Então o peso do par é um
 Dado um uso local Então a posição permanece navegável sem produzir uma aresta entre arquivos
 ```
+
+O índice também pode carregar uma coleta de execução da CLI, com revisão, suítes medidas e associação entre arquivo de regra e suítes que executaram uma checagem. A coleta acompanha a apresentação; a projeção do grafo continua sendo a dos pares indexados.

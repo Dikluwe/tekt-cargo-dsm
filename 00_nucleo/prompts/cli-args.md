@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::args` — os argumentos da CLI (L2)
-Hash do Código: 82a8841e
+Hash do Código: 65a8f2e8
 
 **Camada**: L2 — Casca (apresentação pura). Os textos de ajuda vêm do
 `lente_catalogo` (ADR-0002).
@@ -62,7 +62,7 @@ Dado --vista camadas Então Vista::Camadas
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","referencias_go","indices_scip","indice_swift","raiz_scip","artefato_ffi","base_compilacao","fluxos","textfold","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
+<!-- crystalline-snapshot: {"functions":[],"types":[{"name":"Vista","kind":"enum","members":["Resumo","Item","Camadas"]},{"name":"Cli","kind":"struct","members":["analise_artefatos","provedor","config_provedor","grafo","pacote","alvo","alvo_id","ranking","top","estrutura","diff","repo","vista","so_referencia","filtrar_stdlib","text","html","saida","referencias_go","indices_scip","indice_swift","raiz_scip","artefato_ffi","base_compilacao","fluxos","textfold","cobertura_cli","completo","comparar","antes","depois","mapa_correspondencia","verbose"]}],"reexports":[]} -->
 
 ## Histórico de Revisões
 
@@ -82,3 +82,5 @@ publicados junto ao HTML, no formato posicional versionado da vista.
 
 `--textfold` solicita os níveis TextFold para a DSM por arquivo. Exige
 `--raiz-scip` e os índices já exigidos nesse modo.
+
+`--cobertura-cli MANIFESTO` requer `--indice-scip`. Recebe os dados opcionais de execução para o painel do HTML.
