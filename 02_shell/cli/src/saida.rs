@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash d791eafe
+//! @prompt-hash 145a6537
 //! @layer L2
-//! @updated 2026-06-07
+//! @updated 2026-11-25
 //!
 //! Formatação do `Raio` para stdout. Quatro modos (matriz `--text` ×
 //! `--verbose`); todos os literais visíveis ao usuário vêm do
@@ -18,12 +18,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use lente_catalogo as cat;
 use lente_core::domain::raio::{Classificacao, Raio};
-use lente_core::entities::grafo::Path as PathGrafo;
+use lente_core::entities::grafo::{Path as PathGrafo, UsesKind};
 // Estágio 1 (0055) + Estágio 2 (0056): todo este vocabulário vem agora do L1 —
 // a CLi não importa mais tipos da fachada `lente_wiring` aqui.
 use lente_core::domain::consulta::{Escopo, ModoUses};
 use lente_core::domain::resultado_diff::{ResultadoDiff, TocadoComRaio};
-use lente_estrutura::{DependenciaModulo, EstruturaModulos, RaioModulo};
+use lente_estrutura::{AgregacaoDetalhada, DependenciaModulo, EstruturaModulos, RaioModulo};
 use lente_comparacao::{ArestaComparada, Comparacao};
 use lente_ranking::ItemRanking;
 
@@ -440,6 +440,574 @@ pub fn formatar_estrutura_html(
     modo_uses: ModoUses,
     pacote: &str,
 ) -> String {
+    renderizar_estrutura_html(estrut, escopo, modo_uses, pacote, None, None)
+}
+
+/// A mesma vista, acompanhada dos registros de uso disponíveis para os cartões.
+pub fn formatar_estrutura_html_com_evidencias(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    pacote: &str,
+    evidencias: &AgregacaoDetalhada,
+) -> String {
+    renderizar_estrutura_html(estrut, escopo, modo_uses, pacote, Some(evidencias), None)
+}
+
+/// Acrescenta ao HTML um índice de referências Go com associação explícita
+/// de cada arquivo a um módulo da estrutura. A vista usa o índice para navegar.
+pub fn formatar_estrutura_html_com_referencias_go(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    pacote: &str,
+    evidencias: &AgregacaoDetalhada,
+    indice: &str,
+) -> Result<String, String> {
+    let referencias = referencias_go_para_html(indice, estrut)?;
+    Ok(renderizar_estrutura_html(
+        estrut,
+        escopo,
+        modo_uses,
+        pacote,
+        Some(evidencias),
+        Some(referencias),
+    ))
+}
+
+fn referencias_go_para_html(
+    indice: &str,
+    estrutura: &EstruturaModulos,
+) -> Result<serde_json::Value, String> {
+    use serde_json::Value;
+
+    let indice: Value = serde_json::from_str(indice).map_err(|e| e.to_string())?;
+    if indice["schema_version"].as_u64() != Some(1) {
+        return Err("schema_version deve ser 1".into());
+    }
+    let files = indice["files"]
+        .as_object()
+        .ok_or("files deve ser um mapa de arquivos para pacotes")?;
+    let modulos: BTreeSet<_> = estrutura.modulos.iter().map(|p| p.as_str()).collect();
+    for (arquivo, modulo) in files {
+        if !caminho_indice_go_valido(arquivo) {
+            return Err(format!("caminho Go relativo inválido: {arquivo}"));
+        }
+        if !modulo.as_str().is_some_and(|m| modulos.contains(m)) {
+            return Err(format!(
+                "pacote de {arquivo} ausente na estrutura: {modulo}"
+            ));
+        }
+    }
+
+    let mut indexados: BTreeSet<_> = files.keys().map(String::as_str).collect();
+    if let Some(extras) = indice.get("search_files") {
+        let extras = extras
+            .as_array()
+            .ok_or("search_files deve ser uma lista de caminhos")?;
+        for item in extras {
+            let arquivo = item
+                .as_str()
+                .ok_or("search_files exige caminhos Go relativos")?;
+            if !caminho_indice_go_valido(arquivo) || !indexados.insert(arquivo) {
+                return Err(format!(
+                    "caminho inválido ou duplicado em search_files: {arquivo}"
+                ));
+            }
+        }
+    }
+
+    let fontes = indice
+        .get("sources")
+        .map(|fontes| {
+            fontes
+                .as_object()
+                .ok_or("sources deve ser um mapa de arquivos para texto")
+        })
+        .transpose()?;
+    if let Some(fontes) = fontes {
+        for (arquivo, texto) in fontes {
+            if !indexados.contains(arquivo.as_str()) || !texto.is_string() {
+                return Err(format!("fonte inválida para o arquivo indexado {arquivo}"));
+            }
+        }
+    }
+
+    let ligacoes = ligacoes_go_para_html(&indice["links"], |arquivo| files.contains_key(arquivo))?;
+    let mut dados = serde_json::json!({
+        "files": files,
+        "links": ligacoes,
+        "configuration": indice["configuration"].as_str()
+    });
+    if let Some(fontes) = fontes {
+        dados["sources"] = serde_json::json!(fontes);
+    }
+    let mut caminhos_mutantes = BTreeSet::new();
+    if let Some(mutantes) = indice.get("mutant_files") {
+        let mutantes = mutantes
+            .as_array()
+            .ok_or("mutant_files deve ser uma lista de caminhos")?;
+        for item in mutantes {
+            let arquivo = item
+                .as_str()
+                .ok_or("mutant_files exige caminhos Go relativos")?;
+            if !indexados.contains(arquivo)
+                || files.contains_key(arquivo)
+                || !caminhos_mutantes.insert(arquivo)
+            {
+                return Err(format!(
+                    "caminho inválido ou duplicado em mutant_files: {arquivo}"
+                ));
+            }
+        }
+        dados["mutant_files"] = serde_json::json!(caminhos_mutantes);
+    }
+    if let Some(comparacoes) = indice.get("mutant_comparisons") {
+        let fontes = fontes.ok_or("mutant_comparisons exige as duas fontes no índice")?;
+        validar_comparacoes_go(comparacoes, fontes, &caminhos_mutantes)?;
+        dados["mutant_comparisons"] = comparacoes.clone();
+    }
+    if let Some(matriz) = indice.get("mutant_test_matrix") {
+        let fontes = fontes.ok_or("mutant_test_matrix exige fontes no índice")?;
+        validar_matriz_testes_go(matriz, &indice["mutant_comparisons"], fontes)?;
+        dados["mutant_test_matrix"] = matriz.clone();
+    }
+    if let Some(links) = indice.get("search_links") {
+        let referencias = ligacoes_go_para_html(links, |arquivo| indexados.contains(arquivo))?;
+        dados["search_links"] = serde_json::json!(referencias);
+    }
+    if let Some(locais) = indice.get("local_references") {
+        let locais = locais
+            .as_object()
+            .ok_or("local_references deve ser um mapa de arquivos para referências")?;
+        let mut registros_locais = Vec::with_capacity(locais.len());
+        for (arquivo, referencias) in locais {
+            if !indexados.contains(arquivo.as_str()) {
+                return Err(format!(
+                    "arquivo ausente no índice de referências locais: {arquivo}"
+                ));
+            }
+            let registros = registros_go_para_html(referencias, arquivo, arquivo)?;
+            registros_locais.push(serde_json::json!([arquivo, arquivo, registros]));
+        }
+        dados["local_references"] = serde_json::json!(registros_locais);
+    }
+    if let Some(definicoes) = indice.get("definitions") {
+        let definicoes = definicoes
+            .as_object()
+            .ok_or("definitions deve ser um mapa de arquivos para declarações")?;
+        let mut arquivos = Vec::with_capacity(definicoes.len());
+        for (arquivo, declaracoes) in definicoes {
+            if !indexados.contains(arquivo.as_str()) {
+                return Err(format!(
+                    "arquivo ausente no índice de declarações: {arquivo}"
+                ));
+            }
+            let declaracoes = declaracoes
+                .as_array()
+                .ok_or_else(|| format!("lista de declarações inválida em {arquivo}"))?;
+            let mut posicoes = Vec::with_capacity(declaracoes.len());
+            for d in declaracoes {
+                let (Some(simbolo), Some(linha), Some(coluna)) = (
+                    simbolo_indice_go(&d["symbol"]),
+                    coordenada_indice_go(&d["line"]),
+                    coordenada_indice_go(&d["column"]),
+                ) else {
+                    return Err(format!(
+                        "símbolo ou posição de declaração inválida em {arquivo}"
+                    ));
+                };
+                posicoes.push(serde_json::json!([simbolo, linha, coluna]));
+            }
+            arquivos.push(serde_json::json!([arquivo, posicoes]));
+        }
+        dados["definitions"] = serde_json::json!(arquivos);
+    }
+    Ok(dados)
+}
+
+fn validar_comparacoes_go(
+    comparacoes: &serde_json::Value,
+    fontes: &serde_json::Map<String, serde_json::Value>,
+    mutantes: &BTreeSet<&str>,
+) -> Result<(), String> {
+    let comparacoes = comparacoes
+        .as_array()
+        .ok_or("mutant_comparisons deve ser uma lista de variantes")?;
+    let mut rotulos = BTreeSet::new();
+    let mut usados = BTreeSet::new();
+    for grupo in comparacoes {
+        let rotulo = simbolo_indice_go(&grupo["label"]).ok_or("variante sem label")?;
+        let pares = grupo["files"]
+            .as_array()
+            .filter(|pares| !pares.is_empty())
+            .ok_or_else(|| format!("variante sem par de arquivos: {rotulo}"))?;
+        if !rotulos.insert(rotulo) {
+            return Err(format!("variante duplicada: {rotulo}"));
+        }
+        for par in pares {
+            let (Some(referencia), Some(mutante)) =
+                (par["reference"].as_str(), par["mutant"].as_str())
+            else {
+                return Err(format!("par de arquivos inválido em {rotulo}"));
+            };
+            if mutantes.contains(referencia)
+                || !mutantes.contains(mutante)
+                || !usados.insert(mutante)
+            {
+                return Err(format!(
+                    "referência ou mutante inválido em {rotulo}: {referencia} → {mutante}"
+                ));
+            }
+            let fonte = |arquivo: &str| fontes.get(arquivo).and_then(serde_json::Value::as_str);
+            let (Some(antes), Some(depois)) = (fonte(referencia), fonte(mutante)) else {
+                return Err(format!(
+                    "fonte ausente na comparação {referencia} → {mutante}"
+                ));
+            };
+            if !blocos_go_validos(antes, depois, &par["changes"]) {
+                return Err(format!(
+                    "blocos não correspondem às fontes de {referencia} → {mutante}"
+                ));
+            }
+        }
+        if let Some(testes) = grupo.get("tests") {
+            validar_testes_comparacao_go(testes, fontes)
+                .map_err(|motivo| format!("testes de {rotulo}: {motivo}"))?;
+        }
+    }
+    Ok(())
+}
+
+fn validar_testes_comparacao_go(
+    testes: &serde_json::Value,
+    fontes: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), String> {
+    let (Some(na_referencia), Some(_), Some(falham_no_mutante)) = (
+        testes["reference_passed"].as_u64(),
+        testes["mutant_passed"].as_u64(),
+        testes["mutant_failed"].as_u64(),
+    ) else {
+        return Err("contagens dos resultados inválidas".into());
+    };
+    if simbolo_indice_go(&testes["suite"]).is_none()
+        || simbolo_indice_go(&testes["run_label"]).is_none()
+    {
+        return Err("suite ou origem da execução ausente".into());
+    }
+    let falhas = testes["failures"]
+        .as_array()
+        .ok_or("failures deve ser uma lista de subtestes")?;
+    if falhas.len() as u64 > na_referencia.min(falham_no_mutante) {
+        return Err("mais ocorrências do que os resultados permitem".into());
+    }
+    let mut nomes = BTreeSet::new();
+    for falha in falhas {
+        let (Some(nome), Some(fonte), Some(linha), Some(coluna)) = (
+            simbolo_indice_go(&falha["name"]),
+            falha["file"]
+                .as_str()
+                .and_then(|arquivo| fontes.get(arquivo))
+                .and_then(serde_json::Value::as_str),
+            coordenada_indice_go(&falha["line"]),
+            coordenada_indice_go(&falha["column"]),
+        ) else {
+            return Err("subteste sem nome ou posição na fonte".into());
+        };
+        let linhas: Vec<_> = fonte.lines().collect();
+        let texto = linhas
+            .get(linha as usize - 1)
+            .and_then(|l| l.get(coluna as usize - 1..));
+        if !nomes.insert(nome) || !texto.is_some_and(|t| t.starts_with(nome)) {
+            return Err(format!("posição do subteste inválida ou duplicada: {nome}"));
+        }
+        if let Some(linha_falha) = falha.get("failure_line") {
+            if !coordenada_indice_go(linha_falha)
+                .is_some_and(|n| n >= linha && n as usize <= linhas.len())
+            {
+                return Err(format!("linha da falha fora da fonte: {nome}"));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validar_matriz_testes_go(
+    matriz: &serde_json::Value,
+    comparacoes: &serde_json::Value,
+    fontes: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), String> {
+    let suite = simbolo_indice_go(&matriz["suite"]).ok_or("matriz sem suite")?;
+    let origem = simbolo_indice_go(&matriz["run_label"]).ok_or("matriz sem origem")?;
+    let casos = matriz["cases"]
+        .as_array()
+        .and_then(|casos| {
+            casos
+                .iter()
+                .map(simbolo_indice_go)
+                .collect::<Option<Vec<_>>>()
+        })
+        .filter(|casos| !casos.is_empty())
+        .ok_or("matriz sem subtestes válidos")?;
+    if casos.iter().collect::<BTreeSet<_>>().len() != casos.len() {
+        return Err("subteste duplicado na matriz".into());
+    }
+    if let Some(locais) = matriz.get("case_locations") {
+        validar_locais_subtestes_go(locais, &casos, fontes)?;
+    }
+    let referencia = estados_matriz_go(&matriz["reference"], casos.len())
+        .ok_or("linha da referência inválida na matriz")?;
+    let aprovados_referencia = referencia.iter().filter(|&&s| s == "pass").count() as u64;
+    let variantes = matriz["variants"]
+        .as_object()
+        .ok_or("matriz sem linhas por variante")?;
+    let grupos: Vec<_> = comparacoes
+        .as_array()
+        .ok_or("matriz exige comparações com resultados")?
+        .iter()
+        .filter(|grupo| grupo["tests"]["suite"].as_str() == Some(suite))
+        .collect();
+    if grupos.is_empty() || grupos.len() != variantes.len() {
+        return Err("linhas da matriz não correspondem às variantes da suite".into());
+    }
+    for grupo in grupos {
+        let rotulo = grupo["label"]
+            .as_str()
+            .ok_or("variante sem rótulo na matriz")?;
+        let resultados = variantes
+            .get(rotulo)
+            .and_then(|row| estados_matriz_go(row, casos.len()))
+            .ok_or_else(|| format!("linha inválida ou ausente para {rotulo}"))?;
+        let testes = &grupo["tests"];
+        let divergencias: BTreeSet<_> = casos
+            .iter()
+            .copied()
+            .zip(referencia.iter().zip(&resultados))
+            .filter_map(|(nome, (&antes, &depois))| {
+                (antes == "pass" && depois == "fail").then_some(nome)
+            })
+            .collect();
+        let observadas: BTreeSet<_> = testes["failures"]
+            .as_array()
+            .ok_or_else(|| format!("falhas não registradas para {rotulo}"))?
+            .iter()
+            .filter_map(|f| f["name"].as_str())
+            .collect();
+        if testes["run_label"].as_str() != Some(origem)
+            || testes["reference_passed"].as_u64() != Some(aprovados_referencia)
+            || testes["mutant_passed"].as_u64()
+                != Some(resultados.iter().filter(|&&s| s == "pass").count() as u64)
+            || testes["mutant_failed"].as_u64()
+                != Some(resultados.iter().filter(|&&s| s == "fail").count() as u64)
+            || divergencias != observadas
+        {
+            return Err(format!(
+                "matriz diverge dos resultados registrados de {rotulo}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validar_locais_subtestes_go(
+    locais: &serde_json::Value,
+    casos: &[&str],
+    fontes: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), String> {
+    let locais = locais
+        .as_object()
+        .ok_or("case_locations deve ser um mapa")?;
+    for (nome, local) in locais {
+        if !casos.contains(&nome.as_str()) {
+            return Err(format!("posição para subteste ausente da matriz: {nome}"));
+        }
+        let texto = local["file"]
+            .as_str()
+            .and_then(|arquivo| fontes.get(arquivo))
+            .and_then(serde_json::Value::as_str);
+        let linha =
+            coordenada_indice_go(&local["line"]).and_then(|n| texto?.lines().nth(n as usize - 1));
+        let literal = coordenada_indice_go(&local["column"])
+            .filter(|&n| n > 1)
+            .and_then(|n| linha?.get(n as usize - 2..));
+        let coincide = ['"', '`'].iter().any(|&aspas| {
+            literal
+                .and_then(|s| s.strip_prefix(aspas)?.strip_prefix(nome))
+                .is_some_and(|s| s.starts_with(aspas))
+        });
+        if !coincide {
+            return Err(format!("posição inválida no código do subteste: {nome}"));
+        }
+    }
+    Ok(())
+}
+
+fn estados_matriz_go(linha: &serde_json::Value, colunas: usize) -> Option<Vec<&str>> {
+    let linha = linha.as_array().filter(|linha| linha.len() == colunas)?;
+    linha
+        .iter()
+        .map(|valor| {
+            valor
+                .as_str()
+                .filter(|s| matches!(*s, "pass" | "fail" | "skip"))
+        })
+        .collect()
+}
+
+fn blocos_go_validos(antes: &str, depois: &str, blocos: &serde_json::Value) -> bool {
+    let Some(blocos) = blocos.as_array() else {
+        return false;
+    };
+    let antes: Vec<_> = antes.lines().collect();
+    let depois: Vec<_> = depois.lines().collect();
+    let (mut pos_ref, mut pos_mut) = (0, 0);
+    for bloco in blocos {
+        let Ok([ini_ref, qtd_ref, ini_mut, qtd_mut]) =
+            serde_json::from_value::<[usize; 4]>(bloco.clone())
+        else {
+            return false;
+        };
+        let iguais = antes
+            .get(pos_ref..ini_ref)
+            .zip(depois.get(pos_mut..ini_mut));
+        let (Some(fim_ref), Some(fim_mut)) =
+            (ini_ref.checked_add(qtd_ref), ini_mut.checked_add(qtd_mut))
+        else {
+            return false;
+        };
+        let alteradas = antes
+            .get(ini_ref..fim_ref)
+            .zip(depois.get(ini_mut..fim_mut));
+        if !iguais.is_some_and(|(a, b)| a == b) || !alteradas.is_some_and(|(a, b)| a != b) {
+            return false;
+        }
+        (pos_ref, pos_mut) = (fim_ref, fim_mut);
+    }
+    antes[pos_ref..] == depois[pos_mut..]
+}
+
+fn caminho_indice_go_valido(arquivo: &str) -> bool {
+    arquivo.ends_with(".go")
+        && !arquivo.contains(['\\', ':'])
+        && !arquivo.chars().any(char::is_control)
+        && arquivo
+            .split('/')
+            .all(|segmento| !matches!(segmento, "" | "." | ".."))
+}
+
+fn ligacoes_go_para_html(
+    links: &serde_json::Value,
+    indexado: impl Fn(&str) -> bool,
+) -> Result<Vec<serde_json::Value>, String> {
+    let links = links
+        .as_array()
+        .ok_or("links deve ser uma lista de ligações")?;
+    let mut pares = BTreeSet::new();
+    let mut ligacoes = Vec::with_capacity(links.len());
+    for link in links {
+        let (Some(de), Some(para)) = (link["from"].as_str(), link["to"].as_str()) else {
+            return Err("ligação exige from e to".into());
+        };
+        if de == para || !indexado(de) || !indexado(para) {
+            return Err(format!("arquivos inválidos na ligação {de} → {para}"));
+        }
+        if !pares.insert((de, para)) {
+            return Err(format!("ligação duplicada: {de} → {para}"));
+        }
+        let registros = registros_go_para_html(&link["references"], de, para)?;
+        ligacoes.push(serde_json::json!([de, para, registros]));
+    }
+    Ok(ligacoes)
+}
+
+fn registros_go_para_html(
+    referencias: &serde_json::Value,
+    de: &str,
+    para: &str,
+) -> Result<Vec<serde_json::Value>, String> {
+    let referencias = referencias
+        .as_array()
+        .filter(|r| !r.is_empty())
+        .ok_or_else(|| format!("ligação sem referências: {de} → {para}"))?;
+    let mut registros = Vec::with_capacity(referencias.len());
+    for r in referencias {
+        let (Some(simbolo), Some(linha), Some(coluna), Some(declaracao)) = (
+            simbolo_indice_go(&r["symbol"]),
+            coordenada_indice_go(&r["use_line"]),
+            coordenada_indice_go(&r["use_column"]),
+            coordenada_indice_go(&r["definition_line"]),
+        ) else {
+            return Err(format!("símbolo ou posição inválida em {de} → {para}"));
+        };
+        let registro = if r.get("definition_column").is_some() {
+            let coluna_declaracao = coordenada_indice_go(&r["definition_column"])
+                .ok_or_else(|| format!("coluna da declaração inválida em {de} → {para}"))?;
+            serde_json::json!([simbolo, linha, coluna, declaracao, coluna_declaracao])
+        } else {
+            serde_json::json!([simbolo, linha, coluna, declaracao])
+        };
+        registros.push(registro);
+    }
+    Ok(registros)
+}
+
+fn simbolo_indice_go(valor: &serde_json::Value) -> Option<&str> {
+    valor
+        .as_str()
+        .filter(|s| !s.trim().is_empty() && !s.chars().any(char::is_control))
+}
+
+fn coordenada_indice_go(valor: &serde_json::Value) -> Option<u32> {
+    valor
+        .as_u64()
+        .and_then(|n| u32::try_from(n).ok())
+        .filter(|n| *n > 0)
+}
+
+fn evidencias_para_html(detalhe: &AgregacaoDetalhada) -> serde_json::Value {
+    const LIMITE_POR_PAR: usize = 8;
+    let por_indice: BTreeMap<_, _> = detalhe
+        .relacoes
+        .iter()
+        .map(|r| (r.indice_snapshot, &r.aresta))
+        .collect();
+    let pares: Vec<_> = detalhe
+        .dependencias
+        .iter()
+        .map(|dep| {
+            let registros: Vec<_> = dep
+                .evidencias
+                .iter()
+                .take(LIMITE_POR_PAR)
+                .filter_map(|indice| por_indice.get(indice))
+                .map(|aresta| {
+                    let subtipo = match aresta.uses_kind {
+                        Some(UsesKind::Import) => Some("import"),
+                        Some(UsesKind::Reference) => Some("referência"),
+                        None => None,
+                    };
+                    serde_json::json!([aresta.from.as_str(), aresta.to.as_str(), subtipo])
+                })
+                .collect();
+            serde_json::json!({
+                "de": dep.de.as_str(),
+                "para": dep.para.as_str(),
+                "quantidade": dep.evidencias.len(),
+                "registros": registros
+            })
+        })
+        .collect();
+    serde_json::Value::Array(pares)
+}
+
+fn renderizar_estrutura_html(
+    estrut: &EstruturaModulos,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+    pacote: &str,
+    evidencias: Option<&AgregacaoDetalhada>,
+    referencias_go: Option<serde_json::Value>,
+) -> String {
     let mut map = estrutura_json_map(estrut, escopo, modo_uses);
     map.insert(
         cat::JSON_PACOTE.to_string(),
@@ -470,7 +1038,15 @@ pub fn formatar_estrutura_html(
         cat::JSON_RAIO_SEMANTICA.to_string(),
         serde_json::Value::String(cat::DSM_RAIO_SEMANTICA.to_string()),
     );
-    let dados = serde_json::Value::Object(map).to_string();
+    if let Some(evidencias) = evidencias {
+        map.insert("evidencias".to_string(), evidencias_para_html(evidencias));
+    }
+    if let Some(referencias) = referencias_go {
+        map.insert("referencias_go".to_string(), referencias);
+    }
+    let dados = serde_json::Value::Object(map)
+        .to_string()
+        .replace('<', "\\u003c");
     // Injeção única (a tela lê tudo de `DADOS`). Placeholder textual no template.
     include_str!("dsm_template.html").replace("__DADOS_JSON__", &dados)
 }
@@ -1489,6 +2065,13 @@ mod tests {
         );
         // O placeholder foi substituído (dado embutido, sem fetch).
         assert!(!s.contains("__DADOS_JSON__"), "placeholder não substituído");
+        // A Matriz abre por padrão e os Cartões consomem o mesmo DADOS.
+        assert!(s.contains(r#"id="vista-matriz" aria-pressed="true""#));
+        assert!(s.contains(r#"id="vista-cartoes" aria-pressed="false""#));
+        assert!(s.contains(r#"id="cartoes" class="cartoes" aria-label="Módulos e grupos" hidden"#));
+        assert!(s.contains(r#"id="go-central""#));
+        assert!(s.contains(r#"id="go-setas""#));
+        assert!(s.contains(r#"id="go-voltar-arquivos" hidden"#));
         // O dado vai inline na const DADOS.
         assert!(s.contains("const DADOS ="));
         assert!(s.contains("\"pacote\":\"meu_pacote\""));
@@ -1501,7 +2084,7 @@ mod tests {
         assert!(s.contains(cat::DSM_RAIO_SEMANTICA));
         // Cabeçalho honesto: a declaração de limite (§3) vem do catálogo.
         assert!(s.contains("estrutural"));
-        assert!(s.contains(cat::DSM_LIMITE_HTML));
+        assert!(s.contains(&cat::DSM_LIMITE_HTML.replace('<', "\\u003c")));
         // Autocontido: sem fetch nem carga de recurso externo (o namespace SVG
         // `http://www.w3.org/2000/svg` é identificador, não rede — não conta).
         assert!(!s.contains("fetch("));
@@ -1517,6 +2100,366 @@ mod tests {
             "meu_pacote",
         );
         assert_eq!(s, s2);
+    }
+
+    #[test]
+    fn html_cartoes_embute_evidencias_limitadas_sem_encerrar_script() {
+        use lente_core::entities::grafo::{Aresta, Relation};
+        use lente_estrutura::{DependenciaDetalhada, DestinoRelacao, RelacaoDetalhada};
+
+        let detalhe = AgregacaoDetalhada {
+            dependencias: vec![DependenciaDetalhada {
+                id_de: 1,
+                de: "k::a".into(),
+                id_para: 2,
+                para: "k::b".into(),
+                peso: 9,
+                evidencias: (0..9).collect(),
+            }],
+            relacoes: (0..9)
+                .map(|indice_snapshot| RelacaoDetalhada {
+                    indice_snapshot,
+                    aresta: Aresta {
+                        from: "k::a::</script>".into(),
+                        id_from: 3,
+                        to: "k::b::item".into(),
+                        id_to: 4,
+                        relation: Relation::Uses,
+                        uses_kind: Some(UsesKind::Reference),
+                    },
+                    destino: DestinoRelacao::Agregada {
+                        id_modulo_de: 1,
+                        id_modulo_para: 2,
+                    },
+                })
+                .collect(),
+            itens_sem_contenedor: vec![],
+        };
+        let html = formatar_estrutura_html_com_evidencias(
+            &estrutura_amostra(),
+            Escopo::Completo,
+            ModoUses::Todas,
+            "k",
+            &detalhe,
+        );
+        assert_eq!(html.matches("</script>").count(), 1);
+        let linha_dados = html
+            .lines()
+            .find_map(|linha| linha.strip_prefix("const DADOS = "))
+            .unwrap();
+        let dados: serde_json::Value =
+            serde_json::from_str(linha_dados.trim_end_matches(';')).unwrap();
+        let par = &dados["evidencias"][0];
+        assert_eq!(par["de"], "k::a");
+        assert_eq!(par["para"], "k::b");
+        assert_eq!(par["quantidade"], 9);
+        assert_eq!(par["registros"].as_array().unwrap().len(), 8);
+        assert_eq!(
+            par["registros"][0],
+            serde_json::json!(["k::a::</script>", "k::b::item", "referência"])
+        );
+    }
+
+    #[test]
+    fn indice_go_preserva_simbolo_posicoes_e_arquivos_sem_ligacoes() {
+        let indice = serde_json::json!({
+            "schema_version": 1,
+            "files": {"src/a.go": "k::a", "src/b.go": "k::a", "isolado.go": "k::b"},
+            "links": [{
+                "from": "src/a.go", "to": "src/b.go",
+                "references": [{
+                    "symbol":"Objeto.Campo", "use_line": 22, "use_column": 10, "definition_line": 12
+                }]
+            }]
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&indice.to_string(), &estrutura).unwrap();
+        assert_eq!(dados["files"]["isolado.go"], "k::b");
+        assert_eq!(
+            dados["links"][0],
+            serde_json::json!(["src/a.go", "src/b.go", [["Objeto.Campo", 22, 10, 12]]])
+        );
+
+        let mut invalido = indice.clone();
+        invalido["files"]["src/a.go"] = serde_json::json!("pacote-de-outro-grafo");
+        assert!(referencias_go_para_html(&invalido.to_string(), &estrutura).is_err());
+        invalido = indice.clone();
+        invalido["links"][0]["references"][0]["use_line"] = serde_json::json!(0);
+        assert!(referencias_go_para_html(&invalido.to_string(), &estrutura).is_err());
+        invalido = indice;
+        invalido["links"][0]["to"] = serde_json::json!("src/ausente.go");
+        assert!(referencias_go_para_html(&invalido.to_string(), &estrutura).is_err());
+    }
+
+    #[test]
+    fn html_go_embute_fonte_e_coluna_da_declaracao_com_texto_literal() {
+        let detalhe = AgregacaoDetalhada {
+            dependencias: vec![],
+            relacoes: vec![],
+            itens_sem_contenedor: vec![],
+        };
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a", "b.go": "k::b"},
+            "sources": {"a.go": "var a = b.Método", "b.go": "func Método() { /* </script> */ }"},
+            "links": [{
+                "from": "a.go", "to": "b.go",
+                "references": [{
+                    "symbol": "b.Método", "use_line": 1, "use_column": 11,
+                    "definition_line": 1, "definition_column": 6
+                }]
+            }]
+        });
+        let estrutura = estrutura_amostra();
+        let html = formatar_estrutura_html_com_referencias_go(
+            &estrutura,
+            Escopo::Completo,
+            ModoUses::Todas,
+            "k",
+            &detalhe,
+            &entrada.to_string(),
+        )
+        .unwrap();
+        assert!(html.contains(r#"id="go-fonte" aria-labelledby="go-fonte-titulo""#));
+        assert_eq!(html.matches("</script>").count(), 1);
+        let dados = html
+            .lines()
+            .find_map(|linha| linha.strip_prefix("const DADOS = "))
+            .unwrap();
+        let dados: serde_json::Value = serde_json::from_str(dados.trim_end_matches(';')).unwrap();
+        assert_eq!(
+            dados["referencias_go"]["sources"]["b.go"],
+            entrada["sources"]["b.go"]
+        );
+        assert_eq!(
+            dados["referencias_go"]["links"][0][2][0],
+            serde_json::json!(["b.Método", 1, 11, 1, 6])
+        );
+
+        entrada["links"][0]["references"][0]["definition_column"] = serde_json::json!(0);
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        entrada["links"][0]["references"][0]["definition_column"] = serde_json::json!(6);
+        entrada["sources"]["ausente.go"] = serde_json::json!("package ausente");
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+    }
+
+    #[test]
+    fn referencias_locais_go_sao_indexadas_sem_criar_ligacoes_no_grafo() {
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a"},
+            "links": [],
+            "local_references": {
+                "a.go": [{
+                    "symbol": "f", "use_line": 4, "use_column": 7,
+                    "definition_line": 3, "definition_column": 6
+                }]
+            }
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&entrada.to_string(), &estrutura).unwrap();
+        assert_eq!(dados["links"], serde_json::json!([]));
+        assert_eq!(
+            dados["local_references"],
+            serde_json::json!([["a.go", "a.go", [["f", 4, 7, 3, 6]]]])
+        );
+        entrada["files"] = serde_json::json!({});
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+    }
+
+    #[test]
+    fn indice_go_preserva_declaracoes_sem_usos() {
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a"},
+            "links": [],
+            "definitions": {
+                "a.go": [{"symbol": "Objeto.Método", "line": 3, "column": 6}]
+            }
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&entrada.to_string(), &estrutura).unwrap();
+        assert_eq!(dados["links"], serde_json::json!([]));
+        assert_eq!(
+            dados["definitions"],
+            serde_json::json!([["a.go", [["Objeto.Método", 3, 6]]]])
+        );
+        entrada["definitions"]["a.go"][0]["column"] = serde_json::json!(0);
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        entrada["definitions"] = serde_json::json!({"ausente.go": []});
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+    }
+
+    #[test]
+    fn arquivos_exclusivos_da_busca_podem_referenciar_producao() {
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a"},
+            "search_files": ["a_test.go"],
+            "sources": {"a_test.go": "package a"},
+            "definitions": {"a_test.go": [{"symbol": "TestF", "line": 3, "column": 6}]},
+            "links": [],
+            "search_links": [{
+                "from": "a_test.go", "to": "a.go",
+                "references": [{
+                    "symbol": "f", "use_line": 4, "use_column": 7,
+                    "definition_line": 3, "definition_column": 6
+                }]
+            }]
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&entrada.to_string(), &estrutura).unwrap();
+        assert_eq!(dados["files"], serde_json::json!({"a.go": "k::a"}));
+        assert_eq!(dados["links"], serde_json::json!([]));
+        assert_eq!(
+            dados["search_links"],
+            serde_json::json!([["a_test.go", "a.go", [["f", 4, 7, 3, 6]]]])
+        );
+        assert_eq!(
+            dados["definitions"],
+            serde_json::json!([["a_test.go", [["TestF", 3, 6]]]])
+        );
+        entrada["links"] = entrada["search_links"].clone();
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        entrada["links"] = serde_json::json!([]);
+        entrada["search_files"] = serde_json::json!(["../a_test.go"]);
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+    }
+
+    #[test]
+    fn copias_de_mutantes_se_restringem_a_arquivos_exclusivos_da_busca() {
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a"},
+            "search_files": ["testdata/mutants/M01/a_test.go", "teste_normal.go"],
+            "mutant_files": ["testdata/mutants/M01/a_test.go"],
+            "links": []
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&entrada.to_string(), &estrutura).unwrap();
+        assert_eq!(
+            dados["mutant_files"],
+            serde_json::json!(["testdata/mutants/M01/a_test.go"])
+        );
+        assert_eq!(dados["files"], serde_json::json!({"a.go": "k::a"}));
+        for invalido in [
+            serde_json::json!(["a.go"]),
+            serde_json::json!(["ausente.go"]),
+        ] {
+            entrada["mutant_files"] = invalido;
+            assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        }
+    }
+
+    #[test]
+    fn comparacao_go_valida_o_par_e_o_alinhamento_das_fontes() {
+        let mut entrada = serde_json::json!({
+            "schema_version": 1,
+            "files": {"a.go": "k::a"},
+            "search_files": ["reference/subject.go", "mutants/M01/subject.go"],
+            "mutant_files": ["mutants/M01/subject.go"],
+            "sources": {
+                "reference/subject.go": "comum\nretirada\ncomum de novo\n",
+                "mutants/M01/subject.go": "comum\nnova\ncomum de novo\n"
+            },
+            "mutant_comparisons": [{
+                "label": "M01",
+                "files": [{
+                    "reference": "reference/subject.go", "mutant": "mutants/M01/subject.go",
+                    "changes": [[1, 1, 1, 1]]
+                }]
+            }],
+            "links": []
+        });
+        let estrutura = estrutura_amostra();
+        let dados = referencias_go_para_html(&entrada.to_string(), &estrutura).unwrap();
+        assert_eq!(dados["mutant_comparisons"], entrada["mutant_comparisons"]);
+
+        entrada["mutant_comparisons"][0]["files"][0]["changes"] = serde_json::json!([]);
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        entrada["mutant_comparisons"][0]["files"][0]["changes"] =
+            serde_json::json!([[1, 999, 1, 1]]);
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        entrada["mutant_comparisons"][0]["files"][0]["reference"] =
+            serde_json::json!("mutants/M01/subject.go");
+        assert!(referencias_go_para_html(&entrada.to_string(), &estrutura).is_err());
+        assert!(blocos_go_validos(
+            "a\nb\n",
+            "a\n",
+            &serde_json::json!([[1, 1, 1, 0]])
+        ));
+        assert!(blocos_go_validos(
+            "",
+            "a\n",
+            &serde_json::json!([[0, 0, 0, 1]])
+        ));
+    }
+
+    #[test]
+    fn resultados_de_subteste_exigem_posicoes_presentes_no_snapshot() {
+        let fontes =
+            serde_json::json!({"suite.go": "t.Run(\"falha\", func() {\n    t.Fatal()\n})"});
+        let fontes = fontes.as_object().unwrap();
+        let mut testes = serde_json::json!({
+            "suite": "TestSuite", "run_label": "Execução local",
+            "reference_passed": 1, "mutant_passed": 0, "mutant_failed": 1,
+            "failures": [{"name": "falha", "file": "suite.go", "line": 1, "column": 8, "failure_line": 2}]
+        });
+        assert!(validar_testes_comparacao_go(&testes, fontes).is_ok());
+        testes["failures"][0]["column"] = serde_json::json!(7);
+        assert!(validar_testes_comparacao_go(&testes, fontes).is_err());
+        testes["failures"][0]["column"] = serde_json::json!(8);
+        testes["failures"][0]["failure_line"] = serde_json::json!(9);
+        assert!(validar_testes_comparacao_go(&testes, fontes).is_err());
+    }
+
+    #[test]
+    fn matriz_de_testes_go_confere_a_celula_com_a_falha_da_variante() {
+        let fontes = serde_json::Map::new();
+        let comparacoes = serde_json::json!([{
+            "label": "M01", "tests": {
+                "suite": "TestSuite", "run_label": "Execução local",
+                "reference_passed": 2, "mutant_passed": 1, "mutant_failed": 1,
+                "failures": [{"name": "primeiro"}]
+            }
+        }]);
+        let mut matriz = serde_json::json!({
+            "suite": "TestSuite", "run_label": "Execução local",
+            "cases": ["primeiro", "segundo"],
+            "reference": ["pass", "pass"],
+            "variants": {"M01": ["fail", "pass"]}
+        });
+        assert!(validar_matriz_testes_go(&matriz, &comparacoes, &fontes).is_ok());
+        matriz["variants"]["M01"] = serde_json::json!(["pass", "fail"]);
+        assert!(validar_matriz_testes_go(&matriz, &comparacoes, &fontes).is_err());
+        matriz["variants"]["M01"] = serde_json::json!(["fail"]);
+        assert!(validar_matriz_testes_go(&matriz, &comparacoes, &fontes).is_err());
+        matriz["variants"]["M01"] = serde_json::json!(["fail", "pass"]);
+        matriz["run_label"] = serde_json::json!("Outra execução");
+        assert!(validar_matriz_testes_go(&matriz, &comparacoes, &fontes).is_err());
+    }
+
+    #[test]
+    fn locais_da_matriz_identificam_o_nome_literal_no_snapshot() {
+        let fontes = serde_json::json!({
+            "suite.go": "t.Run(\"primeiro-outro\", verificar)\n/* ç */ t.Run(`primeiro`, verificar)\n"
+        });
+        let fontes = fontes.as_object().unwrap();
+        let casos = ["primeiro", "segundo"];
+        let mut locais = serde_json::json!({
+            "primeiro": {"file": "suite.go", "line": 2, "column": 17}
+        });
+        assert!(validar_locais_subtestes_go(&locais, &casos, fontes).is_ok());
+        locais["primeiro"]["column"] = serde_json::json!(16);
+        assert!(validar_locais_subtestes_go(&locais, &casos, fontes).is_err());
+        locais["primeiro"] = serde_json::json!({"file": "suite.go", "line": 1, "column": 8});
+        assert!(validar_locais_subtestes_go(&locais, &casos, fontes).is_err());
+        locais["primeiro"] = serde_json::json!({"file": "ausente.go", "line": 2, "column": 17});
+        assert!(validar_locais_subtestes_go(&locais, &casos, fontes).is_err());
+        let fora_da_matriz = serde_json::json!({
+            "primeiro": {"file": "suite.go", "line": 2, "column": 17}
+        });
+        assert!(validar_locais_subtestes_go(&fora_da_matriz, &["segundo"], fontes).is_err());
     }
 
     fn comparacao_amostra() -> Comparacao {

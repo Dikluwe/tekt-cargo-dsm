@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_app::main` — o ponto de entrada (L4)
-Hash do Código: 4805b2ee
+Hash do Código: b5d3d3b2
 
 **Camada**: L4 — Fiação (app/ponto de composição). Importa L1/L2/L4.
 **Unidade**: `04_wiring/app/src/main.rs` (crate `lente_app`, o binário `lente`).
@@ -26,6 +26,10 @@ do L4** (a CLI virou lib pura no 0057).
 - **`run(cli)`** — roteia entre os modos (diff / estrutura / ranking / per-nó),
   monta `FonteGrafo`/`AlvoBusca`/`Escopo`/`ModoUses` (do L1) das flags, chama a
   orquestração e formata; erro do wiring → `SaidaErro` via `erro::traduzir`.
+- `--estrutura --html` solicita a estrutura com evidências ao wiring e delega
+  a geração do HTML ao formatador L2. Texto e JSON usam a estrutura usual.
+  Quando informado, lê `--referencias-go` localmente, valida o índice no
+  formatador antes de gravar o HTML e propaga erro com o caminho da entrada.
 - **`SaidaErro`** — código (1=pipeline, 2=args) + mensagem já traduzida.
 - **L4 importa L1/L2/L4** (composição — para baixo, permitido). A apresentação
   (args/saida) e o catálogo são L2; a orquestração é L4; o vocabulário é L1.

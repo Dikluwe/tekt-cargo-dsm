@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_catalogo` — o catálogo de apresentação (L2)
-Hash do Código: 2b3d1675
+Hash do Código: d1a911de
 
 **Camada**: L2 — Casca (apresentação). Pureza de apresentação: zero literais de
 texto ao usuário fora daqui (ADR-0002).
@@ -21,6 +21,8 @@ das molduras.
 
 ## Comportamento e invariantes
 
+- `HELP_REFERENCIAS_GO` e `ERRO_REFERENCIAS_GO` descrevem a entrada
+  complementar da vista HTML e enquadram seu erro de validação.
 - **`Template`** — `struct Template(&'static str)` com `render(&[(&str, &str)]) ->
   String`: substitui `{placeholder}` por valores; placeholder ausente fica literal.
 - **~100 `pub const`** organizados por grupo (cada grupo = um contexto de saída):

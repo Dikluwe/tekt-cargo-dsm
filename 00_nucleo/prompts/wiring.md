@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_wiring` — a fiação (L4)
-Hash do Código: c7507381
+Hash do Código: 8433cc2f
 
 **Camada**: L4 — Fiação (composição). Importa L1/L2/L3 (é o topo, compõe tudo).
 **Unidade**: `04_wiring/src/lib.rs` (crate `lente_wiring`).
@@ -24,6 +24,9 @@ as camadas abaixo.
   - `calcular_raio_de_alvo(fonte, alvo, escopo) -> Result<Raio, ErroLente>`.
   - `rankear_pacote(fonte, n, escopo) -> Result<Vec<ItemRanking>, _>`.
   - `analisar_estrutura(fonte, escopo, modo_uses) -> Result<EstruturaModulos, _>`.
+  - `analisar_estrutura_com_evidencias` fornece a mesma estrutura mais a
+    agregação detalhada do L1 para a vista HTML. Ambas vêm da mesma extração,
+    após aplicar o escopo e o modo de uses.
   - `montar_grafo_workspace(raiz) -> Result<GrafoWorkspace, _>` (enumera→extrai
     cacheado→resolve por crate→une).
   - `analisar_diff(raiz) -> Result<ResultadoDiff, _>` (canonicaliza a raiz; ler_diff
@@ -60,7 +63,7 @@ Dado um ErroFork Quando ? num pipeline Então ErroLente::Fork (agregação via F
 
 ## Interface Snapshot
 <!-- GENERATED — não edite manualmente -->
-<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"},{"name":"comparar","params":["&std::path::Path","&std::path::Path","Escopo","ModoUses"],"return_type":"Result<Comparacao, ErroComparar>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff"]},{"name":"FalhaCrate","kind":"struct","members":["crate_name","motivo"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas","falhas"]},{"name":"ErroComparar","kind":"struct","members":["lado","erro"]}],"reexports":["lente_core::domain::resultado_diff::{\n    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking","lente_comparacao::{\n    ArestaComparada, Comparacao, ComparacaoItens, ItemAmbiguo, ItemPareado, ItemSemPar, Lado,\n    ResumoCiclos,\n}"]} -->
+<!-- crystalline-snapshot: {"functions":[{"name":"calcular_raio_de_alvo","params":["FonteGrafo","AlvoBusca","Escopo"],"return_type":"Result<Raio, ErroLente>"},{"name":"montar_grafo_workspace","params":["&std::path::Path"],"return_type":"Result<GrafoWorkspace, ErroLente>"},{"name":"analisar_diff","params":["&std::path::Path"],"return_type":"Result<ResultadoDiff, ErroLente>"},{"name":"rankear_pacote","params":["FonteGrafo","usize","Escopo"],"return_type":"Result<Vec<ItemRanking>, ErroLente>"},{"name":"analisar_estrutura","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<EstruturaModulos, ErroLente>"},{"name":"analisar_estrutura_com_evidencias","params":["FonteGrafo","Escopo","ModoUses"],"return_type":"Result<(EstruturaModulos, AgregacaoDetalhada), ErroLente>"},{"name":"comparar","params":["&std::path::Path","&std::path::Path","Escopo","ModoUses"],"return_type":"Result<Comparacao, ErroComparar>"}],"types":[{"name":"ErroLente","kind":"enum","members":["Fork","Adaptador","Resolucao","Raio","IdInexistente","ForkSemUsesKind","Workspace","Diff"]},{"name":"FalhaCrate","kind":"struct","members":["crate_name","motivo"]},{"name":"GrafoWorkspace","kind":"struct","members":["grafo","fantasmas","falhas"]},{"name":"ErroComparar","kind":"struct","members":["lado","erro"]}],"reexports":["lente_core::domain::resultado_diff::{\n    RaioCombinado, ResultadoDiff, TocadoComRaio, combinar_raios,\n}","lente_core::domain::consulta::{AlvoBusca, Escopo, FonteGrafo, ModoUses}","lente_core::domain::uniao::Fantasma","lente_estrutura::{Ciclo, DependenciaModulo, EstruturaModulos, OrdemDsm}","lente_ranking::ItemRanking","lente_comparacao::{\n    ArestaComparada, Comparacao, ComparacaoItens, ItemAmbiguo, ItemPareado, ItemSemPar, Lado,\n    ResumoCiclos,\n}"]} -->
 
 ## Histórico de Revisões
 

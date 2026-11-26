@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash a6255b04
+//! @prompt-hash 9d9bae43
 //! @layer L4
-//! @updated 2026-06-07
+//! @updated 2026-11-25
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
 //!          escopo do usuário por prompt 00_nucleo/prompt/0030-escopo-usuario.md
 //! Camada:  L4 — Fiação (composição pura, sem lógica de negócio).
@@ -38,7 +38,8 @@ use lente_core::domain::raio::{ErroRaio, Raio, calcular_raio};
 use lente_core::domain::uniao::{GrafoCrate, ResultadoUniao, unir_grafos};
 use lente_core::entities::grafo::{Aresta, Grafo, Path, Relation};
 use lente_estrutura::{
-    agregar_por_modulo, detectar_ciclos, ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
+    AgregacaoDetalhada, agregar_por_modulo, agregar_por_modulo_detalhado, detectar_ciclos,
+    ordenar_dsm, pesos_modulo_a_modulo, raios_por_modulo,
 };
 use lente_comparacao::{ChavePareamento, Proveniencia, comparar_estruturas, comparar_itens};
 use lente_infra::NaturezaRaiz;
@@ -373,12 +374,26 @@ pub fn analisar_estrutura(
     estrutura_de_grafo(grafo, modo_uses)
 }
 
-/// A construção da [`EstruturaModulos`] a partir de um grafo **já resolvido e
-/// escopado** (prompt 0074): aplica o modo de uses, agrega, detecta ciclos,
-/// ordena a DSM, conta pesos e raios. Fatorada de [`analisar_estrutura`] para
-/// ser reusada pela comparação ([`comparar`]), que extrai cada lado por
-/// diretório em vez de `FonteGrafo`.
+/// Reúne a estrutura e as evidências detalhadas do mesmo grafo filtrado.
+pub fn analisar_estrutura_com_evidencias(
+    fonte: FonteGrafo,
+    escopo: Escopo,
+    modo_uses: ModoUses,
+) -> Result<(EstruturaModulos, AgregacaoDetalhada), ErroLente> {
+    let grafo = aplicar_modo_estrutura(obter_grafo(fonte, escopo)?, modo_uses)?;
+    Ok((
+        estrutura_filtrada(&grafo),
+        agregar_por_modulo_detalhado(&grafo),
+    ))
+}
+
+/// Sobre um grafo já resolvido e escopado, aplica o modo e calcula a estrutura.
 fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModulos, ErroLente> {
+    let grafo = aplicar_modo_estrutura(grafo, modo_uses)?;
+    Ok(estrutura_filtrada(&grafo))
+}
+
+fn aplicar_modo_estrutura(grafo: Grafo, modo_uses: ModoUses) -> Result<Grafo, ErroLente> {
     let grafo = match modo_uses {
         ModoUses::Todas => grafo,
         ModoUses::SoReferencia => {
@@ -401,13 +416,17 @@ fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModu
             filtrar_so_referencia(&grafo)
         }
     };
-    let agg = agregar_por_modulo(&grafo);
+    Ok(grafo)
+}
+
+fn estrutura_filtrada(grafo: &Grafo) -> EstruturaModulos {
+    let agg = agregar_por_modulo(grafo);
     let ciclos = detectar_ciclos(&agg);
     // Prompt 0035: ordem da DSM (módulos + blocos) sobre o agregado.
     let dsm = ordenar_dsm(&agg);
     // Prompt 0071: peso de acoplamento por par módulo→módulo (Achado 1 do 0036).
     // Contado sobre o grafo de itens (não o agregado, que já colapsou as arestas).
-    let pesos = pesos_modulo_a_modulo(&grafo);
+    let pesos = pesos_modulo_a_modulo(grafo);
 
     let mut modulos: Vec<Path> = agg.nodes.iter().map(|n| n.path.clone()).collect();
     modulos.sort_by(|a, b| a.as_str().cmp(b.as_str()));
@@ -433,16 +452,16 @@ fn estrutura_de_grafo(grafo: Grafo, modo_uses: ModoUses) -> Result<EstruturaModu
 
     // Prompt 0073: raio por módulo (montante/jusante transitivos, exatos) sobre
     // o MESMO grafo de itens (mesmo escopo/modo) que a estrutura usa.
-    let raios = raios_por_modulo(&grafo);
+    let raios = raios_por_modulo(grafo);
 
-    Ok(EstruturaModulos {
+    EstruturaModulos {
         modulos,
         dependencias,
         ciclos,
         ordem: dsm.ordem,
         blocos: dsm.blocos,
         raios,
-    })
+    }
 }
 
 /// Erro da comparação, identificando **qual lado** falhou (prompt 0074) — para
@@ -1449,6 +1468,35 @@ mod tests {
             .map(|d| (d.de.as_str(), d.para.as_str()))
             .collect();
         assert_eq!(deps, vec![("t::a", "t::b")]);
+    }
+
+    #[test]
+    fn estrutura_com_evidencias_respeita_o_mesmo_filtro() {
+        let fonte = || FonteGrafo::Json(json_ciclo_misto_reference_e_import().to_string());
+        let (estrutura, detalhe) =
+            analisar_estrutura_com_evidencias(fonte(), Escopo::Completo, ModoUses::SoReferencia)
+                .unwrap();
+        let comum = analisar_estrutura(fonte(), Escopo::Completo, ModoUses::SoReferencia).unwrap();
+        assert_eq!(estrutura, comum);
+        assert_eq!(detalhe.dependencias.len(), 1);
+        let dependencia = &detalhe.dependencias[0];
+        assert_eq!(dependencia.de.as_str(), "t::a");
+        assert_eq!(dependencia.para.as_str(), "t::b");
+        let [indice] = dependencia.evidencias.as_slice() else {
+            panic!("esperava uma evidência de referência");
+        };
+        let aresta = &detalhe
+            .relacoes
+            .iter()
+            .find(|r| r.indice_snapshot == *indice)
+            .unwrap()
+            .aresta;
+        assert_eq!(aresta.from.as_str(), "t::a::f");
+        assert_eq!(aresta.to.as_str(), "t::b::g");
+        assert_eq!(
+            aresta.uses_kind,
+            Some(lente_core::entities::grafo::UsesKind::Reference)
+        );
     }
 
     /// Prompt 0034: diagnóstico de fork antigo. Quando o JSON tem

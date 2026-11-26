@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/catalogo.md
-//! @prompt-hash 28b667e5
+//! @prompt-hash 6c40f78b
 //! @layer L2
-//! @updated 2026-06-07
+//! @updated 2026-11-25
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
 //!          conteúdo de mensagens ao usuário é dado de L2; código nunca
 //!          carrega literais de apresentação.
@@ -142,6 +142,11 @@ pub const HELP_VERBOSE: &str = "Inclui lista completa de itens impactados";
 pub const HELP_HTML: &str =
     "Gera a DSM de estrutura como HTML autocontido e imprime o caminho (só com --estrutura)";
 pub const HELP_SAIDA: &str = "Caminho do HTML (--html). Default: lente-estrutura.html no cwd";
+pub const HELP_REFERENCIAS_GO: &str =
+    "Índice JSON de referências Go entre arquivos. Requer --estrutura --html --grafo.";
+pub const ERRO_REFERENCIAS_GO: Template =
+    Template("índice de referências Go inválido em {arquivo}: {detalhe}");
+
 /// Prompt 0072: a vista `--html` tem default `seu-codigo`; esta flag restaura o `completo`.
 pub const HELP_COMPLETO: &str =
     "Inclui sysroot/stdlib na vista --html (restaura o escopo completo; default da vista é seu-codigo)";

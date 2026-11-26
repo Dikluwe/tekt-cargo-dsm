@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash 41cdbe2d
+//! @prompt-hash 65cd2322
 //! @layer L4
-//! @updated 2026-06-07
+//! @updated 2026-11-25
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
 //! Camada:  L4 — Fiação (app/ponto de composição). É o crate que **compõe** a
 //!          apresentação (`lente_cli`, L2) com a orquestração (`lente_wiring`,
@@ -146,37 +146,68 @@ fn run_estrutura(fonte: FonteGrafo, escopo: Escopo, cli: &args::Cli) -> Result<S
     let contexto = erro::ContextoErro {
         alvo_informado: String::new(),
     };
-    match lente_wiring::analisar_estrutura(fonte, escopo, modo_uses) {
-        Ok(estrut) => {
-            // Prompt 0071: vista HTML — grava o arquivo e devolve o caminho
-            // (stdout só leva a mensagem; o HTML vai pro disco).
-            if cli.html {
-                let html =
-                    saida::formatar_estrutura_html(&estrut, escopo, modo_uses, &rotulo_pacote(cli));
-                let caminho = cli
-                    .saida
-                    .clone()
-                    .unwrap_or_else(|| std::path::PathBuf::from(cat::DSM_SAIDA_PADRAO));
-                std::fs::write(&caminho, html).map_err(|e| SaidaErro {
-                    codigo: 1,
-                    mensagem: cat::DSM_ERRO_ESCRITA.render(&[
-                        ("caminho", &caminho.display().to_string()),
-                        ("detalhe", &e.to_string()),
-                    ]),
-                })?;
-                return Ok(cat::DSM_ESCRITO.render(&[("caminho", &caminho.display().to_string())]));
-            }
-            let modo = saida::Modo {
-                text: cli.text,
-                verbose: cli.verbose,
-            };
-            Ok(saida::formatar_estrutura(&estrut, escopo, modo_uses, &modo))
-        }
-        Err(e) => Err(SaidaErro {
+    if cli.html {
+        let (estrutura, evidencias) = lente_wiring::analisar_estrutura_com_evidencias(
+            fonte, escopo, modo_uses,
+        )
+        .map_err(|e| SaidaErro {
             codigo: 1,
             mensagem: erro::traduzir(&e, &contexto),
-        }),
+        })?;
+        let pacote = rotulo_pacote(cli);
+        let html = if let Some(arquivo) = &cli.referencias_go {
+            let indice =
+                std::fs::read_to_string(arquivo).map_err(|e| err_arquivo(arquivo, e))?;
+            saida::formatar_estrutura_html_com_referencias_go(
+                &estrutura,
+                escopo,
+                modo_uses,
+                &pacote,
+                &evidencias,
+                &indice,
+            )
+            .map_err(|detalhe| SaidaErro {
+                codigo: 1,
+                mensagem: cat::ERRO_REFERENCIAS_GO.render(&[
+                    ("arquivo", &arquivo.to_string_lossy()),
+                    ("detalhe", &detalhe),
+                ]),
+            })?
+        } else {
+            saida::formatar_estrutura_html_com_evidencias(
+                &estrutura,
+                escopo,
+                modo_uses,
+                &pacote,
+                &evidencias,
+            )
+        };
+        let caminho = cli
+            .saida
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from(cat::DSM_SAIDA_PADRAO));
+        std::fs::write(&caminho, html).map_err(|e| SaidaErro {
+            codigo: 1,
+            mensagem: cat::DSM_ERRO_ESCRITA.render(&[
+                ("caminho", &caminho.display().to_string()),
+                ("detalhe", &e.to_string()),
+            ]),
+        })?;
+        return Ok(cat::DSM_ESCRITO.render(&[("caminho", &caminho.display().to_string())]));
     }
+
+    let estrutura =
+        lente_wiring::analisar_estrutura(fonte, escopo, modo_uses).map_err(|e| SaidaErro {
+            codigo: 1,
+            mensagem: erro::traduzir(&e, &contexto),
+        })?;
+    let modo = saida::Modo {
+        text: cli.text,
+        verbose: cli.verbose,
+    };
+    Ok(saida::formatar_estrutura(
+        &estrutura, escopo, modo_uses, &modo,
+    ))
 }
 
 /// Pipeline do modo paridade (prompt 0074): compara duas raízes com escopo/modo
@@ -324,6 +355,26 @@ fn alvo_pedido_texto(alvo: &saida::AlvoPedido) -> String {
 mod tests {
     use super::*;
 
+    #[test]
+    fn referencias_go_exigem_html_com_grafo() {
+        let argumentos = ["lente", "--referencias-go", "refs.json"];
+        assert!(args::Cli::try_parse_from(argumentos).is_err());
+        let cli = args::Cli::try_parse_from([
+            "lente",
+            "--referencias-go",
+            "refs.json",
+            "--estrutura",
+            "--html",
+            "--grafo",
+            "grafo.json",
+        ])
+        .unwrap();
+        assert_eq!(
+            cli.referencias_go.as_deref(),
+            Some(std::path::Path::new("refs.json"))
+        );
+    }
+
     /// JSON sintético com colisão Display+Debug (mesma estrutura do teste do
     /// L4 wiring, mas como string para a CLI consumir).
     fn json_sintetico() -> &'static str {
@@ -377,6 +428,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -456,6 +508,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -487,6 +540,7 @@ mod tests {
             text: false,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -519,6 +573,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -700,6 +755,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -735,6 +791,7 @@ mod tests {
             text: false,
             html: true,
             saida: Some(saida.clone()),
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
@@ -892,6 +949,7 @@ mod tests {
             text: false,
             html: true,
             saida: Some(saida.clone()),
+            referencias_go: None,
             completo: true,
             comparar: false,
             antes: None,
@@ -928,6 +986,7 @@ mod tests {
             text: true,
             html: false,
             saida: None,
+            referencias_go: None,
             completo: false,
             comparar: false,
             antes: None,
