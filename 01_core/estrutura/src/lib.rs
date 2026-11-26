@@ -1,8 +1,8 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/estrutura.md
-//! @prompt-hash 359ef283
+//! @prompt-hash 7a8a7c30
 //! @layer L1
-//! @updated 2026-09-26
+//! @updated 2026-11-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
 //! Camada:  L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 //!
@@ -173,13 +173,11 @@ pub fn agregar_por_modulo(grafo: &Grafo) -> Grafo {
     for a in &grafo.edges {
         match a.relation {
             Relation::Uses => {
-                let from_mod = match modulo_de.get(&a.id_from) {
-                    Some(&m) => m,
-                    None => continue,
+                let Some(from_mod) = modulo_de.get(&a.id_from).copied() else {
+                    continue;
                 };
-                let to_mod = match modulo_de.get(&a.id_to) {
-                    Some(&m) => m,
-                    None => continue,
+                let Some(to_mod) = modulo_de.get(&a.id_to).copied() else {
+                    continue;
                 };
                 if from_mod == to_mod {
                     continue; // uses intra-módulo é absorvido
@@ -1157,6 +1155,24 @@ mod tests {
         assert_eq!(arestas_uses.len(), 1, "dois itens, uma aresta de módulo");
         assert_eq!(arestas_uses[0].from.as_str(), "k::a");
         assert_eq!(arestas_uses[0].to.as_str(), "k::b");
+    }
+
+    #[test]
+    fn agregacao_ignora_uses_sem_modulo_na_origem_ou_no_destino() {
+        let mut g = grafo_dois_modulos();
+        g.nodes.push(no(99, "k::orfao", Kind::Fn));
+        g.edges.extend([
+            aresta(99, "k::orfao", 21, "k::b::g", Relation::Uses),
+            aresta(11, "k::a::f", 99, "k::orfao", Relation::Uses),
+            aresta(11, "k::a::f", 21, "k::b::g", Relation::Uses),
+        ]);
+        let usos: Vec<_> = agregar_por_modulo(&g)
+            .edges
+            .into_iter()
+            .filter(|a| a.relation == Relation::Uses)
+            .map(|a| (a.id_from, a.id_to))
+            .collect();
+        assert_eq!(usos, [(10, 20)]);
     }
 
     #[test]

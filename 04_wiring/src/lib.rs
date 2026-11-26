@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/wiring.md
-//! @prompt-hash a5548205
+//! @prompt-hash 5d27c4ad
 //! @layer L4
 //! @updated 2026-11-26
 //!          ampliado por prompt 00_nucleo/prompt/0027-ranking-top-n.md
@@ -167,7 +167,19 @@ impl fmt::Display for ErroLente {
     }
 }
 
-impl Error for ErroLente {}
+impl Error for ErroLente {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Fork(erro) => Some(erro),
+            Self::Adaptador(erro) => Some(erro),
+            Self::Resolucao(erro) => Some(erro),
+            Self::Raio(erro) => Some(erro),
+            Self::Workspace(erro) => Some(erro),
+            Self::Diff(erro) => Some(erro),
+            Self::IdInexistente(_) | Self::ForkSemUsesKind | Self::NenhumCrateAnalisado(_) => None,
+        }
+    }
+}
 
 /// Pipeline completo: extrai (ou recebe) o grafo, resolve colisões, aplica
 /// o escopo, e calcula o raio do alvo.
@@ -1021,6 +1033,53 @@ mod tests {
         let v3 = ErroLente::Workspace(ErroWorkspace::Toolchain("rustc ausente".to_string()));
         for v in [v1, v2, v3].iter() {
             assert!(!format!("{}", v).is_empty());
+        }
+    }
+
+    fn conferir_causa<E: Error + 'static>(causa: E)
+    where
+        ErroLente: From<E>,
+    {
+        let mensagem = causa.to_string();
+        let erro = ErroLente::from(causa);
+        let obtida = erro.source().unwrap().downcast_ref::<E>().unwrap();
+        assert_eq!(obtida.to_string(), mensagem);
+    }
+
+    #[test]
+    fn erro_lente_expoe_cada_falha_encapsulada() {
+        conferir_causa(ErroFork::StatusErro {
+            codigo: Some(1),
+            stderr: "fork falhou".into(),
+        });
+        conferir_causa(ErroAdaptador::JsonInvalido("eof".into()));
+        conferir_causa(ErroResolve::ColisaoInexistente);
+        conferir_causa(ErroRaio::AlvoInexistente(Path::from("k::inexistente")));
+        conferir_causa(ErroWorkspace::Manifesto("inválido".into()));
+        conferir_causa(ErroDiff::Parse("inválido".into()));
+    }
+
+    #[test]
+    fn erro_lente_permite_percorrer_a_cadeia_de_causas() {
+        use std::io::{Error as ErroIo, ErrorKind};
+
+        let erro = ErroLente::from(ErroDiff::Io(ErroIo::from(ErrorKind::PermissionDenied)));
+        let causa = erro.source().unwrap();
+        let io = causa.source().unwrap().downcast_ref::<ErroIo>().unwrap();
+        assert_eq!(io.kind(), ErrorKind::PermissionDenied);
+    }
+
+    #[test]
+    fn erro_lente_sem_falha_encapsulada_nao_tem_causa_individual() {
+        for erro in [
+            ErroLente::IdInexistente(42),
+            ErroLente::ForkSemUsesKind,
+            ErroLente::NenhumCrateAnalisado(vec![FalhaCrate {
+                crate_name: "demo".into(),
+                motivo: "falha de extração".into(),
+            }]),
+        ] {
+            assert!(erro.source().is_none(), "{erro}");
         }
     }
 

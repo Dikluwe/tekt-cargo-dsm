@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-chamadas-nativas.md
-//! @prompt-hash 9f1843d6
+//! @prompt-hash 7330b06c
 //! @layer L3
 //! @updated 2026-11-26
 
@@ -414,6 +414,100 @@ mod tests {
         };
         assert_eq!(local.coluna, 19);
         assert_eq!(chamador.declaracao.coluna, 4);
+    }
+
+    #[test]
+    fn filtra_opcoes_de_compilacao_e_saida() {
+        for opcao in ["-c", "-MD", "-MMD", "-MP"] {
+            assert_eq!(
+                flags_com_argumentos(&[opcao, "-std=c17"]).unwrap(),
+                ["-std=c17"],
+                "{opcao}"
+            );
+        }
+        for opcao in ["-o", "-MF", "-MT", "-MQ"] {
+            assert_eq!(
+                flags_com_argumentos(&[opcao, "saida.o", "-std=c17"]).unwrap(),
+                ["-std=c17"],
+                "{opcao}"
+            );
+            assert_eq!(flags_com_argumentos(&[opcao]), None, "{opcao} sem valor");
+        }
+    }
+
+    #[test]
+    fn preserva_opcoes_admitidas_com_e_sem_argumento() {
+        for (opcao, valor) in [
+            ("-I", "headers"),
+            ("-D", "ATIVO=1"),
+            ("-U", "ATIVO"),
+            ("-x", "c"),
+            ("-isystem", "sistema"),
+            ("-iquote", "local"),
+            ("-include", "config.h"),
+            ("-isysroot", "sysroot"),
+            ("-target", "aarch64-linux-gnu"),
+            ("--target", "aarch64-linux-gnu"),
+        ] {
+            assert_eq!(
+                flags_com_argumentos(&[opcao, valor, "-std=c17"]).unwrap(),
+                [opcao, valor, "-std=c17"],
+                "{opcao}"
+            );
+            assert_eq!(flags_com_argumentos(&[opcao]), None, "{opcao} sem valor");
+            assert_eq!(
+                flags_com_argumentos(&[opcao, "-std=c17"]),
+                None,
+                "{opcao} seguido de outra opção"
+            );
+        }
+        for opcao in [
+            "-pthread",
+            "-fPIC",
+            "-fpic",
+            "-fPIE",
+            "-fpie",
+            "-fno-exceptions",
+            "-fexceptions",
+            "-fno-rtti",
+            "-frtti",
+            "-m32",
+            "-m64",
+            "-ansi",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-g",
+            "-g0",
+            "-g1",
+            "-g2",
+            "-g3",
+            "-O0",
+            "-O1",
+            "-O2",
+            "-O3",
+            "-Og",
+            "-Os",
+            "-Oz",
+        ] {
+            assert_eq!(
+                flags_com_argumentos(&[opcao, "-std=c17"]).unwrap(),
+                [opcao, "-std=c17"],
+                "{opcao}"
+            );
+        }
+    }
+
+    fn flags_com_argumentos(opcoes: &[&str]) -> Option<Vec<String>> {
+        let entrada = Compilacao {
+            directory: "/raiz".into(),
+            file: "/raiz/a.c".into(),
+            arguments: std::iter::once("clang")
+                .chain(opcoes.iter().copied())
+                .map(str::to_owned)
+                .collect(),
+            command: String::new(),
+        };
+        flags(&entrada, Path::new("/raiz"), Path::new("/raiz/a.c"))
     }
 
     #[test]

@@ -1,5 +1,5 @@
 # Chamadas nativas para a Lente FFI (L3)
-Hash do Código: 85065cd5
+Hash do Código: e1618755
 
 Com um vínculo FFI confirmado, procura compile_commands.json na raiz
 ou em build. Usa apenas unidades C e C++ que estão nas fontes indexadas
@@ -30,7 +30,16 @@ confirmada. Uma declaração estática não pode produzir esse vínculo.
 Dada AST de chamada direta Então registrar o callee e a declaração envolvente.
 Dado uso como valor ou chamada indireta Então não registrar uma chamada direta.
 Dado argumento para plugin ou arquivo de resposta Então recusar a unidade.
+Dada cada opção de controle de compilação ou saída Então removê-la com seu argumento, quando exigido.
+Dada cada opção admitida Então preservá-la e consumir seu argumento apenas quando exigido.
+Dada uma opção sem o argumento obrigatório Então recusar a unidade.
 ```
 
 A admissão dos argumentos de compilação também é reutilizada pelo adaptador
 de Explorar chamadas nativas. As duas projeções usam contratos separados.
+
+## Histórico de Revisões
+
+| Data | Motivo | Arquivos afetados |
+|------|--------|-------------------|
+| 2026-11-26 | Cobertura parametrizada das alternativas de admissão de opções de compilação. | `03_infra/src/scip_ffi/chamadas_nativas.rs` |

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-scip.md
-//! @prompt-hash 57fdd1af
+//! @prompt-hash d85dcdf2
 //! @layer L3
 //! @updated 2026-11-26
 
@@ -355,6 +355,100 @@ fn coluna_em_bytes(linha: &str, offset: i32, unidade: PositionEncoding) -> Optio
 #[cfg(test)]
 mod tests {
     use super::*;
+    use protobuf::EnumOrUnknown;
+
+    fn posicao_no_documento(
+        indexador: &str,
+        codificacao: EnumOrUnknown<PositionEncoding>,
+        coluna: i32,
+    ) -> Result<Option<LocalFonte>, String> {
+        let arquivo = "a.rs";
+        let documento = Document {
+            relative_path: arquivo.into(),
+            position_encoding: codificacao,
+            occurrences: vec![Occurrence {
+                range: vec![0, coluna, coluna + 1],
+                symbol: "local 0".into(),
+                symbol_roles: SymbolRole::Definition as i32,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let mut fontes = FontesIndexadas {
+            fontes: BTreeMap::from([(arquivo.into(), "🚀éx".into())]),
+            ..Default::default()
+        };
+        let mut simbolos = BTreeMap::new();
+        carregar_documento(
+            Path::new("."),
+            indexador,
+            &documento,
+            &mut fontes,
+            &mut simbolos,
+            "índice de teste",
+            &mut BTreeMap::new(),
+        )?;
+        Ok(simbolos
+            .into_values()
+            .next()
+            .and_then(|simbolo| simbolo.declaracoes.into_iter().next()))
+    }
+
+    fn conferir_offset(indexador: &str, codificacao: PositionEncoding, coluna: i32) {
+        let local = posicao_no_documento(indexador, codificacao.into(), coluna)
+            .unwrap_or_else(|erro| panic!("{indexador} / {codificacao:?}: {erro}"))
+            .unwrap_or_else(|| panic!("{indexador} / {codificacao:?}: posição descartada"));
+        assert_eq!(
+            (local.coluna, local.coluna_fim),
+            (6, 7),
+            "{indexador} / {codificacao:?}"
+        );
+    }
+
+    #[test]
+    fn usa_o_padrao_de_codificacao_de_cada_indexador() {
+        use PositionEncoding::UnspecifiedPositionEncoding;
+        for indexador in ["rust-analyzer", "scip-clang", "scip-go", "scip-zig"] {
+            conferir_offset(indexador, UnspecifiedPositionEncoding, 6);
+        }
+        for indexador in [
+            "scip-python",
+            "scip-java",
+            "scip-typescript",
+            "scip-dotnet",
+            "scip-dart",
+        ] {
+            conferir_offset(indexador, UnspecifiedPositionEncoding, 3);
+        }
+    }
+
+    #[test]
+    fn codificacao_explicita_prevalece_sobre_o_padrao_do_indexador() {
+        use PositionEncoding::*;
+        for (indexador, codificacao, coluna) in [
+            ("scip-java", UTF8CodeUnitOffsetFromLineStart, 6),
+            ("rust-analyzer", UTF16CodeUnitOffsetFromLineStart, 3),
+            ("scip-go", UTF32CodeUnitOffsetFromLineStart, 2),
+            ("sem-padrao", UTF16CodeUnitOffsetFromLineStart, 3),
+        ] {
+            conferir_offset(indexador, codificacao, coluna);
+        }
+    }
+
+    #[test]
+    fn recusa_codificacao_desconhecida_ou_ausente_sem_padrao() {
+        use PositionEncoding::UnspecifiedPositionEncoding;
+        for (indexador, codificacao) in [
+            ("sem-padrao", UnspecifiedPositionEncoding.into()),
+            ("rust-analyzer", EnumOrUnknown::from_i32(999)),
+        ] {
+            let erro = posicao_no_documento(indexador, codificacao, 6).unwrap_err();
+            assert!(
+                erro.contains("codificação da posição SCIP"),
+                "{indexador}: {erro}"
+            );
+        }
+    }
 
     #[test]
     fn colunas_respeitam_unicode_e_rejeitam_offsets_entre_unidades() {

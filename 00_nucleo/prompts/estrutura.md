@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_estrutura` — vista de módulos, ciclos e DSM
-Hash do Código: 360d0ab1
+Hash do Código: b62ee3df
 
 **Camada**: L1 — Núcleo. Pureza: stdlib + `lente_core`. Zero externas.
 **Unidade**: `01_core/estrutura/src/lib.rs` (crate `lente_estrutura`, arquivo único).
@@ -20,6 +20,7 @@ Genérico — opera sobre qualquer `Grafo` (fractal: item/módulo/crate).
 
 - **`agregar_por_modulo(grafo) -> Grafo`**: itens → módulos (pelo contenedor
   `Owns`); `Uses` viram dependências módulo→módulo; `uses` intra-módulo absorvidos.
+  Uma `Uses` cuja origem ou destino não tenha módulo contenedor é ignorada.
 - **`detectar_ciclos(grafo) -> Vec<Ciclo>`**: SCC à mão (Tarjan, sem `petgraph`)
   sobre as `Uses`; devolve SCCs ≥ 2; `Ciclo.modulos` ordenado lexicograficamente;
   ordem entre ciclos determinística.
@@ -128,6 +129,7 @@ semântica e API; qualificação Option::None não é um braço curinga.
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-11-26 | Simplificação das buscas dos módulos contenedores na agregação. | `01_core/estrutura/src/lib.rs` |
 | 2026-06-07 | Nucleação (migração de convenção, prompt 0060) da vista de estrutura. Código inalterado. | `01_core/estrutura/src/lib.rs` |
 
 | 2026-09-26 | API aditiva de agregação detalhada: evidências por snapshot, contabilidade e validação Owns; legado preservado. | `01_core/estrutura/src/lib.rs` |

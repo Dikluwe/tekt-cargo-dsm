@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_wiring` — a fiação (L4)
-Hash do Código: 6ab501da
+Hash do Código: 247e8138
 
 **Camada**: L4 — Fiação (composição). Importa L1/L2/L3 (é o topo, compõe tudo).
 **Unidade**: `04_wiring/src/lib.rs` (crate `lente_wiring`).
@@ -74,6 +74,11 @@ referenciar o L3). Por isso o **V12 = 1 sobre o `ErroLente` é intencional e
 aceito** — um `enum` no L4 que é legítimo (não é "L4 criando tipo de domínio";
 é o tipo-soma dos erros que a composição propaga com `?`).
 
+`Error::source()` devolve a falha encapsulada em `Fork`, `Adaptador`,
+`Resolucao`, `Raio`, `Workspace` e `Diff`. `IdInexistente`,
+`ForkSemUsesKind` e `NenhumCrateAnalisado` não têm uma causa encadeada
+individual. `Display` preserva as mensagens e o resumo das falhas por crate.
+
 ## Restrições (L4)
 
 - O **topo**: importa L1/L2/L3 (depende de tudo abaixo). Não há camada acima.
@@ -85,6 +90,8 @@ aceito** — um `enum` no L4 que é legítimo (não é "L4 criando tipo de domí
 Dado um JSON com colisão Quando calcular_raio_de_alvo Então o raio do alvo resolvido
 Dado a raiz do repo Quando montar_grafo_workspace Então o grafo unificado + fantasmas
 Dado um ErroFork Quando ? num pipeline Então ErroLente::Fork (agregação via From)
+Dada cada variante que encapsula falha Quando consultar Error::source Então obter a causa com seu tipo original
+Dada uma variante sem erro encapsulado Quando consultar Error::source Então obter None
 ```
 
 ## Interface Snapshot
@@ -95,6 +102,7 @@ Dado um ErroFork Quando ? num pipeline Então ErroLente::Fork (agregação via F
 
 | Data | Motivo | Arquivos afetados |
 |------|--------|-------------------|
+| 2026-11-26 | Expor as causas dos erros encapsulados por `ErroLente`. | `04_wiring/src/lib.rs` |
 | 2026-09-26 | Distinguir pacote Cargo de crate canônico da extração; contrato de identidade e limites de membros com falha. | `04_wiring/src/lib.rs` |
 | 2026-09-26 | Toolchain consultado por membro em cada raiz; teste de propagação até o cache. | `04_wiring/src/lib.rs` |
 | 2026-08-26 | P0079: `comparar` recebe mapa declarativo opcional já lido pelo L3 e o injeta no pareamento puro; ausência preserva o pipeline anterior. | `04_wiring/src/lib.rs` |
