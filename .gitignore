@@ -17,3 +17,6 @@ Thumbs.db
 
 # Dependências locais de helpers JavaScript.
 node_modules/
+
+# Ambiente virtual local do TextFold.
+/.venv-textfold/

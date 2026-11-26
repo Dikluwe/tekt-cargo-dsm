@@ -1,5 +1,5 @@
 # Índice de referências de fonte (L1)
-Hash do Código: ddf6b99d
+Hash do Código: 2d995c83
 
 O índice recebe fontes e posições normalizadas em linha base um e colunas
 UTF-8 em bytes base zero, com fim exclusivo. Cada símbolo conserva a
@@ -15,6 +15,7 @@ alcançabilidade entre arquivos. Nenhuma operação do domínio faz I/O.
 O índice pode carregar, por arquivo de código, o caminho relativo e o texto
 original do seu prompt Markdown admitido pelo adaptador. Essa informação serve
 à navegação e não participa da projeção do grafo nem do cálculo de raio.
+Quando pedido, o prompt inclui os níveis TextFold, proveniência e evidências.
 
 A prova FFI distingue ELF/DWARF de identidades confirmadas no IndexStore.
 

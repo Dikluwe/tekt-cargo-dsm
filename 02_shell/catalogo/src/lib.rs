@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/catalogo.md
-//! @prompt-hash c32bddfb
+//! @prompt-hash f195d714
 //! @layer L2
 //! @updated 2026-11-26
 //! Camada:  L2 — Casca (apresentação). Nasce sob o Tekt ADR-0002:
@@ -139,6 +139,8 @@ pub const HELP_BASE_COMPILACAO: &str =
 pub const ERRO_BASE_COMPILACAO: Template = Template("base de compilação inválida: {detalhe}");
 pub const HELP_FLUXOS: &str = "JSON de fluxos publicados no HTML com os índices.";
 pub const ERRO_FLUXOS: Template = Template("fluxos inválidos em {arquivo}: {detalhe}");
+pub const HELP_TEXTFOLD: &str = "Inclui os níveis do TextFold local nos prompts da DSM.";
+pub const ERRO_TEXTFOLD: Template = Template("falha ao obter níveis TextFold: {detalhe}");
 pub const HELP_ARTEFATO_FFI: &str =
     "ELF com debug para ligar chamadas FFI indexadas a definições C/C++.";
 pub const ERRO_ARTEFATO_FFI: Template = Template("artefato FFI inválido: {detalhe}");

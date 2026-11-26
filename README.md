@@ -103,6 +103,29 @@ apontando para um Markdown local sob `00_nucleo/prompts/` ou `00_nucleo/prompt/`
 o painel oferece **Ver prompt**. O leitor inclui o texto e um índice clicável
 das seções no próprio HTML. **Voltar à matriz** conserva o arquivo selecionado.
 
+### Níveis TextFold para prompts Tekt
+
+O TextFold é uma dependência externa e opcional. Instale o pacote Python em
+um ambiente virtual fora do checkout, reutilizável entre projetos Tekt, e
+mantenha o `python3` desse ambiente no `PATH` ao gerar a DSM.
+
+```sh
+ambiente_textfold="${XDG_DATA_HOME:-$HOME/.local/share}/tekt/textfold-venv"
+python3 -m venv "$ambiente_textfold"
+. "$ambiente_textfold/bin/activate"
+python3 -m pip install 'textfold==0.10.57'
+
+mkdir -p target
+rust-analyzer scip --output target/rust.scip .
+lente --estrutura --html --raiz-scip . --indice-scip target/rust.scip \
+  --textfold --saida target/lente-textfold.html
+```
+
+Em **Ver prompt**, alterne entre **Tópicos**, **Síntese**, **Pontos**, **Trechos**
+e **Integral**. O adaptador L3 usa os níveis disponíveis na biblioteca local do
+TextFold ou a extração local, sem chamar um modelo. O HTML abre offline e a
+vista integral conserva o Markdown do repositório.
+
 O HTML incorpora o código dos arquivos indexados. Com `--artefato-ffi`,
 a Lente também liga funções externas de Rust às implementações C/C++
 de ABI C que constam no artefato. Passe o executável ELF final (ou a

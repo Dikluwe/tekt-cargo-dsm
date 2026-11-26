@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra-scip.md
-//! @prompt-hash b027efb8
+//! @prompt-hash 57fdd1af
 //! @layer L3
 //! @updated 2026-11-26
 
@@ -115,7 +115,7 @@ fn identidade(arquivo: &str, simbolo: &str) -> (Option<String>, String) {
     )
 }
 
-fn resolver_fonte(raiz: &Path, arquivo: &str) -> Result<PathBuf, String> {
+pub(super) fn resolver_fonte(raiz: &Path, arquivo: &str) -> Result<PathBuf, String> {
     if arquivo
         .chars()
         .any(|c| c.is_control() || c == '\\' || c == ':')
@@ -169,7 +169,7 @@ fn prompt_declarado(fonte: &str) -> Option<&str> {
     prompt
 }
 
-fn caminho_em_nucleo(caminho: &Path) -> bool {
+pub(super) fn caminho_em_nucleo(caminho: &Path) -> bool {
     caminho.extension().is_some_and(|ext| ext == "md")
         && (caminho.starts_with("00_nucleo/prompts") || caminho.starts_with("00_nucleo/prompt"))
 }
@@ -200,6 +200,7 @@ pub fn anexar_prompts(raiz: &Path, indice: &mut FontesIndexadas) {
             PromptFonte {
                 caminho: caminho.into(),
                 texto,
+                textfold: None,
             },
         );
     }

@@ -1,5 +1,5 @@
 # Admissão de índices SCIP (L3)
-Hash do Código: c489187a
+Hash do Código: ddaaf7e5
 
 Recebe um ou mais índices binários SCIP do mesmo snapshot e a raiz local
 explícita do código. Usa a biblioteca SCIP oficial. Lê somente documentos
@@ -36,3 +36,4 @@ Markdown apontado relativamente à raiz do projeto, em `00_nucleo/prompts/`
 ou `00_nucleo/prompt/`. Tanto o caminho declarado quanto o resolvido devem
 pertencer a essas pastas na raiz canônica. Referências ausentes, ambíguas,
 inválidas ou ilegíveis deixam o arquivo sem prompt e mantêm a geração da DSM.
+O adaptador TextFold reutiliza a resolução confinada desses caminhos.

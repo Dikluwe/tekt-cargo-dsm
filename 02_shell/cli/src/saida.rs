@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-saida.md
-//! @prompt-hash b62f9ebf
+//! @prompt-hash e7aaf03b
 //! @layer L2
 //! @updated 2026-11-26
 //!
@@ -673,7 +673,11 @@ fn formatar_indice_scip(
                 .map(|(arquivo, prompt)| {
                     (
                         arquivo.clone(),
-                        json!({"caminho": prompt.caminho, "texto": prompt.texto}),
+                        json!({
+                            "caminho": prompt.caminho,
+                            "texto": prompt.texto,
+                            "textfold": prompt.textfold.as_ref().map(textfold_para_html),
+                        }),
                     )
                 })
                 .collect::<serde_json::Map<_, _>>()
@@ -690,6 +694,34 @@ fn formatar_indice_scip(
         None,
         Some(("scip", dados)),
     )
+}
+
+fn textfold_para_html(
+    leitura: &lente_core::domain::fontes_indexadas::LeituraTextFold,
+) -> serde_json::Value {
+    use serde_json::json;
+
+    let secoes: Vec<_> = leitura
+        .secoes
+        .iter()
+        .map(|secao| {
+            let unidades: Vec<_> = secao
+                .unidades
+                .iter()
+                .map(|u| {
+                    json!({
+                        "topico": u.topico, "sintese": u.sintese, "ponto": u.ponto,
+                        "evidencias": u.evidencias, "integral": u.integral,
+                    })
+                })
+                .collect();
+            json!({
+                "titulo": secao.titulo, "profundidade": secao.profundidade,
+                "topico": secao.topico, "sintese": secao.sintese, "unidades": unidades,
+            })
+        })
+        .collect();
+    json!({"gerado_por_ia": leitura.gerado_por_ia, "modelo": leitura.modelo, "secoes": secoes})
 }
 
 fn referencias_go_para_html(
@@ -2620,6 +2652,7 @@ mod tests {
             PromptFonte {
                 caminho: caminho.into(),
                 texto: texto.into(),
+                textfold: None,
             },
         );
         let html = formatar_estrutura_html_scip(&estrutura_amostra(), &indice);

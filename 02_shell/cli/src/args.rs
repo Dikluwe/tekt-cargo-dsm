@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/cli-args.md
-//! @prompt-hash a315d3e1
+//! @prompt-hash 07281c0c
 //! @layer L2
 //! @updated 2026-11-26
 //!
@@ -155,6 +155,9 @@ pub struct Cli {
 
     #[arg(long, value_name = "ARQUIVO", requires = "raiz_scip", help = lente_catalogo::HELP_FLUXOS)]
     pub fluxos: Option<std::path::PathBuf>,
+
+    #[arg(long, requires = "raiz_scip", help = lente_catalogo::HELP_TEXTFOLD)]
+    pub textfold: bool,
 
     /// Restaura o escopo `completo` (com sysroot) nas superfícies de consumo
     /// cujo default virou `seu-codigo` (prompt 0072): `--html` e `--comparar`.

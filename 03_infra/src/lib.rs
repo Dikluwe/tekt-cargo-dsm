@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/infra.md
-//! @prompt-hash 1b3c4baf
+//! @prompt-hash 8279ce3a
 //! @layer L3
 //! @updated 2026-11-26
 //! Spec:    00_nucleo/specs/forma-organizada.md
@@ -40,6 +40,7 @@ mod metadata;
 pub mod provedores;
 pub mod scip;
 pub mod scip_ffi;
+pub mod textfold;
 mod traducao;
 mod workspace;
 

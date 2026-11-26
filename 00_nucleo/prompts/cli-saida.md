@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_cli::saida` — os formatadores de saída (L2)
-Hash do Código: f20ddd4d
+Hash do Código: eb480e5e
 
 **Camada**: L2 — Casca (apresentação pura). Os literais vêm do `lente_catalogo`
 (ADR-0002).
@@ -144,6 +144,10 @@ refactor 0055–0057.
   abriu na matriz, conserva também a rolagem e repõe o foco no botão.
 - Dado um arquivo sem prompt válido ou um grupo dobrado, o painel não oferece
   a ação. A vista do prompt não altera os dados de dependência nem o raio.
+- Com TextFold, o leitor abre em **Tópicos** e oferece **Síntese**, **Pontos**,
+  **Trechos** e **Integral**. Identifica níveis gerados por IA, mostra a
+  evidência original de cada unidade ao expandir e mantém o Markdown integral
+  acessível no mesmo leitor. O HTML inclui todos os níveis sem dependência de servidor.
   Uma célula FFI abre primeiro a implementação nativa, identifica o
   símbolo de link e mantém atalhos para a declaração e usos Rust.
   O identificador Rust com vínculo FFI confirmado abre a implementação

@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/fontes-indexadas.md
-//! @prompt-hash 26197122
+//! @prompt-hash ae779999
 //! @layer L1
 //! @updated 2026-11-26
 
@@ -51,6 +51,32 @@ pub type ChamadasFonte = BTreeMap<LocalFonte, Option<FuncaoFonte>>;
 pub struct PromptFonte {
     pub caminho: String,
     pub texto: String,
+    pub textfold: Option<LeituraTextFold>,
+}
+
+#[derive(Clone, Debug)]
+pub struct LeituraTextFold {
+    pub gerado_por_ia: bool,
+    pub modelo: String,
+    pub secoes: Vec<SecaoTextFold>,
+}
+
+#[derive(Clone, Debug)]
+pub struct SecaoTextFold {
+    pub titulo: String,
+    pub profundidade: usize,
+    pub topico: String,
+    pub sintese: String,
+    pub unidades: Vec<UnidadeTextFold>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UnidadeTextFold {
+    pub topico: String,
+    pub sintese: String,
+    pub ponto: String,
+    pub evidencias: Vec<String>,
+    pub integral: String,
 }
 
 #[derive(Debug, Default)]

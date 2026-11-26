@@ -1,5 +1,5 @@
 # Prompt de Nucleação: `lente_infra` — o adaptador da fonte (L3)
-Hash do Código: 2f9ef816
+Hash do Código: dc05fe6e
 
 **Camada**: L3 — Infraestrutura. I/O e deps externas permitidos.
 **Unidade**: `03_infra/src/lib.rs` (crate `lente_infra`, fachada).
@@ -86,3 +86,6 @@ O adaptador de chamadas Go lê apenas fontes indexadas e entrega posições para
 
 O leitor de Explorar chamadas C/C++ vive em `explorar_chamadas_nativas` e
 recebe base de compilação explícita para complementar um índice SCIP.
+
+O adaptador `textfold` exporta níveis de leitura dos prompts admitidos quando
+o ponto de composição o solicita.

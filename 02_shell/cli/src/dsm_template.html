@@ -266,6 +266,11 @@
     color: #182c42; border: 1px solid #aac0d6; border-radius: 9px; }
   #prompt-leitor[open] { display: flex; flex-direction: column; }
   #prompt-leitor::backdrop { background: #1d2d4380; }
+  #prompt-textfold { padding: 8px 12px; border-bottom: 1px solid #dce6f0; }
+  #prompt-niveis { display: flex; flex-wrap: wrap; gap: 4px; }
+  #prompt-niveis button { padding: 4px 8px; }
+  #prompt-niveis [aria-pressed="true"] { border-color: #25578e; background: #e5effb; color: #153b65; }
+  #prompt-proveniencia { margin: 5px 0 0; color: #45586e; }
   #prompt-indice { flex: 0 1 240px; min-width: 0; overflow: auto;
     padding: 12px; background: #f4f7fb; }
   #prompt-indice h3 { margin: 0 0 6px; }
@@ -275,6 +280,11 @@
     overflow-wrap: anywhere; }
   #prompt-texto pre { margin: 0; white-space: pre-wrap; font: 12px/1.6 ui-monospace, monospace; }
   #prompt-texto :is(h3, h4, h5, h6) { margin: 8px 0; scroll-margin-top: 12px; }
+  #prompt-texto .prompt-secao-dobrada { padding: 8px 12px; margin-bottom: 8px;
+    border: 1px solid #dce6f0; border-radius: 4px; }
+  #prompt-texto .prompt-unidade { margin: 8px 0; padding-bottom: 8px; border-bottom: 1px solid #e5ebf2; }
+  #prompt-texto .prompt-unidade p { margin: 4px 0; }
+  #prompt-texto .prompt-unidade summary { cursor: pointer; color: #185184; }
   @media (max-width: 760px) {
     #prompt-indice { flex: 0 1 auto; max-height: 24vh; }
   }
@@ -672,6 +682,10 @@
   <div class="go-fonte-cabecalho">
     <div><h2 id="prompt-titulo">Prompt do arquivo</h2><p><code id="prompt-caminho"></code></p></div>
     <form id="prompt-retornar" method="dialog"><button type="submit">Voltar à matriz</button></form>
+  </div>
+  <div id="prompt-textfold" hidden>
+    <div id="prompt-niveis" role="group" aria-label="Nível de leitura TextFold"></div>
+    <p id="prompt-proveniencia" role="status"></p>
   </div>
   <div class="go-fonte-corpo">
     <nav id="prompt-indice" aria-labelledby="prompt-indice-titulo">
@@ -1939,36 +1953,100 @@ function titulosPrompt(linhas) {
   return titulos;
 }
 
-let retornoPrompt;
-function abrirPrompt(prompt, origem) {
+function adicionarSecaoPrompt(destino, titulo, nivel) {
+  const secao = elemento(`h${Math.min(nivel + 2, 6)}`, titulo);
+  secao.tabIndex = -1;
+  destino.append(secao);
+  const item = elemento("li");
+  item.style.paddingInlineStart = `${Math.min(nivel - 1, 4) * 9}px`;
+  item.append(botaoAcao(titulo, () => {
+    secao.scrollIntoView({ block: "start" });
+    secao.focus({ preventScroll: true });
+  }, "go-posicao"));
+  $("#prompt-indice ol").append(item);
+}
+
+function renderizarMarkdownPrompt(prompt, texto) {
   const linhas = prompt.texto.split(/\r?\n/);
-  const titulos = titulosPrompt(linhas);
-  const texto = $("#prompt-texto");
-  const indice = $("#prompt-indice ol");
-  $("#prompt-caminho").textContent = prompt.caminho;
-  indice.replaceChildren();
-  texto.replaceChildren();
-  $("#prompt-indice").hidden = !titulos.length;
   let inicio = 0;
-  for (const { inicio: linha, fim, nivel, titulo } of titulos) {
+  for (const { inicio: linha, fim, nivel, titulo } of titulosPrompt(linhas)) {
     if (linha > inicio) texto.append(elemento("pre", linhas.slice(inicio, linha).join("\n")));
-    const secao = elemento(`h${Math.min(nivel + 2, 6)}`, titulo);
-    secao.tabIndex = -1;
-    texto.append(secao);
-    const item = elemento("li");
-    item.style.paddingInlineStart = `${Math.min(nivel - 1, 4) * 9}px`;
-    item.append(botaoAcao(titulo, () => {
-      secao.scrollIntoView({ block: "start" });
-      secao.focus({ preventScroll: true });
-    }, "go-posicao"));
-    indice.append(item);
+    adicionarSecaoPrompt(texto, titulo, nivel);
     inicio = fim;
   }
   if (inicio < linhas.length) texto.append(elemento("pre", linhas.slice(inicio).join("\n")));
-  retornoPrompt = origem;
-  $("#prompt-leitor").showModal();
+}
+
+const niveisTextFold = [
+  ["topico", "Tópicos"], ["sintese", "Síntese"], ["ponto", "Pontos"],
+  ["trechos", "Trechos"], ["integral", "Integral"],
+];
+
+function renderizarTextFold(leitura, nivel, texto) {
+  for (const secao of leitura.secoes) {
+    const bloco = elemento("section", null, nivel === "topico" ? "prompt-secao-dobrada" : null);
+    adicionarSecaoPrompt(bloco, secao.titulo || "Abertura", Math.max(1, secao.profundidade));
+    const destaques = nivel === "topico" ? secao.topico : nivel === "sintese" ? secao.sintese : "";
+    if (destaques) bloco.append(elemento("p", destaques));
+    for (const unidade of secao.unidades) {
+      const conteudo = nivel === "trechos" ? unidade.evidencias.join(" … ") : unidade[nivel];
+      if (!conteudo) continue;
+      const parte = elemento("div", null, "prompt-unidade");
+      parte.append(elemento("p", conteudo));
+      if (nivel !== "trechos" && unidade.integral) {
+        const evidencia = elemento("details");
+        evidencia.append(elemento("summary", "Ver trecho original"));
+        const lista = elemento("blockquote", unidade.evidencias.join(" … ") || unidade.integral);
+        evidencia.append(lista);
+        parte.append(evidencia);
+      }
+      bloco.append(parte);
+    }
+    texto.append(bloco);
+  }
+}
+
+function mostrarNivelPrompt(prompt, nivel) {
+  const texto = $("#prompt-texto");
+  const indice = $("#prompt-indice ol");
+  indice.replaceChildren();
+  texto.replaceChildren();
+  if (nivel === "integral") renderizarMarkdownPrompt(prompt, texto);
+  else renderizarTextFold(prompt.textfold, nivel, texto);
+  $("#prompt-indice").hidden = !indice.childElementCount;
+  const leitura = prompt.textfold;
+  if (leitura) {
+    const autoral = nivel === "trechos" || nivel === "integral";
+    $("#prompt-proveniencia").textContent = autoral ? "Texto original" : leitura.gerado_por_ia
+      ? `TextFold · gerado por IA${leitura.modelo ? ` · ${leitura.modelo}` : ""}` : "TextFold · extração local";
+  }
   texto.scrollTop = 0;
   $("#prompt-indice").scrollTop = 0;
+}
+
+let retornoPrompt;
+function abrirPrompt(prompt, origem) {
+  $("#prompt-caminho").textContent = prompt.caminho;
+  const temNiveis = Boolean(prompt.textfold?.secoes.length);
+  $("#prompt-textfold").hidden = !temNiveis;
+  const niveis = $("#prompt-niveis");
+  niveis.replaceChildren();
+  function selecionarNivel(nivel) {
+    for (const botao of niveis.children) {
+      botao.setAttribute("aria-pressed", String(botao.dataset.nivel === nivel));
+    }
+    mostrarNivelPrompt(prompt, nivel);
+  }
+  if (temNiveis) {
+    for (const [nivel, rotulo] of niveisTextFold) {
+      const botao = botaoAcao(rotulo, () => selecionarNivel(nivel));
+      botao.dataset.nivel = nivel;
+      niveis.append(botao);
+    }
+  }
+  selecionarNivel(temNiveis ? "topico" : "integral");
+  retornoPrompt = origem;
+  $("#prompt-leitor").showModal();
 }
 
 $("#prompt-retornar").addEventListener("submit", () => {

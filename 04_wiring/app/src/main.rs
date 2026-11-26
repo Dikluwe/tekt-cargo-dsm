@@ -1,6 +1,6 @@
 //! Crystalline Lineage
 //! @prompt 00_nucleo/prompts/app-main.md
-//! @prompt-hash e3eea63d
+//! @prompt-hash cb2a95d0
 //! @layer L4
 //! @updated 2026-11-26
 //!          ponto de entrada relocado por prompt 00_nucleo/prompt/0057-estagio3_relocar_ponto_entrada.md
@@ -133,6 +133,12 @@ fn run(cli: args::Cli) -> Result<String, SaidaErro> {
             );
         }
         lente_infra::scip::anexar_prompts(raiz, &mut indice);
+        if cli.textfold {
+            lente_infra::textfold::anexar(raiz, &mut indice).map_err(|detalhe| SaidaErro {
+                codigo: 1,
+                mensagem: cat::ERRO_TEXTFOLD.render(&[("detalhe", &detalhe)]),
+            })?;
+        }
         let estrutura = lente_wiring::analisar_estrutura_indexada(&indice.grafo());
         let html = if let Some(arquivo) = &cli.fluxos {
             let erro_fluxos = |detalhe: String| SaidaErro {
@@ -671,6 +677,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -764,6 +771,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -808,6 +816,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -851,6 +860,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -1043,6 +1053,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -1089,6 +1100,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
@@ -1287,6 +1299,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: true,
             comparar: false,
             antes: None,
@@ -1334,6 +1347,7 @@ mod tests {
             artefato_ffi: None,
             base_compilacao: None,
             fluxos: None,
+            textfold: false,
             completo: false,
             comparar: false,
             antes: None,
